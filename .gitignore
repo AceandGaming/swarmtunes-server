@@ -1,0 +1,9 @@
+/data/pending_songs/*
+/data/processing_songs/*
+/data/songs/*
+
+*.mp3
+*.wav
+*.flac
+
+__pycache__/
