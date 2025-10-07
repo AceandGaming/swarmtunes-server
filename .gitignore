@@ -1,6 +1,4 @@
-/data/pending_songs/*
-/data/processing_songs/*
-/data/songs/*
+/data/*
 
 *.mp3
 *.wav
