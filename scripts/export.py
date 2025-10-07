@@ -30,5 +30,5 @@ def ExportSong(uuid: str):
         )
     audio.save(v2_version=3)
 
-    return f"{song.title} by {song.artist} ({song.type})"
+    return f"{song.title} by {song.artist.replace(",", "")} ({song.type})" #chrome doesn't like ,
     

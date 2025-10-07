@@ -1,15 +1,21 @@
 from pathlib import Path
+import os
 
-SONGS_FILE = "data/songs.json"
-ALBUMS_FILE = "data/albums.json"
-PLAYLISTS_FILE = "data/playlists.json"
-USERS_FILE = "data/users.json"
-MUSIC_DIR = Path("data/songs")
-SONGS_DIR = Path("data/songs")
-PENDING_DIR = Path("data/pending_songs")
+#static
+SONGS_FILE = Path("data/static/songs.json")
+MUSIC_DIR = Path("data/static/songs")
+SONGS_DIR = Path("data/static/songs")
+
 COVERS_DIR = Path("covers")
-TEST_DIR = Path("test")
-PROCESSING_DIR = Path("data/processing_songs")
+
+
+DATA_PATH = Path("data") / os.getenv("DATA_PATH", "release")
+print("Using path", DATA_PATH)
+
+PLAYLISTS_FILE = DATA_PATH / "playlists.json"
+USERS_FILE = DATA_PATH / "users.json"
+PENDING_DIR = DATA_PATH / "pending_songs"
+PROCESSING_DIR = DATA_PATH / "processing_songs"
 
 def ClearProcessing():
     for file in PROCESSING_DIR.iterdir():

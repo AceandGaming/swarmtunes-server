@@ -15,6 +15,8 @@ from scripts.export import ExportSong
 from scripts.cover import GetCover as ResizeCover
 import asyncio
 import re
+import os
+
 
 def InitializeServer():
     global app, auth
@@ -23,7 +25,9 @@ def InitializeServer():
     app = FastAPI()
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
+        allow_origins=[
+            "https://swarmtunes.com",
+        ],
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
@@ -85,25 +89,27 @@ async def CleanUp():
         print("Downloading new files complete")
         AlbumManager.GenerateAlbums()
         print("New songs downloaded and albums generated")
-    asyncio.create_task(Download())
+    if os.getenv("DATA_PATH") is None:
+        asyncio.create_task(Download())
 @app.on_event("shutdown")
 async def Shutdown():
-    print("Shutting down...")
+    print("Saving...")
     SongManager.Save()
     PlaylistManager.Save()
     UserManager.Save()
-    print("Shutdown complete")
+    print("Saved!")
 
 @app.get("/")
 async def root():
     return {
-        "message": "Hello World", 
+        "message": "Welcome to the SwarmTunes API", 
         "status": "ok",
         "songs": len(SongManager.songs),
         "albums": len(AlbumManager.albums),
         "playlists": len(PlaylistManager.playlists),
         "users": len(UserManager.users),
-        "emotes": len(emotes.emotes)
+        "emotes": len(emotes.emotes),
+        "current-path": paths.DATA_PATH
     }
 
 @app.get("/swarmfm")
