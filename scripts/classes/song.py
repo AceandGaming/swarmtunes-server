@@ -16,7 +16,7 @@ class Song:
         return Song(json["title"], json["type"], json["artist"], json["date"], json["google_drive_id"], json["original"], json["uuid"])
     @property
     def cover_artist(self):
-        return {"neuro": "Neuro-sama", "evil": "Evil Neuro", "duet": "Neuro-sama and Evil Neuro"}[self.type]
+        return {"neuro": "Neuro-sama", "evil": "Evil Neuro", "duet": "Neuro-sama and Evil Neuro", "mashup": "Neuro-sama and Evil Neuro"}[self.type]
     @property
     def cover_art(self):
         if (paths.COVERS_DIR / f"{self.uuid}.png").exists():
@@ -30,7 +30,7 @@ class Song:
         else:
             return datetime.strptime(self.date, "%d/%m/%y")
 
-    def __init__(self, title: str, type: Literal["neuro", "evil", "duet"], artist = "unknown", date = "unknown", google_drive_id = "none", is_original = False, songUUID = None):
+    def __init__(self, title: str, type: Literal["neuro", "evil", "duet", "mashup"], artist = "unknown", date = "unknown", google_drive_id = "none", is_original = False, songUUID = None):
         self.title = title
         self.type = type
         self.artist = artist

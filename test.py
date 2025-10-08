@@ -6,5 +6,4 @@ import scripts.api.google_drive as google_drive
 
 
 SongManager.Load()
-song = SongManager.GetSong("8be2573a-e99a-4c02-bad4-cb6ca591c34d")
-ReDownloadSong(song)
+asyncio.run(DownloadMissingSongs())
