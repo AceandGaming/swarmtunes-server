@@ -61,10 +61,10 @@ class Album:
         if len(self.songs) == 0:
             self.type = "unknown"
             return self.type
-        counts = {"neuro": 0, "evil": 0, "duet": 0}
+        counts = {"neuro": 0, "evil": 0, "duet": 0, "mashup": 0}
         for song in self.songs:
             counts[song.type] += 1
-        mix = (counts["evil"] + counts["duet"] * 0.5) / (counts["neuro"] + counts["evil"] + counts["duet"])
+        mix = (counts["evil"] + (counts["duet"] + counts["mashup"]) * 0.5) / (counts["neuro"] + counts["evil"] + counts["duet"] + counts["mashup"])
         if mix < 0.33:
             self.type = "neuro"
         elif mix > 0.66:

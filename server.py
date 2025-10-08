@@ -21,13 +21,17 @@ import os
 def InitializeServer():
     global app, auth
     startTime = time.time()
+
+    allow_origins = [
+        "https://swarmtunes.com",
+    ]
+    if os.getenv("DATA_PATH") is not None: #dev only
+        allow_origins = ["*"]
     print("Starting server...")
     app = FastAPI()
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=[
-            "https://swarmtunes.com",
-        ],
+        allow_origins=allow_origins,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
@@ -276,7 +280,7 @@ def NewPlaylist(req: NewPlaylistRequest, token: str = Depends(auth)):
     name = req.name.strip()
     if len(name) > 32 or len(name) <= 0:
         raise HTTPException(400, detail="Invalid playlist name")
-    if not re.match(r"^[A-Za-z_ ]+$", name):
+    if not re.match(r"^[0-9A-Za-z_ ]+$", name):
         raise HTTPException(400, detail="Playlist name contains invalid characters")
 
     playlist = Playlist(name, user.uuid)
@@ -324,3 +328,18 @@ def RemoveSongFromPlaylist(uuid: str, req: PlaylistSongUpdateRequest, token: str
             raise HTTPException(400, detail="Song not in playlist")
         playlist.RemoveSong(song)
     return {"success": True}
+
+class RenamePlaylistRequest(BaseModel):
+    name: str
+
+@app.post("/playlists/{uuid}/rename")
+def RenamePlaylist(uuid: str, req: RenamePlaylistRequest, token: str = Depends(auth)):
+    playlist = VailidatePlaylist(token, uuid)
+    name = req.name.strip()
+    if len(name) > 32 or len(name) <= 0:
+        raise HTTPException(400, detail="Invalid playlist name")
+    if not re.match(r"^[0-9A-Za-z_ ]+$", name):
+        raise HTTPException(400, detail="Playlist name contains invalid characters")
+    playlist.title = name
+    return {"success": True}
+    

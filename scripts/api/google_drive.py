@@ -12,7 +12,8 @@ driveFiles = drive.files()
 folderIds = {
     "evil": "16WT3-_bOG2I50YS9eBwNK9W99Uh-QhwK",
     "neuro": "118gr4QuaGQGKfJ0X8VBCytvPjdzPayPY",
-    "duet": "16XWYR_-i0vAvKkmI9a77ZLiZTp20WHjs"
+    "duet": "16XWYR_-i0vAvKkmI9a77ZLiZTp20WHjs",
+    "mashup": "1x8GPZgcIAK-THwiM4jZ2lUCmFFJnx91m"
 }
 def GetAllFilesInFolder(q):
     page_token = None
@@ -30,6 +31,7 @@ def GetAllFilesInFolder(q):
         if not page_token:
             break
     return all_files
+
 def GetAllFiles():
     neuroFiles = GetAllFilesInFolder(f"'{folderIds["neuro"]}' in parents and mimeType='audio/mpeg'")
     for f in neuroFiles:
@@ -43,7 +45,11 @@ def GetAllFiles():
     for f in duetFiles:
         f["folder"] = "duet"
 
-    files = neuroFiles + evilFiles + duetFiles
+    mashupFiles = GetAllFilesInFolder(f"'{folderIds["mashup"]}' in parents and mimeType='audio/mpeg'")
+    for f in mashupFiles:
+        f["folder"] = "mashup"
+
+    files = neuroFiles + evilFiles + duetFiles + mashupFiles
     return files
 
 def DownloadFile(file_id):
