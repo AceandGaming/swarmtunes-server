@@ -7,6 +7,7 @@ MUSIC_DIR = Path("data/static/songs")
 SONGS_DIR = Path("data/static/songs")
 
 COVERS_DIR = Path("covers")
+COVER_CACHE = Path("cache", "covers")
 
 
 DATA_PATH = Path("data") / os.getenv("DATA_PATH", "release")
