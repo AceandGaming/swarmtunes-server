@@ -3,9 +3,10 @@ from scripts.classes.song import SongManager
 from scripts.classes.album import AlbumManager
 from scripts.classes.user import UserManager, PlaylistManager, SessionManager, User, Playlist
 from fastapi import FastAPI, HTTPException, Query, Form, Header, Depends
-from fastapi.responses import FileResponse, StreamingResponse
+from fastapi.responses import FileResponse, StreamingResponse, HTMLResponse, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer
+import scripts.embed as embeds
 import scripts.api.emotes as emotes
 import time, math
 import scripts.paths as paths
@@ -16,7 +17,6 @@ from scripts.cover import GetCover as ResizeCover
 import asyncio
 import re
 import os
-
 
 def InitializeServer():
     global app, auth
@@ -104,7 +104,12 @@ async def Shutdown():
     print("Saved!")
 
 @app.get("/")
-async def root():
+async def root(song = Query(...)):
+    if song:
+        song = SongManager.GetSong(song)
+        if not song:
+            return
+        return HTMLResponse(embeds.SongEmbed(song))
     return {
         "message": "Welcome to the SwarmTunes API", 
         "status": "ok",
@@ -174,10 +179,12 @@ def GetCover(name: str, size: int = Query(128)):
             if not song:
                 raise HTTPException(404, detail="Cover not found")
             path = song.cover_art
-    buffer = ResizeCover(path, size)
-    if not buffer:
+    file = ResizeCover(path, size)
+    if not file:
         raise HTTPException(404, detail="Cover not found")
-    return StreamingResponse(buffer, media_type="image/webp")
+
+    return FileResponse(file, media_type="image/webp", headers={"Accept-Ranges": "bytes"})
+    
 
 @app.get("/albums")
 def GetAlbums(uuids: list[str] = Query(None), filters: str = Query(None)):
