@@ -17,6 +17,7 @@ from scripts.cover import GetCover as ResizeCover
 import asyncio
 import re
 import os
+from scripts.search import SearchSongs
 
 def InitializeServer():
     global app, auth
@@ -350,3 +351,7 @@ def RenamePlaylist(uuid: str, req: RenamePlaylistRequest, token: str = Depends(a
     playlist.title = name
     return {"success": True}
     
+@app.get("/search")
+def Search(query: str = Query(""), maxResults: int = Query(30)):
+    results = SearchSongs(query)
+    return SongManager.ConvertToNetworkDict(results[:maxResults])
