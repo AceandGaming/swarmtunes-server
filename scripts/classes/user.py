@@ -3,7 +3,6 @@ import scripts.paths as paths
 import uuid as createUUID
 import json
 from passlib.context import CryptContext
-import secrets
 from scripts.filters import Filter
 from scripts.utils import *
 from .song import SongManager, Song
@@ -11,8 +10,8 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 class User:
-    @staticmethod
-    def CreateFromJson(userJson: dict):
+    @classmethod
+    def CreateFromJson(cls, userJson: dict):
         if not HasValues(userJson, "uuid", "username", "password", "playlists"):
             print(f"Warn: Invalid user json: {userJson}")
             return
@@ -24,15 +23,23 @@ class User:
                 return
             playlist.userid = userJson["uuid"]
             playlists.append(playlist)
-        return User(userJson["username"], userJson["password"], playlists, userJson["uuid"], hashed = True)
-    def __init__(self, username: str, password: str, playlists: list[Playlist]|None = None, uuid: str|None = None, hashed = False):
-        self.username = username
-        self.password = password if hashed else pwd_context.hash(password) 
-        self.playlists = playlists if playlists is not None else []
+        user = cls.__new__(cls)
+        user.username = userJson["username"]
+        user.password = userJson["password"] #already hashed
+        user.playlists = playlists
+        user.uuid = userJson["uuid"]
+        return user
+    @property
+    def isAdmin(self) -> bool:
+        return False
 
-        if uuid is None:
-            uuid = str(createUUID.uuid4())
-        while uuid in UserManager.users:
+    def __init__(self, username: str, password: str):
+        self.username = username
+        self.password = pwd_context.hash(password) 
+        self.playlists = []
+
+        uuid = str(createUUID.uuid4())
+        while uuid in UserManager.users.keys():
             uuid = str(createUUID.uuid4())
         self.uuid = uuid
     def __repr__(self):
@@ -122,55 +129,6 @@ class UserManager:
     def Save():
         with open(paths.USERS_FILE, "w") as file:
             json.dump(UserManager.ConvertToJson(), file, indent=2)
-    
-class SessionToken:
-    def __init__(self, user: User):
-        self.token = secrets.token_urlsafe(16)
-        self.user = user
-    def __repr__(self):
-        return self.token
-    def __eq__(self, other):
-        if not isinstance(other, SessionToken) or not isinstance(self, SessionToken):
-            return False
-        return self.token == other.token
-
-class SessionManager:
-    tokens = []
-    @staticmethod
-    def AddToken(token: SessionToken):
-        SessionManager.tokens.append(token)
-    @staticmethod
-    def RemoveToken(token: SessionToken):
-        SessionManager.tokens.remove(token)
-    @staticmethod
-    def Login(username: str, password: str):
-        user = UserManager.GetUserWithUsername(username)
-        if user is None:
-            return None
-        if not user.VerifyPassword(password):
-            return None
-        for token in SessionManager.tokens:
-            if token.user == user:
-                return token.token
-        token = SessionToken(user)
-        SessionManager.AddToken(token)
-        return token.token
-    @staticmethod
-    def Logout(tokenString: str):
-        for token in SessionManager.tokens:
-            if token.token == tokenString:
-                SessionManager.RemoveToken(token)
-                return
-    @staticmethod
-    def GetUser(tokenString: str):
-        for token in SessionManager.tokens:
-            if token.token == tokenString:
-                return token.user
-    @staticmethod
-    def TokenIsValid(tokenString: str):
-        return SessionManager.GetUser(tokenString) is not None
-        
-
 
 class Playlist:
     @property

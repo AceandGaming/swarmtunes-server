@@ -1,9 +1,11 @@
+from typing import Literal
 from pydantic import BaseModel
 from scripts.classes.song import SongManager
 from scripts.classes.album import AlbumManager
-from scripts.classes.user import UserManager, PlaylistManager, SessionManager, User, Playlist
-from fastapi import FastAPI, HTTPException, Query, Form, Header, Depends
-from fastapi.responses import FileResponse, StreamingResponse, HTMLResponse, Response
+from scripts.classes.user import UserManager, PlaylistManager, User, Playlist
+from scripts.classes.session import SessionManager
+from fastapi import FastAPI, HTTPException, Query, Depends
+from fastapi.responses import FileResponse, HTMLResponse, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer
 import scripts.embed as embeds
@@ -63,19 +65,31 @@ def GetFilters(filterString: str):
     for split in filterString.split(","):
         filters.append(Filter.CreateFromString(split))
     return filters
-def VailidateToken(token: str):
+def VailidateUser(token: str):
     user = SessionManager.GetUser(token)
     if not user:
         raise HTTPException(401, detail="Invalid token", headers={"token-expired": "true"})
     return user
+def VailidateAdmin(token: str):
+    user = VailidateUser(token)
+    if not user.isAdmin:
+        raise HTTPException(403, detail="Not admin")
+    return user
 def VailidatePlaylist(token: str, uuid: str):
-    user = VailidateToken(token)
+    user = VailidateUser(token)
     playlist = PlaylistManager.GetPlaylist(uuid)
     if not playlist:
         raise HTTPException(404, detail="Playlist not found")
     if playlist.user != user:
         raise HTTPException(403, detail="Playlist not owned by user")
     return playlist
+
+async def ResyncServer():
+    print("Downloading new files...")
+    await DownloadMissingSongs()
+    print("Downloading new files complete")
+    AlbumManager.GenerateAlbums()
+    print("New songs downloaded and albums generated")
 
 InitializeServer()
 
@@ -88,14 +102,9 @@ async def CleanUp():
     paths.ClearPending()
     paths.ClearProcessing()
     print("Cleanup complete")
-    async def Download():
-        print("Downloading new files...")
-        await DownloadMissingSongs()
-        print("Downloading new files complete")
-        AlbumManager.GenerateAlbums()
-        print("New songs downloaded and albums generated")
+
     if os.getenv("DATA_PATH") is None:
-        asyncio.create_task(Download())
+        await ResyncServer()
 @app.on_event("shutdown")
 async def Shutdown():
     print("Saving...")
@@ -105,7 +114,7 @@ async def Shutdown():
     print("Saved!")
 
 @app.get("/")
-async def root(song = Query(...)):
+async def root(song = Query(None)):
     if song:
         song = SongManager.GetSong(song)
         if not song:
@@ -146,6 +155,28 @@ def GetSongs(uuids: list[str] = Query(None), filters: str = Query(None), maxResu
         songs = SongManager.GetSongs()
         songs = songs[:maxResults]
         return SongManager.ConvertToNetworkDict(songs) #type: ignore
+    
+class EditSongRequest(BaseModel):
+    title: str
+    type: Literal["neuro", "evil", "duet", "mashup"]
+    artist: str
+    date: str
+    #google_drive_id: str
+    original: bool
+
+@app.put("/songs/{uuid}")
+def EditSong(uuid: str, req: EditSongRequest, token: str = Depends(auth)):
+    VailidateAdmin(token)
+    song = SongManager.GetSong(uuid)
+    if not song:
+        raise HTTPException(404, detail="Song not found")
+    song.title = req.title
+    song.type = req.type
+    song.artist = req.artist
+    song.date = req.date
+    #song.google_drive_id = req.google_drive_id
+    song.original = req.original
+    return {"success": True}
 
 @app.get("/files/{uuid}")
 def GetSongFile(uuid: str, export: bool = Query(False)):
@@ -251,7 +282,7 @@ def Login(req: LoginRequest):
     token = SessionManager.Login(username, password)
     if not token:
         raise HTTPException(401, detail="Invalid username or password")
-    return {"token": token}
+    return {"token": token.token, "isAdmin": token.user.isAdmin}
 
 @app.post("/users/logout")
 def Logout(token: str = Depends(auth)):
@@ -262,7 +293,7 @@ def Logout(token: str = Depends(auth)):
 
 @app.get("/playlists")
 def GetPlaylists(uuids: list[str] = Query(None), filters: str = Query(None), token: str = Depends(auth)):
-    user = VailidateToken(token)
+    user = VailidateUser(token)
     if uuids:
         playlists = []
         for uuid in uuids:
@@ -282,9 +313,9 @@ class NewPlaylistRequest(BaseModel):
     name: str
     songs: list[str] = []
 
-@app.post("/playlists/new")
+@app.post("/playlists")
 def NewPlaylist(req: NewPlaylistRequest, token: str = Depends(auth)):
-    user = VailidateToken(token)
+    user = VailidateUser(token)
     name = req.name.strip()
     if len(name) > 32 or len(name) <= 0:
         raise HTTPException(400, detail="Invalid playlist name")
@@ -300,14 +331,11 @@ def NewPlaylist(req: NewPlaylistRequest, token: str = Depends(auth)):
     PlaylistManager.AddPlaylist(playlist)
     return playlist.ToNetworkDict()
 
-class DeletePlaylistRequest(BaseModel):
-    uuid: str
-
-@app.post("/playlists/delete")
-def DeletePlaylist(req: DeletePlaylistRequest, token: str = Depends(auth)):
-    playlist = VailidatePlaylist(token, req.uuid)
+@app.delete("/playlists/{uuid}")
+def DeletePlaylist(uuid: str,  token: str = Depends(auth)):
+    playlist = VailidatePlaylist(token, uuid)
     PlaylistManager.RemovePlaylist(playlist)
-    return {"success": True}
+    return
 
 class PlaylistSongUpdateRequest(BaseModel):
     songs: list[str]
@@ -340,7 +368,7 @@ def RemoveSongFromPlaylist(uuid: str, req: PlaylistSongUpdateRequest, token: str
 class RenamePlaylistRequest(BaseModel):
     name: str
 
-@app.post("/playlists/{uuid}/rename")
+@app.patch("/playlists/{uuid}")
 def RenamePlaylist(uuid: str, req: RenamePlaylistRequest, token: str = Depends(auth)):
     playlist = VailidatePlaylist(token, uuid)
     name = req.name.strip()
@@ -355,3 +383,10 @@ def RenamePlaylist(uuid: str, req: RenamePlaylistRequest, token: str = Depends(a
 def Search(query: str = Query(""), maxResults: int = Query(30)):
     results = SearchSongs(query)
     return SongManager.ConvertToNetworkDict(results[:maxResults])
+
+@app.post("/resync")
+def Resync(token: str = Depends(auth)):
+    VailidateAdmin(token)
+    task = asyncio.create_task(DownloadMissingSongs())
+    task.add_done_callback(lambda task: task.exception())
+    return
