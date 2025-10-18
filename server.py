@@ -5,7 +5,7 @@ from scripts.classes.album import AlbumManager
 from scripts.classes.user import UserManager, PlaylistManager, User, Playlist
 from scripts.classes.session import SessionManager
 from fastapi import FastAPI, HTTPException, Query, Depends
-from fastapi.responses import FileResponse, HTMLResponse, Response
+from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer
 import scripts.embed as embeds
@@ -34,7 +34,7 @@ def InitializeServer():
     app = FastAPI()
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=allow_origins,
+        allow_origins= ["*"], #allow_origins,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
@@ -57,7 +57,6 @@ def InitializeServer():
     emotes.Load()
     print(f"Loaded {len(emotes.emotes)} emotes")
     print(f"Server started in {math.floor((time.time() - startTime) * 1000)} miliseconds")
-    print("todo: Fix discord bot")
     return app
 
 def GetFilters(filterString: str):
@@ -284,11 +283,22 @@ def Login(req: LoginRequest):
         raise HTTPException(401, detail="Invalid username or password")
     return {"token": token.token, "isAdmin": token.user.isAdmin}
 
-@app.post("/users/logout")
+@app.post("/me/logout")
 def Logout(token: str = Depends(auth)):
     if not SessionManager.TokenIsValid(token):
         raise HTTPException(401, detail="Invalid token")
     SessionManager.Logout(token)
+    return
+
+@app.get("/me")
+def GetUser(token: str = Depends(auth)):
+    user = VailidateUser(token)
+    return UserManager.ConvertToNetworkDict(user, True)
+
+@app.delete("/me")
+def DeleteUser(token: str = Depends(auth)):
+    user = VailidateUser(token)
+    UserManager.DeleteUser(user)
     return
 
 @app.get("/playlists")
@@ -340,7 +350,7 @@ def DeletePlaylist(uuid: str,  token: str = Depends(auth)):
 class PlaylistSongUpdateRequest(BaseModel):
     songs: list[str]
 
-@app.post("/playlists/{uuid}/add")
+@app.patch("/playlists/{uuid}/add")
 def AddSongToPlaylist(uuid: str, req: PlaylistSongUpdateRequest, token: str = Depends(auth)):
     playlist = VailidatePlaylist(token, uuid)
     for song in req.songs:
@@ -353,7 +363,7 @@ def AddSongToPlaylist(uuid: str, req: PlaylistSongUpdateRequest, token: str = De
 
     return {"success": True}
 
-@app.post("/playlists/{uuid}/remove")
+@app.patch("/playlists/{uuid}/remove")
 def RemoveSongFromPlaylist(uuid: str, req: PlaylistSongUpdateRequest, token: str = Depends(auth)):
     playlist = VailidatePlaylist(token, uuid)
     for song in req.songs:
@@ -385,8 +395,8 @@ def Search(query: str = Query(""), maxResults: int = Query(30)):
     return SongManager.ConvertToNetworkDict(results[:maxResults])
 
 @app.post("/resync")
-def Resync(token: str = Depends(auth)):
+async def Resync(token: str = Depends(auth)):
     VailidateAdmin(token)
-    task = asyncio.create_task(DownloadMissingSongs())
+    task = asyncio.create_task(ResyncServer())
     task.add_done_callback(lambda task: task.exception())
     return

@@ -70,8 +70,46 @@ class User:
         return {
             "uuid": self.uuid,
             "username": self.username,
-            "playlists": playlistJSONs
+            "playlists": playlistJSONs,
+            "isAdmin": self.isAdmin
         }
+
+class Admin(User):
+    @classmethod
+    def CreateFromJson(cls, userJson: dict):
+        user = super().CreateFromJson(userJson)
+        if user is None:
+            return
+        user.adminHash = userJson["admin"]
+        return user
+    @classmethod
+    def PromoteUser(cls, user: User):
+        admin = cls.__new__(cls)
+        admin.username = user.username
+        admin.password = user.password
+        admin.playlists = user.playlists
+        admin.uuid = user.uuid
+        admin.adminHash = pwd_context.hash(user.uuid)
+        return admin
+
+    @property
+    def isAdmin(self):
+        return self.VerifyAdmin()
+
+    def __init__(self, username: str, password: str):
+        super().__init__(username, password)
+        self.adminHash = pwd_context.hash(self.uuid) #prevents copy and pasting json
+    def ToJson(self):
+        playlistUUIDs = [playlist.uuid for playlist in self.playlists]
+        return {
+            "uuid": self.uuid,
+            "username": self.username,
+            "password": self.password,
+            "playlists": playlistUUIDs,
+            "admin": self.adminHash
+        }
+    def VerifyAdmin(self):
+        return pwd_context.verify(self.uuid, self.adminHash)
 
 class UserManager:
     users = {}
@@ -88,7 +126,15 @@ class UserManager:
         UserManager.users[user.uuid] = user
         UserManager.Save()
     @staticmethod
-    def RemoveUser(user: User):
+    def UpdateUser(user: User):
+        UserManager.users[user.uuid] = user
+        UserManager.Save()
+    @staticmethod
+    def RemoveUser(uuid: str):
+        del UserManager.users[uuid]
+        UserManager.Save()
+    @staticmethod
+    def DeleteUser(user: User):
         for playlist in user.playlists:
             PlaylistManager.RemovePlaylist(playlist)
         del UserManager.users[user.uuid]
@@ -121,7 +167,10 @@ class UserManager:
         with open(paths.USERS_FILE, "r") as file:
             users = json.load(file)
             for userJson in users:
-                user = User.CreateFromJson(userJson)
+                if userJson.get("admin") is not None:
+                    user = Admin.CreateFromJson(userJson)
+                else:
+                    user = User.CreateFromJson(userJson)
                 if user is None:
                     raise Exception(f"Loaded invalid user json: {userJson}")
                 UserManager.users[user.uuid] = user

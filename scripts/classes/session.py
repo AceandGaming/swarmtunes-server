@@ -1,5 +1,4 @@
 from scripts.classes.user import UserManager, User
-from scripts.classes.admin import Admin
 import secrets
 
 class SessionToken:
