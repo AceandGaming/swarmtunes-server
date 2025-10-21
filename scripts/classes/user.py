@@ -186,6 +186,10 @@ class Playlist:
         if user is None:
             raise Exception(f"Playlist has invalid user uuid: {self.userid}")
         return user
+    @property
+    def type(self):
+        return self.DetermineType()
+
     @staticmethod
     def CreateFromJson(json):
         if not HasValues(json, "uuid", "title", "songs"):
@@ -235,8 +239,22 @@ class Playlist:
             "uuid": self.uuid,
             "title": self.title,
             "user": self.userid,
-            "songs": songJSONs
+            "songs": songJSONs,
+            "type": self.type
         }
+    def DetermineType(self):
+        if len(self.songs) == 0:
+            return "unknown"
+        counts = {"neuro": 0, "evil": 0, "duet": 0, "mashup": 0}
+        for song in self.songs:
+            counts[song.type] += 1
+        mix = (counts["evil"] + (counts["duet"] + counts["mashup"]) * 0.5) / (counts["neuro"] + counts["evil"] + counts["duet"] + counts["mashup"])
+        if mix < 0.33:
+            return "neuro"
+        elif mix > 0.66:
+            return "evil"
+        else:
+            return "duet"
     
 class PlaylistManager:
     playlists: dict[str, Playlist] = {}

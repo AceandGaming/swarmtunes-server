@@ -34,7 +34,7 @@ def InitializeServer():
     app = FastAPI()
     app.add_middleware(
         CORSMiddleware,
-        allow_origins= ["*"], #allow_origins,
+        allow_origins= allow_origins,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
@@ -191,6 +191,7 @@ def GetSongFile(uuid: str, export: bool = Query(False)):
 
 @app.get("/covers/{name}")
 def GetCover(name: str, size: int = Query(128)):
+    size = 2 ** round(math.log2(size))
     if size > 1024:
         size = 1024
     if size < 1:
