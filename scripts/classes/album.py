@@ -5,6 +5,13 @@ from scripts.utils import HasValues
 from scripts.filters import Filter
 
 class Album:
+    @property 
+    def PrettyType(self):
+        return {"neuro": "Neuro-sama", "evil": "Evil Neuro", "duet": "Neuro-sama and Evil Neuro", "unknown": "Unknown"}[self.type]
+    @property
+    def Title(self):
+        return self.PrettyType + " Karaoke"
+
     @staticmethod
     def CreateFromJson(json):
         if not HasValues(json, "uuid", "date", "type", "songs"):
