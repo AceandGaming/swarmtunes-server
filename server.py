@@ -14,7 +14,7 @@ import time, math
 import scripts.paths as paths
 from scripts.download import DownloadMissingSongs
 from scripts.filters import Filter
-from scripts.export import ExportSong
+from scripts.export import ExportSong, ExportAlbum
 from scripts.cover import GetCover as ResizeCover
 import asyncio
 import re
@@ -177,11 +177,23 @@ def EditSong(uuid: str, req: EditSongRequest, token: str = Depends(auth)):
     song.original = req.original
     return {"success": True}
 
+@app.get("/files/album/{uuid}")
+def GetAlbumFile(uuid: str):
+    album = AlbumManager.GetAlbum(uuid)
+    if not album:
+        raise HTTPException(404, detail="Album not found")
+    filename = ExportAlbum(album)
+    file_path = paths.PROCESSING_DIR / uuid
+    return FileResponse(file_path, media_type="application/zip", headers={"Content-Disposition": f"attachment; filename={filename}"})
+    
+
 @app.get("/files/{uuid}")
 def GetSongFile(uuid: str, export: bool = Query(False)):
     if export:
-        try: filename = ExportSong(uuid)
-        except: raise HTTPException(404, detail="Song not found")
+        song = SongManager.GetSong(uuid)
+        if song is None:
+            raise HTTPException(404, detail="Song not found")
+        filename = ExportSong(song)
         file_path = paths.PROCESSING_DIR / uuid
         return FileResponse(file_path, media_type="audio/mpeg", headers={"Content-Disposition": f"attachment; filename={filename}"})
     if not SongManager.GetSong(uuid):
