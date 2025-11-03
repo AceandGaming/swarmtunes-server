@@ -17,6 +17,7 @@ PLAYLISTS_FILE = DATA_PATH / "playlists.json"
 USERS_FILE = DATA_PATH / "users.json"
 PENDING_DIR = DATA_PATH / "pending_songs"
 PROCESSING_DIR = DATA_PATH / "processing_songs"
+SHARE_FILE = DATA_PATH / "shares.json"
 
 def ClearProcessing():
     for file in PROCESSING_DIR.iterdir():

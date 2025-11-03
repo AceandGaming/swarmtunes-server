@@ -20,6 +20,7 @@ import asyncio
 import re
 import os
 from scripts.search import SearchSongs
+from scripts.share import ShareManager
 
 def InitializeServer():
     global app, auth
@@ -56,6 +57,7 @@ def InitializeServer():
     print("Loading emotes...")
     emotes.Load()
     print(f"Loaded {len(emotes.emotes)} emotes")
+    ShareManager.Load()
     print(f"Server started in {math.floor((time.time() - startTime) * 1000)} miliseconds")
     return app
 
@@ -110,12 +112,18 @@ async def Shutdown():
     SongManager.Save()
     PlaylistManager.Save()
     UserManager.Save()
+    ShareManager.Save()
     print("Saved!")
 
 @app.get("/")
-async def root(song = Query(None)):
+async def root(song = Query(None), s = Query(None)):
     if song:
         song = SongManager.GetSong(song)
+        if not song:
+            return
+        return HTMLResponse(embeds.SongEmbed(song))
+    if s:
+        song = ShareManager.GetSong(s)
         if not song:
             return
         return HTMLResponse(embeds.SongEmbed(song))
@@ -154,6 +162,14 @@ def GetSongs(uuids: list[str] = Query(None), filters: str = Query(None), maxResu
         songs = SongManager.GetSongs()
         songs = songs[:maxResults]
         return SongManager.ConvertToNetworkDict(songs) #type: ignore
+@app.get("/songs/{uuid}/share")
+def GetSongShare(uuid: str):
+    song = SongManager.GetSong(uuid)
+    if not song:
+        raise HTTPException(404, detail="Song not found")
+    link = ShareManager.ShareSong(song)
+    return {"link": link}
+    
     
 class EditSongRequest(BaseModel):
     title: str
