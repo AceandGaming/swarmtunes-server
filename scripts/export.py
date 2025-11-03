@@ -42,7 +42,6 @@ def ExportAlbum(album: Album):
 
     path = paths.PROCESSING_DIR / album.uuid
     metadata = {
-        "id": album.uuid,
         "date": album.date,
         "type": album.type,
         "title": album.Title

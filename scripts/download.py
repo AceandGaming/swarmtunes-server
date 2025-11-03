@@ -50,6 +50,8 @@ def DownloadSong(drive_file):
 
 def ReDownloadSong(song):
     print(f"ReDownloading '{song.title}' ID: {song.google_drive_id}")
+    if (song.google_drive_id == "unknown"):
+        return
     if (paths.MUSIC_DIR / song.uuid).exists():
         os.remove(paths.MUSIC_DIR / song.uuid)
     google_drive.DownloadFile(song.google_drive_id)

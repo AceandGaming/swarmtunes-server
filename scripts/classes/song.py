@@ -37,12 +37,16 @@ class Song:
         self.date = date
         self.google_drive_id = google_drive_id
         self.original = is_original
+        self.has_custom_cover = False
 
         if songUUID is None:
             songUUID = str(createUUID.uuid4())
         while songUUID in SongManager.songs:
             songUUID = str(createUUID.uuid4())
         self.uuid = songUUID
+
+        if (paths.COVERS_DIR / f"{self.uuid}.png").exists():
+            self.has_custom_cover = True
     def __repr__(self):
         return f"{self.title} by {self.artist} ({self.type})"
     def __eq__(self, other):
@@ -66,7 +70,8 @@ class Song:
             "type": self.type,
             "artist": self.artist,
             "date": self.date,
-            "original": self.original
+            "original": self.original,
+            "has_custom_cover": self.has_custom_cover
         }
 
 class SongManager:

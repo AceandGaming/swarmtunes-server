@@ -29,7 +29,7 @@ class SessionManager:
             return None
         for token in SessionManager.tokens:
             if token.user == user:
-                return token.token
+                return token
         token = SessionToken(user)
         SessionManager.AddToken(token)
         return token
