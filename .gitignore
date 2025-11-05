@@ -1,5 +1,7 @@
 /data/*
 /cache/
+/old-data/
+/old-scripts/
 
 *.mp3
 *.wav

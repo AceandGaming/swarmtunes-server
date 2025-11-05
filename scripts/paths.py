@@ -1,27 +1,12 @@
 from pathlib import Path
 import os
 
-#static
-SONGS_FILE = Path("data/static/songs.json")
-MUSIC_DIR = Path("data/static/songs")
-SONGS_DIR = Path("data/static/songs")
+DATA_PATH = Path("data")
+IDS_FILE = DATA_PATH / "ids.json"
+MP3_DIR = DATA_PATH / "mp3"
+SONGS_DIR = DATA_PATH / "songs"
+ALBUMS_DIR = DATA_PATH / "albums"
 
-COVERS_DIR = Path("covers")
-COVER_CACHE = Path("cache", "covers")
-
-
-DATA_PATH = Path("data") / os.getenv("DATA_PATH", "release")
-print("Using path", DATA_PATH)
-
-PLAYLISTS_FILE = DATA_PATH / "playlists.json"
-USERS_FILE = DATA_PATH / "users.json"
-PENDING_DIR = DATA_PATH / "pending_songs"
-PROCESSING_DIR = DATA_PATH / "processing_songs"
-SHARE_FILE = DATA_PATH / "shares.json"
-
-def ClearProcessing():
-    for file in PROCESSING_DIR.iterdir():
-        file.unlink()
-def ClearPending():
-    for file in PENDING_DIR.iterdir():
-        file.unlink()
+os.makedirs(MP3_DIR, exist_ok=True)
+os.makedirs(SONGS_DIR, exist_ok=True)
+os.makedirs(ALBUMS_DIR, exist_ok=True)
