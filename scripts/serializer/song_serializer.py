@@ -1,5 +1,5 @@
 from .serializer import BaseSerializer
-from scripts.types import Song
+from scripts.types.song import Song, SongExternalStorage
 from dataclasses import asdict
 from datetime import datetime
 
@@ -13,6 +13,8 @@ class SongSerializer(BaseSerializer[Song]):
     @staticmethod
     def Deserialize(data: dict):
         data["date"] = datetime.fromisoformat(data["date"])
+        if "storage" in data:
+            data["storage"] = SongExternalStorage(**data["storage"])
         return Song(**data)
     
     @staticmethod

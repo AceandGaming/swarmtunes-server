@@ -1,15 +1,12 @@
 from scripts.id_manager import IDManager
 from scripts.types import *
 from scripts.data_system import DataSystem
-from datetime import datetime
 
 IDManager.Load()
 
-now = datetime.now()
-DataSystem.songs.Create(title="test", artist="test", singers=["test"], date=now)
-DataSystem.songs.Create(title="test2", artist="test", singers=["test"], date=now)
-DataSystem.songs.Create(title="test3", artist="test", singers=["test"], date=now)
-DataSystem.songs.Create(title="test4", artist="test", singers=["test"], date=now)
-album = DataSystem.albums.CreateFromDate(now)
+user = DataSystem.users.Create(username="test", password="a hash")
+user.AddResolver((lambda id: None))
+DataSystem.users.Save(user)
+print(user.__dict__)
 
-print(album.__dict__)
+IDManager.Save()

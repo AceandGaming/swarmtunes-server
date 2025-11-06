@@ -10,9 +10,10 @@ class HasId(Protocol):
 T = TypeVar("T", bound=HasId)
 
 class BaseDatabase(Generic[T]):
-    def __init__(self, serializer: Type[BaseSerializer[T]], path: Path):
+    def __init__(self, type: Type[T], serializer: Type[BaseSerializer[T]], path: Path):
         self._serializer = serializer
         self._path = path
+        self._objectType = type
 
     def Get(self, id: str):
         path = self._path / id
@@ -23,8 +24,9 @@ class BaseDatabase(Generic[T]):
             return self._serializer.Deserialize(data)
     
     def GetAll(self):
-        ids = IDManager.GetIds(T.__name__.lower())
+        ids = IDManager.GetIds(self._objectType)
         if ids is None:
+            print("Warning: No ids found in id manager for type", self._objectType.__name__.lower())
             return []
         items = []
         for id in ids:

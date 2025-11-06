@@ -3,33 +3,35 @@ import json
 import scripts.paths as paths
 
 class IDManager:
-    _ids = {}
+    _ids: dict[str, list[str]] = {}
 
     @staticmethod
-    def NewId(type: str):
-        if type not in IDManager._ids:
-            IDManager._ids[type] = []
+    def NewId(type: type):
+        name = type.__name__.lower()
+        if name not in IDManager._ids:
+            IDManager._ids[name] = []
 
         def new():
             nonlocal type
-            return type + "_" + str(uuid.uuid4())
+            return name + "_" + str(uuid.uuid4())
 
         id = new()
-        while id in IDManager._ids[type]:
+        while id in IDManager._ids[name]:
             id = new()
-        IDManager._ids[type].append(id)
+        IDManager._ids[name].append(id)
         return id
     @staticmethod
-    def GetIds(type: str):
-        return IDManager._ids.get(type)
+    def GetIds(type: type):
+        name = type.__name__.lower()
+        return IDManager._ids.get(name)
     @staticmethod
     def SplitId(id: str):
         type, uuid = id.split("_")
         return type, uuid
     @staticmethod
     def RemoveId(id: str):
-        type, uuid = IDManager.SplitId(id)
-        IDManager._ids[type].remove(id)
+        name, uuid = IDManager.SplitId(id)
+        IDManager._ids[name].remove(id)
 
     @staticmethod
     def Save():

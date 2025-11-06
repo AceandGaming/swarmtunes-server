@@ -5,4 +5,4 @@ from scripts.types import Song
 
 class SongDatabase(BaseDatabase[Song]):
     def __init__(self):
-        super().__init__(SongSerializer, paths.SONGS_DIR)
+        super().__init__(Song, SongSerializer, paths.SONGS_DIR)

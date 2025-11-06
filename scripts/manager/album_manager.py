@@ -10,7 +10,7 @@ class AlbumManager(BaseManager[Album]):
         super().__init__(AlbumDatabase())
     
     def Create(self, **kwargs) -> Album:
-        id = IDManager.NewId("album")
+        id = IDManager.NewId(Album)
         album = Album(id=id, **kwargs)
         self.Save(album)
         return album
@@ -20,17 +20,18 @@ class AlbumManager(BaseManager[Album]):
         if album is None:
             return None
         
-        album.resolver = SongManager().Get
+        album.AddResolver(SongManager().Get)
         return album
     
     def CreateFromDate(self, date):
-        id = IDManager.NewId("album")
+        id = IDManager.NewId(Album)
         songs = []
         for song in SongManager().items:
+            print(song.date, date)
             if song.date == date:
                 songs.append(song.id)
         album = Album(id=id, date=date, songIds=songs)
         
-        album.resolver = SongManager().Get
+        album.AddResolver(SongManager().Get)
         self.Save(album)
         return album
