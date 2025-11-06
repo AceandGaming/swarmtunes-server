@@ -5,4 +5,4 @@ from scripts.types import Album
 
 class AlbumDatabase(BaseDatabase[Album]):
     def __init__(self):
-        super().__init__(AlbumSerializer, paths.ALBUMS_DIR)
+        super().__init__(Album, AlbumSerializer, paths.ALBUMS_DIR)

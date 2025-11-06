@@ -18,8 +18,3 @@ class BaseSerializer(ABC, Generic[T]):
     @abstractmethod
     def Deserialize(data: dict) -> T:
         raise NotImplementedError
-
-    @staticmethod
-    @abstractmethod
-    def DeserializeFromNetwork(data: dict) -> T:
-        raise NotImplementedError

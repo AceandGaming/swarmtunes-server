@@ -7,7 +7,6 @@ from typing import Optional, Callable
 class Album:
     id: str
     date: datetime
-    resolver: Optional[Callable[[str], Optional[Song]]] = None
     songIds: list[str] = field(default_factory=lambda: [])
 
     @property
@@ -24,6 +23,9 @@ class Album:
             if song is not None:
                 songs.append(song)
         return songs
+    
+    def AddResolver(self, resolver: Callable[[str], Optional[Song]]):
+        self.resolver = resolver
     
     def __repr__(self):
         return f"{", ".join(self.singers)} with {len(self.songs)} songs"
