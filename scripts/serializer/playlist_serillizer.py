@@ -1,11 +1,11 @@
 from .serializer import BaseSerializer
-from scripts.types import Album
+from scripts.types import Playlist
 from dataclasses import asdict
 from datetime import datetime
 
-class AlbumSerializer(BaseSerializer[Album]):
+class PlaylistSerializer(BaseSerializer[Playlist]):
     @staticmethod
-    def Serialize(item: Album):
+    def Serialize(item: Playlist):
         data = asdict(item)
         data["date"] = item.date.isoformat()
         return data
@@ -13,13 +13,13 @@ class AlbumSerializer(BaseSerializer[Album]):
     @staticmethod
     def Deserialize(data: dict):
         data["date"] = datetime.fromisoformat(data["date"])
-        return Album(**data)
+        return Playlist(**data)
     
     @staticmethod
-    def SerializeToNetwork(item: Album):
+    def SerializeToNetwork(item: Playlist):
         return asdict(item)
     
     @staticmethod
     def DeserializeFromNetwork(data: dict):
         data["date"] = datetime.fromisoformat(data["date"])
-        return Album(**data)
+        return Playlist(**data)

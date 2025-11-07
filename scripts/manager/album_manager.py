@@ -27,11 +27,22 @@ class AlbumManager(BaseManager[Album]):
         id = IDManager.NewId(Album)
         songs = []
         for song in SongManager().items:
-            print(song.date, date)
             if song.date == date:
                 songs.append(song.id)
-        album = Album(id=id, date=date, songIds=songs)
+        album = Album(id=id, date=date, songIds=set(songs))
         
         album.AddResolver(SongManager().Get)
         self.Save(album)
         return album
+    
+    def ReGenerate(self):
+        dateLookup = {}
+        for album in self.items:
+            dateLookup[album.date] = album
+        for song in SongManager().items:
+            album = dateLookup.get(song.date)
+            if album is None:
+                self.CreateFromDate(song.date)
+            else:
+                album.AddSong(song)
+            

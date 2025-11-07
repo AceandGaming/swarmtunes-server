@@ -17,6 +17,20 @@ class Song:
     isOriginal: Optional[bool] = False
     storage: SongExternalStorage = field(default_factory=lambda: SongExternalStorage())
 
+    @property
+    def coverType(self):
+        if len(self.singers) == 0:
+            return None
+        if len(self.singers) > 1:
+            return "duet"
+        singer = self.singers[0]
+        if singer == "Neuro-sama":
+            return "neuro"
+        if singer == "Evil Neuro":
+            return "evil"
+        return None
+        
+
     def __repr__(self):
         return f"{self.title} by {self.artist} ({", ".join(self.singers)})"
     def __eq__(self, other):
