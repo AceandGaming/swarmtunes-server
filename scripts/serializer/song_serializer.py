@@ -9,6 +9,7 @@ class SongSerializer(BaseSerializer[Song]):
         data = asdict(item)
         data["date"] = item.date.isoformat()
         return data
+
     
     @staticmethod
     def Deserialize(data: dict):

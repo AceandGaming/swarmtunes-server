@@ -1,7 +1,8 @@
 /data/*
 /cache/
-/old-data/
-/old-scripts/
+/old_data/
+/old_scripts/
+/old_covers/
 
 *.mp3
 *.wav

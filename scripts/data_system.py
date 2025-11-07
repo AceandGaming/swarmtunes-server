@@ -6,3 +6,4 @@ class DataSystem:
     songs = SongManager()
     albums = AlbumManager()
     users = UserManager()
+    playlists = PlaylistManager()

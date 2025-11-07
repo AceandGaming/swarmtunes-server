@@ -7,11 +7,7 @@ from typing import Optional, Callable
 class Album:
     id: str
     date: datetime
-    songIds: list[str] = field(default_factory=lambda: [])
-
-    @property
-    def singers(self):
-        return self._GetSingers()
+    songIds: set[str] = field(default_factory=lambda: set())
 
     @property
     def songs(self) -> list[Song]:
@@ -23,6 +19,28 @@ class Album:
             if song is not None:
                 songs.append(song)
         return songs
+
+    @property
+    def singers(self):
+        return self._GetSingers()
+    
+    @property
+    def coverType(self):
+        if len(self.singers) == 0:
+            return None
+        if len(self.singers) > 1:
+            return "duet"
+        singer = self.singers[0]
+        if singer == "Neuro-sama":
+            return "neuro"
+        if singer == "Evil Neuro":
+            return "evil"
+        return None
+    
+    @property
+    def PrettyName(self):
+        return " and ".join(self.singers) + "Karaoke"
+
     
     def AddResolver(self, resolver: Callable[[str], Optional[Song]]):
         self.resolver = resolver
@@ -42,6 +60,6 @@ class Album:
         return list(singers)
     
     def AddSong(self, song: Song):
-        self.songIds.append(song.id)
+        self.songIds.add(song.id)
     def RemoveSong(self, song: Song):
         self.songIds.remove(song.id)
