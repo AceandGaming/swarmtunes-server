@@ -3,6 +3,7 @@ import os
 
 DATA_DIR = Path("data")
 ART_DIR = Path("art")
+COVERS_DIR = ART_DIR / "covers"
 COVER_CACHE = Path("cache", "covers")
 PROCESSING_DIR = Path("processing")
 
@@ -16,7 +17,7 @@ SONGS_DIR = DATA_DIR / "songs"
 ALBUMS_DIR = DATA_DIR / "albums"
 USERS_DIR = DATA_DIR / "users"
 PLAYLISTS_DIR = DATA_DIR / "playlists"
-COVERS_DIR = DATA_DIR / "covers"
+
 
 os.makedirs(MP3_DIR, exist_ok=True)
 os.makedirs(SONGS_DIR, exist_ok=True)

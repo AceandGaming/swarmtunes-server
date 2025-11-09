@@ -17,7 +17,13 @@ class PlaylistSerializer(BaseSerializer[Playlist]):
     
     @staticmethod
     def SerializeToNetwork(item: Playlist):
-        return asdict(item)
+        return {
+            "id": item.id,
+            "name": item.name,
+            "date": item.date,
+            "coverType": item.coverType,
+            "songIds": list(item.songIds)
+        }
     
     @staticmethod
     def DeserializeFromNetwork(data: dict):

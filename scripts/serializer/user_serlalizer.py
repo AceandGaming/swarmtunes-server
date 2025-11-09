@@ -7,13 +7,17 @@ class UserSerializer(BaseSerializer[User]):
     @staticmethod
     def Serialize(item: User):
         data = asdict(item)
+        data["date"] = item.date.isoformat()
         return data
     
     @staticmethod
     def Deserialize(data: dict):
-        data["date"] = datetime.fromisoformat(data["date"])
-        if "storage" in data:
-            data["storage"] = UserData(**data["storage"])
+        if "date" in data:
+            data["date"] = datetime.fromisoformat(data["date"])
+        else:
+            data["date"] = datetime.now()
+        if "userData" in data:
+            data["userData"] = UserData(**data["userData"])
         return User(**data)
     
     @staticmethod

@@ -3,7 +3,7 @@ import googleapiclient.http as driveAPI
 from aiohttp import ClientSession
 import re
 from datetime import datetime
-from scripts.paths import SONG_PROCESSING_DIR as PENDING_DIR
+from scripts.paths import PROCESSING_DIR as PENDING_DIR
 import string
 
 drive = get_drive_service()

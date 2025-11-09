@@ -15,10 +15,13 @@ class Song:
     singers: list[str]
     date: datetime
     isOriginal: Optional[bool] = False
+    coverArt: Optional[str] = None
     storage: SongExternalStorage = field(default_factory=lambda: SongExternalStorage())
 
     @property
     def coverType(self):
+        if self.coverArt is not None:
+            return "custom"
         if len(self.singers) == 0:
             return None
         if len(self.singers) > 1:

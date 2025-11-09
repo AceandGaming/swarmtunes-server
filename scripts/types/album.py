@@ -11,7 +11,8 @@ class Album:
 
     @property
     def songs(self) -> list[Song]:
-        if self.resolver is None:
+        if not hasattr(self, "resolver"):
+            print("Warning: Album does not have a resolver")
             return []
         songs = []
         for songId in self.songIds:
@@ -55,9 +56,22 @@ class Album:
 
     def _GetSingers(self):
         singers = set()
+        singerCounts = {}
         for song in self.songs:
             singers.update(song.singers)
-        return list(singers)
+            for singer in song.singers:
+                if singer in singerCounts:
+                    singerCounts[singer] += 1
+                else:
+                    singerCounts[singer] = 1
+        minPercentage = 1 / (len(singers) + 1)
+        totalCount = sum(singerCounts.values())
+        newSingers = set()
+        for singer in singers:
+            percentage = singerCounts[singer] / totalCount
+            if percentage > minPercentage:
+                newSingers.add(singer)
+        return list(newSingers)
     
     def AddSong(self, song: Song):
         self.songIds.add(song.id)

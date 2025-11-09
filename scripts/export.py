@@ -9,7 +9,7 @@ import json
 def CreateAlbumName(song):
     return f"{song.cover_artist} Karaoke"
 def ExportSong(song: Song):
-    path = paths.SONG_PROCESSING_DIR / song.id
+    path = paths.PROCESSING_DIR / song.id
     shutil.copy(paths.MP3_DIR / song.id, path)
     audio = ID3(path)
     audio["TIT2"] = ID3Frames.TIT2(encoding=3, text=song.title) #title
@@ -35,11 +35,11 @@ def ExportAlbum(album: Album):
     for song in album.songs:
         filename = ExportSong(song)
         files.append((
-            paths.SONG_PROCESSING_DIR / song.id,
+            paths.PROCESSING_DIR / song.id,
             filename + ".mp3"
         ))
 
-    path = paths.SONG_PROCESSING_DIR / album.id
+    path = paths.PROCESSING_DIR / album.id
     metadata = {
         "date": album.date.isoformat(),
         "type": album.coverType,

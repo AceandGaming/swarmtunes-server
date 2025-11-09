@@ -1,8 +1,8 @@
 from scripts.types import Song
 
 def SongEmbed(song: Song):
-    redirect_url = f"https://swarmtunes.com?song={song.uuid}"
-    image_url = f"https://api.swarmtunes.com/covers/{song.uuid}?size=256"
+    redirect_url = f"https://swarmtunes.com?song={song.id}"
+    image_url = f"https://api.swarmtunes.com/covers/{song.id}?size=256"
     return f"""
     <!DOCTYPE html>
     <html lang="en">
@@ -11,9 +11,9 @@ def SongEmbed(song: Song):
         <title>{song.title} | SwarmTunes</title>
 
         <meta property="og:title" content="{song.title}" />
-        <meta property="og:description" content="by {song.artist}\nSung by: {song.cover_artist}" />
+        <meta property="og:description" content="by {song.artist}\nSung by: {", ".join(song.singers)}" />
         <meta property="og:image" content="{image_url}" />
-        <meta property="og:url" content="https://share.swarmtunes.com?song={song.uuid}" />
+        <meta property="og:url" content="https://share.swarmtunes.com?song={song.id}" />
         <meta property="og:type" content="music.song" />
 
         <meta name="twitter:card" content="summary_large_image" />
