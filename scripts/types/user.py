@@ -24,16 +24,17 @@ class User:
 
     @property
     def validAdmin(self) -> bool:
-        if self.adminHash is None:
+        if not hasattr(self, "adminHash") or self.adminHash is None:
             return False
         return context.verify(self.id, self.adminHash)
 
     @property
     def playlists(self) -> list["Playlist"]:
-        if self.playlistResolver is None or self.userData.playlistIds is None:
+        if not hasattr(self, "playlistResolver"):
+            print("Warning: User does not have a playlist resolver")
             return []
         playlists = []
-        for playlistId in self.userData.playlistIds:
+        for playlistId in self.userData.playlistIds or []:
             playlist = self.playlistResolver(playlistId)
             if playlist is not None:
                 playlists.append(playlist)

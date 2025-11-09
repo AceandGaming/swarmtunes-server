@@ -23,6 +23,12 @@ class AlbumManager(BaseManager[Album]):
         album.AddResolver(SongManager().Get)
         return album
     
+    def GetAll(self):
+        albums = self._database.GetAll()
+        for album in albums:
+            album.AddResolver(SongManager().Get)
+        return albums
+    
     def CreateFromDate(self, date):
         id = IDManager.NewId(Album)
         songs = []
@@ -45,4 +51,7 @@ class AlbumManager(BaseManager[Album]):
                 self.CreateFromDate(song.date)
             else:
                 album.AddSong(song)
+        
+        for album in self.items:
+            self.Save(album)
             

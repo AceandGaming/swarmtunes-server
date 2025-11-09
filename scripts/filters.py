@@ -52,3 +52,21 @@ class Filter:
                 return value.startswith(self.value)
             case FilterTypes.ENDS_WITH:
                 return value.endswith(self.value)
+            
+def GetFilters(filterString: str):
+    filters = []
+    for split in filterString.split(","):
+        filters.append(Filter.CreateFromString(split))
+    return filters
+            
+def FilterDict(items, filters):
+    filtered = []
+    for item in items:
+        match = True
+        for filter in filters:
+            if not filter.Match(item[filter.field]):
+                match = False
+                break
+        if match:
+            filtered.append(item)
+    return filtered

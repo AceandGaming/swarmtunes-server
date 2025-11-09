@@ -10,17 +10,14 @@ if TYPE_CHECKING:
 class Playlist:
     id: str
     name: str
-    date: datetime
     userId: str
+    date: datetime = field(default_factory=lambda: datetime.now())
     songIds: list[str] = field(default_factory=lambda: [])
 
-    @property
-    def singers(self):
-        return self._GetSingers()
 
     @property
     def songs(self) -> list[Song]:
-        if self.songResolver is None:
+        if not hasattr(self, "songResolver"):
             return []
         songs = []
         for songId in self.songIds:
@@ -29,6 +26,22 @@ class Playlist:
                 songs.append(song)
         return songs
     
+    @property
+    def singers(self):
+        return self._GetSingers()
+    
+    @property
+    def coverType(self):
+        if len(self.singers) == 0:
+            return None
+        if len(self.singers) > 1:
+            return "duet"
+        singer = self.singers[0]
+        if singer == "Neuro-sama":
+            return "neuro"
+        if singer == "Evil Neuro":
+            return "evil"
+        return None
     # @property
     # def user(self) -> Optional["User"]:
     #     if self.userResolver is None:
@@ -51,9 +64,22 @@ class Playlist:
 
     def _GetSingers(self):
         singers = set()
+        singerCounts = {}
         for song in self.songs:
             singers.update(song.singers)
-        return list(singers)
+            for singer in song.singers:
+                if singer in singerCounts:
+                    singerCounts[singer] += 1
+                else:
+                    singerCounts[singer] = 1
+        minPercentage = 1 / (len(singers) + 1)
+        totalCount = sum(singerCounts.values())
+        newSingers = set()
+        for singer in singers:
+            percentage = singerCounts[singer] / totalCount
+            if percentage > minPercentage:
+                newSingers.add(singer)
+        return list(newSingers)
     
     def AddSong(self, song: Song):
         self.songIds.append(song.id)

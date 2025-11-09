@@ -13,11 +13,17 @@ class AlbumSerializer(BaseSerializer[Album]):
     @staticmethod
     def Deserialize(data: dict):
         data["date"] = datetime.fromisoformat(data["date"])
+        data["songIds"] = set(data["songIds"])
         return Album(**data)
     
     @staticmethod
     def SerializeToNetwork(item: Album):
-        return asdict(item)
+        return {
+            "id": item.id,
+            "date": item.date,
+            "type": item.coverType,
+            "songIds": list(item.songIds)
+        }
     
     @staticmethod
     def DeserializeFromNetwork(data: dict):

@@ -66,8 +66,8 @@ def DownloadSong(drive_file):
         date=songData["date"],
         singers=singers
     )
-    CorrectMP3(paths.SONG_PROCESSING_DIR / drive_file["id"], paths.MP3_DIR / song.id)
-    os.remove(paths.SONG_PROCESSING_DIR / song.storage.googleDriveId) #type: ignore
+    CorrectMP3(paths.PROCESSING_DIR / drive_file["id"], paths.MP3_DIR / song.id)
+    os.remove(paths.PROCESSING_DIR / song.storage.googleDriveId) #type: ignore
     DataSystem.songs.Save(song)
 
 def ReDownloadSong(song):
@@ -77,8 +77,8 @@ def ReDownloadSong(song):
     if (paths.MP3_DIR / song.id).exists():
         os.remove(paths.MP3_DIR / song.id)
     google_drive.DownloadFile(song.storage.googleDriveId)
-    CorrectMP3(paths.SONG_PROCESSING_DIR / song.storage.googleDriveId, paths.MP3_DIR / song.id)
-    os.remove(paths.SONG_PROCESSING_DIR / song.storage.googleDriveId)
+    CorrectMP3(paths.PROCESSING_DIR / song.storage.googleDriveId, paths.MP3_DIR / song.id)
+    os.remove(paths.PROCESSING_DIR / song.storage.googleDriveId)
 
 async def DownloadSongs(drive_files):
     downloadSemaphore = asyncio.Semaphore(50)
@@ -105,8 +105,8 @@ async def DownloadSongs(drive_files):
             print(f"Correcting '{song.title}' ID: {song.storage.googleDriveId}")
             if (song.storage.googleDriveId is None):
                 return
-            await asyncio.to_thread(CorrectMP3, paths.SONG_PROCESSING_DIR / song.storage.googleDriveId, paths.MP3_DIR / song.id)
-            os.remove(paths.SONG_PROCESSING_DIR / song.storage.googleDriveId)
+            await asyncio.to_thread(CorrectMP3, paths.PROCESSING_DIR / song.storage.googleDriveId, paths.MP3_DIR / song.id)
+            os.remove(paths.PROCESSING_DIR / song.storage.googleDriveId)
 
     async with ClientSession() as session:
         tasks = [CreateSong(drive_file, session) for drive_file in drive_files]

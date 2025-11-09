@@ -40,6 +40,8 @@ def ScoreSong(song: Song, query: str, multipliers: Optional[SearchMultipliers] =
     return lengthDiffrence * multipliers.lengthDiffrence + min(titleDiffrence, artistDiffrence) * multipliers.charDiffrence + relevancy * multipliers.relevancy
 
 def SearchSongs(query, multipliers: Optional[SearchMultipliers] = None):
+    if query == "":
+        return sorted(DataSystem.songs.items, key=lambda song: song.date, reverse=True)
     if not multipliers:
         multipliers = SearchMultipliers()
     return sorted(DataSystem.songs.items, key=lambda song: ScoreSong(song, query, multipliers))

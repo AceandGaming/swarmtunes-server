@@ -20,14 +20,18 @@ class SongSerializer(BaseSerializer[Song]):
     
     @staticmethod
     def SerializeToNetwork(item: Song):
-        return {
+        data = {
             "id": item.id,
             "title": item.title,
             "artist": item.artist,
             "singers": item.singers,
+            "coverType": item.coverType,
             "date": item.date,
-            "isOriginal": item.isOriginal,
+            "original": item.isOriginal,
         }
+        if item.coverArt is not None:
+            data["coverArt"] = item.coverArt
+        return data
     
     @staticmethod
     def DeserializeFromNetwork(data: dict):

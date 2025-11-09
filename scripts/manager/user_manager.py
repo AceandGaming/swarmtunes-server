@@ -36,6 +36,7 @@ class UserManager(BaseManager[User]):
         for user in self.items:
             if user.username == username:
                 if self.CheckPassword(user, password):
+                    user.AddResolver(PlaylistManager().Get)
                     return user
                 break
         return None

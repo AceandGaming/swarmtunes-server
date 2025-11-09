@@ -17,3 +17,8 @@ def GetCover(path, scale):
     except (FileNotFoundError):
         return None
     
+def GetCoverPathFromSong(song):
+    if song.coverType == "custom":
+        return paths.COVERS_DIR / song.coverArt
+    else:
+        return paths.ART_DIR / f"{song.coverType}.png"

@@ -10,7 +10,7 @@ T = TypeVar("T", bound=HasId)
 class BaseManager(Generic[T]):
     @property
     def items(self) -> list[T]:
-        return self._database.GetAll()
+        return self.GetAll()
 
     def __init__(self, database: BaseDatabase[T]):
         self._database: BaseDatabase[T] = database
@@ -24,4 +24,6 @@ class BaseManager(Generic[T]):
         IDManager.RemoveId(item.id)
     def Get(self, id: str):
         return self._database.Get(id)
+    def GetAll(self):
+        return self._database.GetAll()
          

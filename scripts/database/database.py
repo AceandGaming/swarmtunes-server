@@ -18,6 +18,7 @@ class BaseDatabase(Generic[T]):
     def Get(self, id: str):
         path = self._path / id
         if not path.exists():
+            print("Warning: No item found with id", id)
             return None
         with open(path, "r") as f:
             data = json.load(f)
@@ -43,4 +44,7 @@ class BaseDatabase(Generic[T]):
     def Save(self, item: T):
         path = self._path / item.id
         with open(path, "w") as f:
-            f.write(json.dumps(self._serializer.Serialize(item), indent=2))
+            string = json.dumps(self._serializer.Serialize(item), indent=2)
+            if string is None or string == "":
+                raise Exception("Failed to serialize item")
+            f.write(string)
