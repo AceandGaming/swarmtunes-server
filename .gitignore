@@ -1,7 +1,6 @@
 /data/*
 /cache/
-/old_data/
-/old_covers/
+/processing/*
 
 *.mp3
 *.wav

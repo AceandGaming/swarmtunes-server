@@ -37,7 +37,7 @@ def InitializeServer():
     app = FastAPI()
     app.add_middleware(
         CORSMiddleware,
-        allow_origins= allow_origins,
+        allow_origins=allow_origins,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
@@ -80,18 +80,18 @@ async def ResyncServer():
 
 app, auth = InitializeServer()
 
-# @app.on_event("startup")
-# async def CleanUp():
-#     # print("Cleaning up...")
-#     # SongManager.DeleteSongsWithoutReference()
-#     # #PlaylistManager.DeletePlaylistsWithoutReference()
-#     # #DataSystem.users.DeleteUsersWithoutReference()
-#     # paths.ClearPending()
-#     # paths.ClearProcessing()
-#     # print("Cleanup complete")
+@app.on_event("startup")
+async def CleanUp():
+    # print("Cleaning up...")
+    # SongManager.DeleteSongsWithoutReference()
+    # #PlaylistManager.DeletePlaylistsWithoutReference()
+    # #DataSystem.users.DeleteUsersWithoutReference()
+    # paths.ClearPending()
+    # paths.ClearProcessing()
+    # print("Cleanup complete")
 
-#     # if os.getenv("DATA_PATH") is None:
-#     #     await ResyncServer()
+    if os.getenv("DATA_PATH") is None:
+        await ResyncServer()
 
 @app.on_event("shutdown")
 async def Shutdown():
@@ -101,6 +101,7 @@ async def Shutdown():
     print("Saved!")
 
 @app.get("/")
+@app.head("/")
 async def root(song = Query(None), s = Query(None)):
     if song:
         song = DataSystem.songs.Get(song)

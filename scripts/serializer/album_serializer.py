@@ -8,6 +8,7 @@ class AlbumSerializer(BaseSerializer[Album]):
     def Serialize(item: Album):
         data = asdict(item)
         data["date"] = item.date.isoformat()
+        data["songIds"] = list(item.songIds)
         return data
     
     @staticmethod

@@ -7,7 +7,7 @@ import zipfile
 import json
 
 def CreateAlbumName(song):
-    return f"{song.cover_artist} Karaoke"
+    return f"{" and ".join(song.singers)} Karaoke"
 def ExportSong(song: Song):
     path = paths.PROCESSING_DIR / song.id
     shutil.copy(paths.MP3_DIR / song.id, path)
