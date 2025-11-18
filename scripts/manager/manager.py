@@ -22,8 +22,15 @@ class BaseManager(Generic[T]):
     def Remove(self, item: T):
         self._database.Remove(item)
         IDManager.RemoveId(item.id)
-    def Get(self, id: str):
+    def Get(self, id: str) -> T|None:
         return self._database.Get(id)
     def GetAll(self):
         return self._database.GetAll()
+    def GetList(self, ids: list[str]) -> list[T]:
+        items = []
+        for id in ids:
+            item = self.Get(id)
+            if item is not None:
+                items.append(item)
+        return items
          
