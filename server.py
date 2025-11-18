@@ -81,7 +81,12 @@ async def ResyncServer():
 app, auth = InitializeServer()
 
 @app.on_event("startup")
+async def Startup():
+    await CleanUp()
+    if os.getenv("DATA_PATH") is None:
+        await ResyncServer()
 async def CleanUp():
+    pass
     # print("Cleaning up...")
     # SongManager.DeleteSongsWithoutReference()
     # #PlaylistManager.DeletePlaylistsWithoutReference()
@@ -89,9 +94,6 @@ async def CleanUp():
     # paths.ClearPending()
     # paths.ClearProcessing()
     # print("Cleanup complete")
-
-    if os.getenv("DATA_PATH") is None:
-        await ResyncServer()
 
 @app.on_event("shutdown")
 async def Shutdown():
@@ -423,7 +425,7 @@ def RenamePlaylist(id: str, req: RenamePlaylistRequest, token: str = Depends(aut
     return {"success": True}
     
 @app.get("/search")
-def Search(query: str = Query(""), maxResults: int = Query(30)):
+def Search(query: str = Query(""), maxResults: int = Query(20)):
     results = SearchSongs(query)
     return SongSerializer.SerializeAllToNetwork(results[:maxResults])
 
