@@ -26,6 +26,7 @@ class SongSerializer(BaseSerializer[Song]):
             "artist": item.artist,
             "singers": item.singers,
             "coverType": item.coverType,
+            "coverArt": item.coverArt,
             "date": item.date,
             "original": item.isOriginal,
         }

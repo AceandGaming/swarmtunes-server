@@ -30,6 +30,7 @@ def ExportSong(song: Song):
     audio.save(v2_version=3)
 
     return str(song)
+
 def ExportAlbum(album: Album):
     files = []
     for song in album.songs:

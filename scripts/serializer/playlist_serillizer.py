@@ -19,7 +19,8 @@ class PlaylistSerializer(BaseSerializer[Playlist]):
     def SerializeToNetwork(item: Playlist):
         return {
             "id": item.id,
-            "name": item.name,
+            "title": item.name,
+            "singers": item.singers,
             "date": item.date,
             "coverType": item.coverType,
             "songIds": list(item.songIds)
