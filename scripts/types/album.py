@@ -40,7 +40,7 @@ class Album:
     
     @property
     def PrettyName(self):
-        return " and ".join(self.singers) + "Karaoke"
+        return " and ".join(self.singers) + " Karaoke"
 
     
     def AddResolver(self, resolver: Callable[[str], Optional[Song]]):

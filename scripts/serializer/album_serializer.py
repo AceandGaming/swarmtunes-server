@@ -22,7 +22,8 @@ class AlbumSerializer(BaseSerializer[Album]):
         return {
             "id": item.id,
             "date": item.date,
-            "type": item.coverType,
+            "singers": item.singers,
+            "coverType": item.coverType,
             "songIds": list(item.songIds)
         }
     
