@@ -17,6 +17,7 @@ SONGS_DIR = DATA_DIR / "songs"
 ALBUMS_DIR = DATA_DIR / "albums"
 USERS_DIR = DATA_DIR / "users"
 PLAYLISTS_DIR = DATA_DIR / "playlists"
+TOKENS_DIR = DATA_DIR / "tokens"
 
 
 os.makedirs(MP3_DIR, exist_ok=True)
@@ -25,5 +26,6 @@ os.makedirs(ALBUMS_DIR, exist_ok=True)
 os.makedirs(USERS_DIR, exist_ok=True)
 os.makedirs(PLAYLISTS_DIR, exist_ok=True)
 os.makedirs(COVERS_DIR, exist_ok=True)
+os.makedirs(TOKENS_DIR, exist_ok=True)
 
 SHARE_FILE = DATA_DIR / "shares.json"

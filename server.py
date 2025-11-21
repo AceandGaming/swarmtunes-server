@@ -1,7 +1,7 @@
 from typing import Literal
 from pydantic import BaseModel
 from scripts.types import *
-from fastapi import FastAPI, HTTPException, Query, Depends
+from fastapi import FastAPI, HTTPException, Query, Depends, Response, Cookie, Request
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer
@@ -23,6 +23,7 @@ from scripts.id_manager import IDManager
 from scripts.session_manager import SessionManager
 from scripts.data_system import DataSystem
 from scripts.serializer import *
+from datetime import datetime
 
 def InitializeServer():
     global app, auth
@@ -34,6 +35,7 @@ def InitializeServer():
     if os.getenv("DATA_PATH") is not None: #dev only
         allow_origins = ["*"]
     print("Starting server...")
+    print("Allowing origins:", allow_origins)
     app = FastAPI()
     app.add_middleware(
         CORSMiddleware,
@@ -41,7 +43,7 @@ def InitializeServer():
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
-        expose_headers=["token-expired"],
+        expose_headers=["token-expired", "session-expired"],
     )
     auth = OAuth2PasswordBearer(tokenUrl="login")
 
@@ -55,7 +57,7 @@ def InitializeServer():
 def VailidateUser(token: str) -> User:
     user = SessionManager.GetUser(token)
     if not user:
-        raise HTTPException(401, detail="Invalid token", headers={"token-expired": "true"})
+        raise HTTPException(401, detail="Invalid session token", headers={"session-expired": "true"})
     return user
 def VailidateAdmin(token: str) -> User:
     user = VailidateUser(token)
@@ -277,9 +279,10 @@ class LoginRequest(BaseModel):
     username: str
     password: str
     create: bool = False
+    remeber: bool = False
 
 @app.post("/users/login")
-def Login(req: LoginRequest):
+def Login(req: LoginRequest, response: Response):
     username = req.username
     password = req.password
     create = req.create
@@ -305,33 +308,78 @@ def Login(req: LoginRequest):
     token = SessionManager.Login(username, password)
     if not token:
         raise HTTPException(401, detail="Invalid username or password")
+    
+    if req.remeber:
+        longToken, secret = DataSystem.tokens.CreateFromUser(token.user)
+        response.set_cookie(
+            key="token",
+            value=f"{longToken.id}:{secret}",
+            max_age=int(longToken.maxAge),
+            httponly=True,
+            secure=True,
+            samesite="none",
+            path="/"
+        )
+
     return {"token": token.token, "isAdmin": token.user.validAdmin}
 
 @app.post("/me/logout")
-def Logout(token: str = Depends(auth)):
-    if not SessionManager.TokenIsValid(token):
-        raise HTTPException(401, detail="Invalid token")
-    SessionManager.Logout(token)
-    return
+def Logout(response: Response, token: str = Cookie(None), session: str = Depends(auth)):
+    if SessionManager.TokenIsValid(session):
+        SessionManager.Logout(session)
+    if token:
+        response.delete_cookie("token")
+        id, secret = token.split(":")
+        if id:
+            DataSystem.tokens.RemoveId(id)
+    return {"success": True}
+
+@app.get("/me/session")
+def GetSession(response: Response, token: str = Cookie(None)):
+    if not token:
+        raise HTTPException(401, detail="Invalid token", headers={"token-expired": "true"})
+    id, secret = token.split(":")
+    if DataSystem.tokens.HasExpired(id):
+        toke = DataSystem.tokens.GetWithSecret(id, secret)
+        if toke is None:
+            raise HTTPException(401, detail="Invalid token", headers={"token-expired": "true"})
+        
+        newToken, newSecret = DataSystem.tokens.Refresh(toke)
+        response.set_cookie(
+            key="token",
+            value=f"{id}:{newSecret}",
+            max_age=int(newToken.maxAge),
+            httponly=True,
+            secure=True,
+            samesite="none",
+            path="/"
+        )
+    else:
+        toke = DataSystem.tokens.Validate(id, secret)
+        if toke is None:
+            raise HTTPException(401, detail="Invalid token", headers={"token-expired": "true"})
+    if toke.user:
+        sessionToken = SessionManager.GetToken(toke.user)
+        return {"token": sessionToken.token, "isAdmin": sessionToken.user.validAdmin}
 
 @app.get("/me")
-def GetUser(token: str = Depends(auth)):
-    user = VailidateUser(token)
+def GetUser(session: str = Depends(auth)):
+    user = VailidateUser(session)
     return UserSerializer.SerializeToNetwork(user)
 
 @app.delete("/me")
-def DeleteUser(token: str = Depends(auth)):
-    user = VailidateUser(token)
+def DeleteUser(session: str = Depends(auth)):
+    user = VailidateUser(session)
     DataSystem.users.Remove(user)
     return
 
 @app.get("/playlists")
-def GetPlaylists(ids: list[str] = Query(None), filters: str = Query(None), token: str = Depends(auth)):
-    user = VailidateUser(token)
+def GetPlaylists(ids: list[str] = Query(None), filters: str = Query(None), session: str = Depends(auth)):
+    user = VailidateUser(session)
     if ids:
         playlists = []
         for id in ids:
-            playlist = VailidatePlaylist(token, id)
+            playlist = VailidatePlaylist(session, id)
             playlists.append(playlist)
         return PlaylistSerializer.SerializeAllToNetwork(playlists)
     elif filters:
@@ -350,8 +398,8 @@ class NewPlaylistRequest(BaseModel):
     songs: list[str] = []
 
 @app.post("/playlists")
-def NewPlaylist(req: NewPlaylistRequest, token: str = Depends(auth)):
-    user = VailidateUser(token)
+def NewPlaylist(req: NewPlaylistRequest, session: str = Depends(auth)):
+    user = VailidateUser(session)
     name = req.name.strip()
     if len(name) > 32 or len(name) <= 0:
         raise HTTPException(400, detail="Invalid playlist name")
@@ -370,9 +418,9 @@ def NewPlaylist(req: NewPlaylistRequest, token: str = Depends(auth)):
     return PlaylistSerializer.SerializeToNetwork(playlist)
 
 @app.delete("/playlists/{id}")
-def DeletePlaylist(id: str,  token: str = Depends(auth)):
-    user = VailidateUser(token)
-    playlist = VailidatePlaylist(token, id)
+def DeletePlaylist(id: str,  session: str = Depends(auth)):
+    user = VailidateUser(session)
+    playlist = VailidatePlaylist(session, id)
     user.RemovePlaylist(playlist)
     DataSystem.playlists.Remove(playlist)
     DataSystem.users.Save(user)
@@ -382,8 +430,8 @@ class PlaylistSongUpdateRequest(BaseModel):
     songs: list[str]
 
 @app.patch("/playlists/{id}/add")
-def AddSongToPlaylist(id: str, req: PlaylistSongUpdateRequest, token: str = Depends(auth)):
-    playlist = VailidatePlaylist(token, id)
+def AddSongToPlaylist(id: str, req: PlaylistSongUpdateRequest, session: str = Depends(auth)):
+    playlist = VailidatePlaylist(session, id)
     for song in req.songs:
         song = DataSystem.songs.Get(song)
         if not song:
@@ -396,8 +444,8 @@ def AddSongToPlaylist(id: str, req: PlaylistSongUpdateRequest, token: str = Depe
     return {"success": True}
 
 @app.patch("/playlists/{id}/remove")
-def RemoveSongFromPlaylist(id: str, req: PlaylistSongUpdateRequest, token: str = Depends(auth)):
-    playlist = VailidatePlaylist(token, id)
+def RemoveSongFromPlaylist(id: str, req: PlaylistSongUpdateRequest, session: str = Depends(auth)):
+    playlist = VailidatePlaylist(session, id)
     for song in req.songs:
         song = DataSystem.songs.Get(song)
         if not song:
@@ -413,8 +461,8 @@ class RenamePlaylistRequest(BaseModel):
     name: str
 
 @app.patch("/playlists/{id}")
-def RenamePlaylist(id: str, req: RenamePlaylistRequest, token: str = Depends(auth)):
-    playlist = VailidatePlaylist(token, id)
+def RenamePlaylist(id: str, req: RenamePlaylistRequest, session: str = Depends(auth)):
+    playlist = VailidatePlaylist(session, id)
     name = req.name.strip()
     if len(name) > 32 or len(name) <= 0:
         raise HTTPException(400, detail="Invalid playlist name")
@@ -430,8 +478,8 @@ def Search(query: str = Query(""), maxResults: int = Query(20)):
     return SongSerializer.SerializeAllToNetwork(results[:maxResults])
 
 @app.post("/resync")
-async def Resync(token: str = Depends(auth)):
-    VailidateAdmin(token)
+async def Resync(session: str = Depends(auth)):
+    VailidateAdmin(session)
     task = asyncio.create_task(ResyncServer())
     task.add_done_callback(lambda task: task.exception())
     return
