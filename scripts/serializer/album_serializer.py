@@ -24,6 +24,7 @@ class AlbumSerializer(BaseSerializer[Album]):
             "date": item.date,
             "singers": item.singers,
             "coverType": item.coverType,
+            "type": item.coverType, # for backwards compatibility
             "songIds": list(item.songIds)
         }
     

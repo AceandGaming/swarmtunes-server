@@ -1,5 +1,4 @@
 from scripts.manager import *
-from scripts.database import *
 from scripts.id_manager import IDManager
 
 class DataSystem:
@@ -7,3 +6,4 @@ class DataSystem:
     albums = AlbumManager()
     users = UserManager()
     playlists = PlaylistManager()
+    tokens = TokenManager()

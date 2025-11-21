@@ -3,11 +3,13 @@ from .song_serializer import SongSerializer
 from .album_serializer import AlbumSerializer
 from .user_serlalizer import UserSerializer
 from .playlist_serillizer import PlaylistSerializer
+from .token_serlalizer import TokenSerializer
 
 __all__ = [
     "BaseSerializer",
     "SongSerializer",
     "AlbumSerializer",
     "UserSerializer",
-    "PlaylistSerializer"
+    "PlaylistSerializer",
+    "TokenSerializer"
 ]
