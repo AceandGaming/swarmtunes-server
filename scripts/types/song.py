@@ -31,6 +31,8 @@ class Song:
             return "neuro"
         if singer == "Evil Neuro":
             return "evil"
+        if singer == "Hiyori":
+            return "v1"
         return None
         
 

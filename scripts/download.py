@@ -47,8 +47,13 @@ def FolderToSingers(folderName):
             return ["Neuro-sama", "Evil Neuro"]
         case "mashup":
             return ["Neuro-sama", "Evil Neuro"]
+        case "v1":
+            return ["Hiyori"]
+        case "v2":
+            return ["Neuro-sama"]
         case _:
-            return ["Unknown"]
+            print("Warning: Could not get singers for folder name:", folderName)
+            return ["unknown"]
 def DownloadSong(drive_file):
     print(f"Downloading '{drive_file["name"]}' ID: {drive_file["id"]}")
 
