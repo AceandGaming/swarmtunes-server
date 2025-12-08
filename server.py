@@ -226,11 +226,16 @@ def GetCover(name: str, size: int = Query(128)):
             path = paths.ART_DIR / "duet.png"
         case "swarmfm":
             path = paths.ART_DIR / "swarmfm.png"
+        case "v1":
+            path = paths.ART_DIR / "v1.png"
         case _:
             song = DataSystem.songs.Get(name)
             if not song:
                 raise HTTPException(404, detail="Song not found")
             path = GetCoverPathFromSong(song)
+
+    #TODO: Prevent path from excaping the directory
+
     file = ResizeCover(path, size)
     if not file:
         raise HTTPException(404, detail="Cover not found")

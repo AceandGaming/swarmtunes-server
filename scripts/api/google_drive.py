@@ -13,7 +13,9 @@ folderIds = {
     "evil": "16WT3-_bOG2I50YS9eBwNK9W99Uh-QhwK",
     "neuro": "118gr4QuaGQGKfJ0X8VBCytvPjdzPayPY",
     "duet": "16XWYR_-i0vAvKkmI9a77ZLiZTp20WHjs",
-    "mashup": "1x8GPZgcIAK-THwiM4jZ2lUCmFFJnx91m"
+    "mashup": "1x8GPZgcIAK-THwiM4jZ2lUCmFFJnx91m",
+    "v1": "10jEKoU3I2u9QUVwcZbkriIgyWoO0zUm5",
+    "v2": "1aPdtiFXiNORIO7RqfMaF7292iBCd8ggH"
 }
 def GetAllFilesInFolder(q):
     page_token = None
@@ -33,23 +35,14 @@ def GetAllFilesInFolder(q):
     return all_files
 
 def GetAllFiles():
-    neuroFiles = GetAllFilesInFolder(f"'{folderIds["neuro"]}' in parents and mimeType='audio/mpeg'")
-    for f in neuroFiles:
-        f["folder"] = "neuro"
+    files = []
 
-    evilFiles = GetAllFilesInFolder(f"'{folderIds["evil"]}' in parents and mimeType='audio/mpeg'")
-    for f in evilFiles:
-        f["folder"] = "evil"
+    for name, id in folderIds.items():
+        newFiles = GetAllFilesInFolder(f"'{id}' in parents and mimeType='audio/mpeg'")
+        for f in newFiles:
+            f["folder"] = name
+        files.extend(newFiles)
 
-    duetFiles = GetAllFilesInFolder(f"'{folderIds["duet"]}' in parents and mimeType='audio/mpeg'")
-    for f in duetFiles:
-        f["folder"] = "duet"
-
-    mashupFiles = GetAllFilesInFolder(f"'{folderIds["mashup"]}' in parents and mimeType='audio/mpeg'")
-    for f in mashupFiles:
-        f["folder"] = "mashup"
-
-    files = neuroFiles + evilFiles + duetFiles + mashupFiles
     return files
 
 def DownloadFile(file_id):
@@ -86,9 +79,19 @@ def GenerateMetaDataFromFile(fileName):
 
     regex = re.search(r"(.*?) - (.*?)\s+?\((\d\d \d\d \d\d)\)", fileName)
     if not regex:
-        songData["title"] = fileName
+        regex = re.search(r"\[(\d\d-\d\d-\d\d)\]\s+(.*?)\s*?(\[\d+\])?$", fileName)
+        if not regex:
+            songData["title"] = string.capwords(fileName)
+            songData["artist"] = "unknown"
+            songData["date"] = datetime.min
+            return songData
+        
+        songData["title"] = string.capwords(regex.group(2).strip())
+    
+        dateString = regex.group(1).strip().replace("-", "/")
+        fileDate = datetime.strptime(dateString, "%m/%d/%y")
+        songData["date"] = fileDate
         songData["artist"] = "unknown"
-        songData["date"] = "unknown"
         return songData
 
     dateString = regex.group(3).strip().replace(" ", "/")

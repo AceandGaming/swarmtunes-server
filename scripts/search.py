@@ -4,12 +4,13 @@ import math
 from scripts.data_system import DataSystem
 from scripts.types import Song
 from typing import Optional
+from datetime import datetime
 
 @dataclass
 class SearchMultipliers:
     wordDiff = 3
     lengthDiff = 0.2
-    recentcy = 0
+    recentcy = 0.0001
     caseDiff = 0.03
     order = 12
     exactness = 0.22
@@ -18,6 +19,7 @@ class SearchMultipliers:
 class Searchable():
     value: str
     id: str
+    date: Optional[datetime] = None
     def __hash__(self) -> int:
         return hash(self.id + self.value)
 
@@ -133,8 +135,11 @@ def Search(query: str, items: list[Searchable], mult: SearchMultipliers):
         
         
         order = MatchOrder(queryWords, itemWords)
+        dayOffset = 0
+        if item.date:
+            dayOffset = (datetime.now() - item.date).days
 
-        totalDiff = lengthDiff * mult.lengthDiff + wordDiff * mult.wordDiff + caseDiff * mult.caseDiff - order * mult.order
+        totalDiff = lengthDiff * mult.lengthDiff + wordDiff * mult.wordDiff + caseDiff * mult.caseDiff - order * mult.order + dayOffset * mult.recentcy
         matches[item.id] = min(totalDiff, matches.get(item.id, math.inf))
 
     return matches
@@ -156,8 +161,8 @@ def SearchSongs(query: str, songs: Optional[list[Song]] = None, multipliers: Opt
         multipliers = SearchMultipliers()
     if not songs:
         songs = DataSystem.songs.items
-    titleSearchables = [Searchable(song.title, song.id) for song in songs]
-    artistSearchables = [Searchable(song.artist, song.id) for song in songs]
+    titleSearchables = [Searchable(song.title, song.id, song.date) for song in songs]
+    artistSearchables = [Searchable(song.artist, song.id, song.date) for song in songs]
     matches = Search(query, titleSearchables + artistSearchables, multipliers)
     if matches == {}:
         return DataSystem.songs.items
