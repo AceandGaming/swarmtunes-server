@@ -1,6 +1,7 @@
 /data/*
 /cache/
 /processing/*
+/import/
 
 *.mp3
 *.wav
