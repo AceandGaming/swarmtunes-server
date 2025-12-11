@@ -22,6 +22,10 @@ class BaseManager(Generic[T]):
     def Remove(self, item: T):
         self._database.Remove(item)
         IDManager.RemoveId(item.id)
+    def RemoveById(self, id: str):
+        item = self.Get(id)
+        if item is not None:
+            self.Remove(item)
     def Get(self, id: str) -> T|None:
         return self._database.Get(id)
     def GetAll(self):
