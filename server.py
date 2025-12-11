@@ -23,7 +23,8 @@ from scripts.id_manager import IDManager
 from scripts.session_manager import SessionManager
 from scripts.data_system import DataSystem
 from scripts.serializer import *
-from datetime import datetime
+import scripts.maintenance as maintenance
+
 
 def InitializeServer():
     global app, auth
@@ -84,19 +85,18 @@ app, auth = InitializeServer()
 
 @app.on_event("startup")
 async def Startup():
-    await CleanUp()
     if os.getenv("DATA_PATH") is None:
-        pass
+        await CleanUp()
         await ResyncServer()
+
 async def CleanUp():
-    pass
-    # print("Cleaning up...")
-    # SongManager.DeleteSongsWithoutReference()
-    # #PlaylistManager.DeletePlaylistsWithoutReference()
-    # #DataSystem.users.DeleteUsersWithoutReference()
-    # paths.ClearPending()
-    # paths.ClearProcessing()
-    # print("Cleanup complete")
+    print("Cleaning up...")
+    maintenance.CheckForOrphanedSongs()
+    maintenance.CheckForOrphaned(Album, paths.ALBUMS_DIR, delete=True)
+    maintenance.CheckForOrphaned(Playlist, paths.PLAYLISTS_DIR, delete=False)
+    maintenance.CheckForOrphaned(User, paths.USERS_DIR, delete=False)
+    maintenance.CheckForOrphaned(Token, paths.TOKENS_DIR, delete=True)
+    maintenance.ClearProcessing()
 
 @app.on_event("shutdown")
 async def Shutdown():
@@ -107,7 +107,7 @@ async def Shutdown():
 
 @app.get("/")
 @app.head("/")
-async def root(song = Query(None), s = Query(None)):
+async def root(song = Query(None), s = Query(None), p = Query(None)):
     if song:
         song = DataSystem.songs.Get(song)
         if not song:
@@ -118,6 +118,11 @@ async def root(song = Query(None), s = Query(None)):
         if not song:
             return
         return HTMLResponse(embeds.SongEmbed(song))
+    if p:
+        playlist = ShareManager.GetPlaylist(p)
+        if not playlist:
+            return
+        return HTMLResponse(embeds.PlaylistEmbed(playlist, p))
     return {
         "message": "Welcome to the SwarmTunes API", 
         "status": "ok",
@@ -162,7 +167,14 @@ def GetSongShare(id: str):
         raise HTTPException(404, detail="Song not found")
     link = ShareManager.ShareSong(song)
     return {"link": link}
-    
+
+@app.get("/playlists/{id}/share")
+def SharePlaylist(id: str, session: str = Depends(auth)):
+    playlist = VailidatePlaylist(session, id)
+    if not playlist:
+        raise HTTPException(404, detail="Playlist not found")
+    link = ShareManager.SharePlaylist(playlist)
+    return {"link": link}
     
 # class EditSongRequest(BaseModel):
 #     title: str
@@ -390,6 +402,26 @@ def DeleteUser(session: str = Depends(auth)):
     user = VailidateUser(session)
     DataSystem.users.Remove(user)
     return
+
+
+class AddSharedPlaylistRequest(BaseModel):
+    code: str
+
+@app.post("/playlists/shared")
+def AddSharedPlaylist(req: AddSharedPlaylistRequest, session: str = Depends(auth)):
+    user = VailidateUser(session)
+    playlist = ShareManager.GetPlaylist(req.code)
+    if not playlist:
+        raise HTTPException(404, detail="Playlist not found")
+    
+    newId = IDManager.NewId(Playlist)
+    playlist.id = newId
+
+    user.AddPlaylist(playlist)
+
+    DataSystem.users.Save(user)
+    DataSystem.playlists.Save(playlist)
+    return {"playlist": PlaylistSerializer.SerializeToNetwork(playlist)}
 
 @app.get("/playlists")
 def GetPlaylists(ids: list[str] = Query(None), filters: str = Query(None), session: str = Depends(auth)):

@@ -10,9 +10,13 @@ def CreateAlbumName(song):
     return f"{" and ".join(song.singers)} Karaoke"
 
 def ExportSong(song: Song):
-    path = paths.PROCESSING_DIR / song.id
-    shutil.copy(paths.MP3_DIR / song.id, path)
-    audio = ID3(path)
+    fromPath = paths.MP3_DIR / song.id
+    toPath = paths.PROCESSING_DIR / song.id
+    if not fromPath.exists():
+        raise Exception("Song not found")
+
+    shutil.copy(fromPath, toPath)
+    audio = ID3(toPath)
     audio["TIT2"] = ID3Frames.TIT2(encoding=3, text=song.title) #title
     audio["TPE1"] = ID3Frames.TPE1(encoding=3, text=song.artist) #artist
     audio["TALB"] = ID3Frames.TALB(encoding=3, text=CreateAlbumName(song)) #album

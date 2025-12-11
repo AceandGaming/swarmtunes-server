@@ -32,6 +32,12 @@ class IDManager:
     def RemoveId(id: str):
         name, uuid = IDManager.SplitId(id)
         IDManager._ids[name].remove(id)
+    @staticmethod
+    def AddId(id: str):
+        name, uuid = IDManager.SplitId(id)
+        if name not in IDManager._ids:
+            IDManager._ids[name] = []
+        IDManager._ids[name].append(id)
 
     @staticmethod
     def Save():
