@@ -11,7 +11,7 @@ import time, math
 import scripts.paths as paths
 from scripts.download import DownloadMissingSongs
 import scripts.filters as Filter
-from scripts.export import ExportSong, ExportAlbum
+from scripts.export import ExportSong, ExportAlbum, ExportPlaylist
 from scripts.cover import GetCover as ResizeCover
 from scripts.cover import GetCoverPathFromSong
 import asyncio
@@ -86,6 +86,7 @@ app, auth = InitializeServer()
 async def Startup():
     await CleanUp()
     if os.getenv("DATA_PATH") is None:
+        pass
         await ResyncServer()
 async def CleanUp():
     pass
@@ -193,6 +194,13 @@ def GetAlbumFile(id: str):
     filename = ExportAlbum(album)
     file_path = paths.PROCESSING_DIR / id
     return FileResponse(file_path, media_type="application/zip", headers={"Content-Disposition": f"attachment; filename={filename}"})
+
+@app.get("/files/playlist/{id}")
+def GetPlaylistFile(id: str, session: str):
+    playlist = VailidatePlaylist(session, id)
+    filename =  ExportPlaylist(playlist)
+    file_path = paths.PROCESSING_DIR / id
+    return FileResponse(file_path, media_type="application/zip", headers={"Content-Disposition": f"attachment; filename={filename}"})
     
 
 @app.get("/files/{id}")
@@ -207,7 +215,12 @@ def GetSongFile(id: str, export: bool = Query(False)):
     if not DataSystem.songs.Get(id):
         raise HTTPException(404, detail="Song not found")
     file_path = paths.MP3_DIR / id
-    return FileResponse(file_path, media_type="audio/mpeg", headers={"Accept-Ranges": "bytes"})
+    ngnixPath = f"/protected/{file_path.relative_to(paths.DATA_DIR)}"
+    print(ngnixPath)
+    response = Response()
+    response.headers["X-Accel-Redirect"] = ngnixPath
+    response.headers["Content-Type"] = "audio/mpeg"
+    return response
 
 @app.get("/covers/{name}")
 def GetCover(name: str, size: int = Query(128)):
@@ -397,6 +410,7 @@ def GetPlaylists(ids: list[str] = Query(None), filters: str = Query(None), sessi
     else:
         playlists = user.playlists
         return PlaylistSerializer.SerializeAllToNetwork(playlists)
+    
 
 class NewPlaylistRequest(BaseModel):
     name: str

@@ -1,13 +1,14 @@
 from mutagen.id3 import ID3
 import mutagen.id3._frames as ID3Frames
 import scripts.paths as paths
-from scripts.types import Song, Album
+from scripts.types import Song, Album, Playlist
 import shutil
 import zipfile
 import json
 
 def CreateAlbumName(song):
     return f"{" and ".join(song.singers)} Karaoke"
+
 def ExportSong(song: Song):
     path = paths.PROCESSING_DIR / song.id
     shutil.copy(paths.MP3_DIR / song.id, path)
@@ -52,3 +53,25 @@ def ExportAlbum(album: Album):
         zipf.writestr("metadata.json", json.dumps(metadata, indent=2))
 
     return album.PrettyName
+
+def ExportPlaylist(playlist: Playlist):
+    files = []
+    for song in playlist.songs:
+        filename = ExportSong(song)
+        files.append((
+            paths.PROCESSING_DIR / song.id,
+            filename + ".mp3"
+        ))
+
+    path = paths.PROCESSING_DIR / playlist.id
+    metadata = {
+        "date": playlist.date.isoformat(),
+        "type": playlist.coverType,
+        "title": playlist.name
+    }
+    with zipfile.ZipFile(path, "w") as zipf:
+        for path, name in files:
+            zipf.write(path, arcname=name)
+        zipf.writestr("metadata.json", json.dumps(metadata, indent=2))
+
+    return playlist.name
