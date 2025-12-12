@@ -1,6 +1,7 @@
 import uuid
-import json
 import scripts.paths as paths
+from scripts.types import *
+import scripts.types as t
 
 class IDManager:
     _ids: dict[str, list[str]] = {}
@@ -28,25 +29,27 @@ class IDManager:
     def SplitId(id: str):
         type, uuid = id.split("_")
         return type, uuid
-    @staticmethod
-    def RemoveId(id: str):
-        name, uuid = IDManager.SplitId(id)
-        IDManager._ids[name].remove(id)
-    @staticmethod
-    def AddId(id: str):
-        name, uuid = IDManager.SplitId(id)
-        if name not in IDManager._ids:
-            IDManager._ids[name] = []
-        IDManager._ids[name].append(id)
 
     @staticmethod
     def Save():
-        with open(paths.IDS_FILE, "w") as f:
-            f.write(json.dumps(IDManager._ids, indent=2))
+        pass
+
     @staticmethod
     def Load():
-        if not paths.IDS_FILE.exists():
-            return
-        with open(paths.IDS_FILE, "r") as f:
-            data = json.load(f)
-            IDManager._ids = data
+        def GetIdsOfPath(path):
+            ids = []
+            for file in path.iterdir():
+                ids.append(file.name)
+            print(f"Found {len(ids)} ids in {path}")
+            return ids
+
+        types = [eval(name) for name in t.__all__]
+
+        IDManager._ids["song"] = GetIdsOfPath(paths.SONGS_DIR)
+        IDManager._ids["album"] = GetIdsOfPath(paths.ALBUMS_DIR)
+        IDManager._ids["playlist"] = GetIdsOfPath(paths.PLAYLISTS_DIR)
+        IDManager._ids["user"] = GetIdsOfPath(paths.USERS_DIR)
+        IDManager._ids["token"] = GetIdsOfPath(paths.TOKENS_DIR)
+
+        if len(types) != len(IDManager._ids):
+            raise Exception("Number of types in id manager does not match number of script types")
