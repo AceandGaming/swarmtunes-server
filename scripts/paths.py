@@ -11,7 +11,6 @@ os.makedirs(DATA_DIR, exist_ok=True)
 os.makedirs(COVER_CACHE, exist_ok=True)
 os.makedirs(PROCESSING_DIR, exist_ok=True)
 
-IDS_FILE = DATA_DIR / "ids.json"
 MP3_DIR = DATA_DIR / "mp3"
 SONGS_DIR = DATA_DIR / "songs"
 ALBUMS_DIR = DATA_DIR / "albums"

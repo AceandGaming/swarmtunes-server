@@ -92,16 +92,11 @@ async def Startup():
 async def CleanUp():
     print("Cleaning up...")
     maintenance.CheckForOrphanedSongs()
-    maintenance.CheckForOrphaned(Album, paths.ALBUMS_DIR, delete=True)
-    maintenance.CheckForOrphaned(Playlist, paths.PLAYLISTS_DIR, delete=False)
-    maintenance.CheckForOrphaned(User, paths.USERS_DIR, delete=False)
-    maintenance.CheckForOrphaned(Token, paths.TOKENS_DIR, delete=True)
     maintenance.ClearProcessing()
 
 @app.on_event("shutdown")
 async def Shutdown():
     print("Saving...")
-    IDManager.Save()
     ShareManager.Save()
     print("Saved!")
 

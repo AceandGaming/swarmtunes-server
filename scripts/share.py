@@ -39,12 +39,17 @@ class ShareManager:
     
     @staticmethod
     def Save():
+        with open(paths.SHARE_FILE, "r") as f:
+            oldData = json.load(f)
+
         data = {
-            "songLinks": ShareManager.songLinks,
-            "playlistLinks": ShareManager.playlistLinks
+            "songLinks": oldData.get("songLinks", {}) | ShareManager.songLinks,
+            "playlistLinks": oldData.get("playlistLinks", {}) | ShareManager.playlistLinks
         }
+
         with open(paths.SHARE_FILE, "w") as f:
             f.write(json.dumps(data, indent=2))
+
     @staticmethod
     def Load():
         if not paths.SHARE_FILE.exists():
