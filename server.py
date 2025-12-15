@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Literal, Optional
 from pydantic import BaseModel
 from scripts.types import *
 from fastapi import FastAPI, HTTPException, Query, Depends, Response, Cookie, Request
@@ -73,6 +73,13 @@ def VailidatePlaylist(token: str, id: str) -> Playlist:
     if playlist.userId != user.id:
         raise HTTPException(403, detail="Playlist not owned by user")
     return playlist
+def VerifyPlaylistName(name: str):
+    name = name.strip()
+    if len(name) > 32 or len(name) <= 0:
+        raise HTTPException(400, detail="Invalid playlist name")
+    if not re.match(r"^[0-9A-Za-z_ :]+$", name):
+        raise HTTPException(400, detail="Playlist name contains invalid characters")
+    return name
 
 async def ResyncServer():
     print("Downloading new files...")
@@ -446,11 +453,7 @@ class NewPlaylistRequest(BaseModel):
 @app.post("/playlists")
 def NewPlaylist(req: NewPlaylistRequest, session: str = Depends(auth)):
     user = VailidateUser(session)
-    name = req.name.strip()
-    if len(name) > 32 or len(name) <= 0:
-        raise HTTPException(400, detail="Invalid playlist name")
-    if not re.match(r"^[0-9A-Za-z_ ]+$", name):
-        raise HTTPException(400, detail="Playlist name contains invalid characters")
+    name = VerifyPlaylistName(req.name)
 
     playlist = DataSystem.playlists.Create(name=name, userId=user.id)
     user.AddPlaylist(playlist)
@@ -503,20 +506,25 @@ def RemoveSongFromPlaylist(id: str, req: PlaylistSongUpdateRequest, session: str
     DataSystem.playlists.Save(playlist)
     return {"success": True}
 
-class RenamePlaylistRequest(BaseModel):
-    name: str
+class PatchPlaylistRequest(BaseModel):
+    name: Optional[str]
+    songIds: Optional[list[str]]
 
 @app.patch("/playlists/{id}")
-def RenamePlaylist(id: str, req: RenamePlaylistRequest, session: str = Depends(auth)):
+def PatchPlaylist(id: str, req: PatchPlaylistRequest, session: str = Depends(auth)):
     playlist = VailidatePlaylist(session, id)
-    name = req.name.strip()
-    if len(name) > 32 or len(name) <= 0:
-        raise HTTPException(400, detail="Invalid playlist name")
-    if not re.match(r"^[0-9A-Za-z_ ]+$", name):
-        raise HTTPException(400, detail="Playlist name contains invalid characters")
-    playlist.name = name
+    if req.name:
+        playlist.name = VerifyPlaylistName(req.name)
+    if req.songIds:
+        playlist.songIds = []
+        for id in req.songIds:
+            song = DataSystem.songs.Get(id)
+            if not song:
+                raise HTTPException(404, detail="Song not found")
+            playlist.AddSong(song)
     DataSystem.playlists.Save(playlist)
     return {"success": True}
+
     
 @app.get("/search")
 def Search(query: str = Query(""), maxResults: int = Query(20)):
