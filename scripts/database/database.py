@@ -3,6 +3,7 @@ from scripts.serializer import BaseSerializer
 from pathlib import Path
 from scripts.id_manager import IDManager
 import json
+from scripts.delete import DeleteManager
 
 class HasId(Protocol):
     id: str
@@ -39,7 +40,7 @@ class BaseDatabase(Generic[T]):
     def Remove(self, item: T):
         path = self._path / item.id
         if path.exists():
-            path.unlink()
+            DeleteManager.DeleteFile(path)
 
     def Save(self, item: T):
         path = self._path / item.id

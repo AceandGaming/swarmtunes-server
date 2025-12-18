@@ -48,3 +48,13 @@ class UserManager(BaseManager[User]):
         
         user.AddResolver(PlaylistManager().Get)
         return user
+
+    def GetAll(self):
+        users = self._database.GetAll()
+        for user in users:
+            user.AddResolver(PlaylistManager().Get)
+        return users
+    
+    def Remove(self, item: User):
+        PlaylistManager().RemoveByUser(item)
+        return super().Remove(item)

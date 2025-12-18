@@ -13,5 +13,7 @@ from pathlib import Path
 import os
 from scripts.search import *
 import time
+import scripts.maintenance as maintenance
+from scripts.delete import DeleteManager
 
 IDManager.Load()

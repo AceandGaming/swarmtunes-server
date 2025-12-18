@@ -24,7 +24,8 @@ from scripts.session_manager import SessionManager
 from scripts.data_system import DataSystem
 from scripts.serializer import *
 import scripts.maintenance as maintenance
-
+import scripts.config as config
+from scripts.delete import DeleteManager
 
 def InitializeServer():
     global app, auth
@@ -98,8 +99,9 @@ async def Startup():
 
 async def CleanUp():
     print("Cleaning up...")
-    maintenance.CheckForOrphanedSongs()
+    maintenance.ClearAllOrphaned()
     maintenance.ClearProcessing()
+    DeleteManager.DeleteExtraFiles()
 
 @app.on_event("shutdown")
 async def Shutdown():
@@ -319,21 +321,21 @@ def Login(req: LoginRequest, response: Response):
     password = req.password
     create = req.create
 
+    username = username.strip().lower()
     if len(username) > 32 or len(username) <= 0:
         raise HTTPException(400, detail="Invalid username")
-    username = username.strip().lower()
     if not re.match(r"^[a-z0-9_-]+$", username):
         raise HTTPException(400, detail="Username contains invalid characters")
     
-    if len(password) > 32 or len(password) <= 0:
+    if len(password) > config.USER_MAX_PASSWORD_LENGTH or len(password) <= 0:
         raise HTTPException(400, detail="Invalid password")
 
     if create:
-        if len(password) < 5:
+        if len(password) < config.USER_MIN_PASSWORD_LENGTH:
             raise HTTPException(400, detail="Password too short")
         if DataSystem.users.UsernameExists(username):
             raise HTTPException(400, detail="Username already taken")
-        if username in ["admin", "vedal", "vedal987", "neuro-sama", "evil neuro", "neuro", "evil"]:
+        if username in ["admin", "vedal", "vedal987", "neuro-sama", "evilneuro", "neuro", "evil"]:
             raise HTTPException(400, detail="Username is reserved")
         
         DataSystem.users.CreateWithPassword(username, password)
@@ -454,6 +456,9 @@ class NewPlaylistRequest(BaseModel):
 def NewPlaylist(req: NewPlaylistRequest, session: str = Depends(auth)):
     user = VailidateUser(session)
     name = VerifyPlaylistName(req.name)
+
+    if user.PlaylistLimitReached():
+        raise HTTPException(400, detail="User has reached playlist limit")
 
     playlist = DataSystem.playlists.Create(name=name, userId=user.id)
     user.AddPlaylist(playlist)

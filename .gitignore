@@ -2,6 +2,7 @@
 /cache/
 /processing/*
 /import/
+/deleted/*
 
 *.mp3
 *.wav

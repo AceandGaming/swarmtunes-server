@@ -2,13 +2,13 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from scripts.types import Song
 from typing import Optional, Callable, TYPE_CHECKING
+from .id_object import IDObject
 if TYPE_CHECKING:
     from scripts.types import User 
 
 
-@dataclass
-class Playlist:
-    id: str
+@dataclass(eq=False)
+class Playlist(IDObject):
     name: str
     userId: str
     date: datetime = field(default_factory=lambda: datetime.now())
@@ -18,7 +18,7 @@ class Playlist:
     @property
     def songs(self) -> list[Song]:
         if not hasattr(self, "songResolver"):
-            return []
+            raise Exception("Playlist does not have a song resolver")
         songs = []
         for songId in self.songIds:
             song = self.songResolver(songId)
@@ -58,11 +58,6 @@ class Playlist:
     
     def __repr__(self):
         return f"{", ".join(self.singers)} with {len(self.songs)} songs"
-    def __eq__(self, other):
-        if not isinstance(other, Playlist) or not isinstance(self, Playlist):
-            return False
-        return self.id == other.id
-
 
     def _GetSingers(self):
         singers = set()
