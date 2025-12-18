@@ -1,15 +1,15 @@
 from dataclasses import dataclass, field
 from typing import Optional
 from datetime import datetime
+from .id_object import IDObject
 
 @dataclass
 class SongExternalStorage:
     googleDriveId: Optional[str] = None
     
 
-@dataclass
-class Song:
-    id: str
+@dataclass(eq=False)
+class Song(IDObject):
     title: str
     artist: str
     singers: list[str]
@@ -38,7 +38,3 @@ class Song:
 
     def __repr__(self):
         return f"{self.title} by {self.artist} ({", ".join(self.singers)})"
-    def __eq__(self, other):
-        if not isinstance(other, Song) or not isinstance(self, Song):
-            return False
-        return self.id == other.id

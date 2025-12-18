@@ -1,12 +1,12 @@
 from dataclasses import dataclass, field
 from typing import Optional, Callable, TYPE_CHECKING
 from datetime import datetime
+from .id_object import IDObject
 if TYPE_CHECKING:
     from scripts.types import User 
 
-@dataclass
-class Token:
-    id: str
+@dataclass(eq=False)
+class Token(IDObject):
     userId: str
     secret: str #hashed
     expires: datetime
