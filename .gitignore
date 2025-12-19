@@ -3,6 +3,7 @@
 /processing/*
 /import/
 /deleted/*
+token.json
 
 *.mp3
 *.wav
