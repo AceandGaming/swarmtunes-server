@@ -2,7 +2,7 @@ from typing import Literal, Optional
 from pydantic import BaseModel
 from scripts.types import *
 from fastapi import FastAPI, HTTPException, Query, Depends, Response, Cookie, Request
-from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer
 import scripts.embed as embeds
@@ -53,6 +53,7 @@ def InitializeServer():
     print("Loading data")
     IDManager.Load()
     ShareManager.Load()
+    emotes.Load()
     print(f"Server started in {math.floor((time.time() - startTime) * 1000)} miliseconds")
     return app, auth
 
@@ -293,21 +294,28 @@ def GetAlbums(ids: list[str] = Query(None), filters: str = Query(None)):
         albums = DataSystem.albums.items
         return AlbumSerializer.SerializeAllToNetwork(albums)
 
-@app.get("/emotes")
-def GetEmotes(names: list[str] = Query(None), scale: int = Query(1)):
-    if names:
-        emotesList = {}
-        for name in names:
-            emote = emotes.GetEmote(name)
-            if not emote:
-                raise HTTPException(404, detail="Emote not found")
-            emotesList[name] = emote + "/" + str(scale) + "x.webp"
-        return emotesList
-    else:
-        emotesList = {}
-        for name, emote in emotes.emotes.items():
-            emotesList[name] = emote + "/" + str(scale) + "x.webp"
-        return emotesList
+@app.get("/emotes/{name}")
+def GetEmote(name: str, scale: int = Query(1)):
+    emote = emotes.GetEmote(name)
+    if not emote:
+        raise HTTPException(404, detail="Emote not found")
+    return RedirectResponse(emote + "/" + str(scale) + "x.webp")
+
+# @app.get("/emotes")
+# def GetEmotes(names: list[str] = Query(None), scale: int = Query(1)):
+#     if names:
+#         emotesList = {}
+#         for name in names:
+#             emote = emotes.GetEmote(name)
+#             if not emote:
+#                 raise HTTPException(404, detail="Emote not found")
+#             emotesList[name] = emote + "/" + str(scale) + "x.webp"
+#         return emotesList
+#     else:
+#         emotesList = {}
+#         for name, emote in emotes.emotes.items():
+#             emotesList[name] = emote + "/" + str(scale) + "x.webp"
+#         return emotesList
 
 class LoginRequest(BaseModel):
     username: str
