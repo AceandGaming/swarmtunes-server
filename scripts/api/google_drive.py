@@ -6,6 +6,7 @@ from datetime import datetime
 from scripts.paths import PROCESSING_DIR as PENDING_DIR
 import string
 
+
 drive = get_drive_service()
 driveFiles = drive.files()
 

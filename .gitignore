@@ -11,3 +11,4 @@ token.json
 *.flac
 
 __pycache__/
+credentials.json

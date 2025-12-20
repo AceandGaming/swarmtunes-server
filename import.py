@@ -24,7 +24,7 @@ def RequireConfirmation(message = "Confirm?", default = True):
             exit()
     
 if CheckPort(8000) or CheckPort(8001):
-    RequireConfirmation("Server is running. This may currupt ids! Continue anyway?", default=False)
+    RequireConfirmation("Server is running. This may cause issues! Continue anyway?", default=False)
 
 importPath = Path("import")
 
