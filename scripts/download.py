@@ -9,7 +9,9 @@ import asyncio
 from aiohttp import ClientSession
 import os
 from scripts.id_manager import IDManager
-
+import scripts.load_metadata as metadata
+from scripts.check_audio import compare_audio_perceptual as CompareAudio
+from datetime import datetime
 
 TARGET_LUFS = -16
 MIN_DBFS = -55 #trim audio lower then this
@@ -37,84 +39,81 @@ def CorrectMP3(inputFile, output):
     song = song._spawn((samples * (1 << 15)).astype(np.int16).tobytes())
 
     song.export(output, format="mp3")
-def FolderToSingers(folderName):
-    match folderName:
-        case "neuro":
-            return ["Neuro-sama"]
-        case "evil":
-            return ["Evil Neuro"]
-        case "duet":
-            return ["Neuro-sama", "Evil Neuro"]
-        case "mashup":
-            return ["Neuro-sama", "Evil Neuro"]
-        case "v1":
-            return ["Hiyori"]
-        case "v2":
-            return ["Neuro-sama"]
-        case _:
-            print("Warning: Could not get singers for folder name:", folderName)
-            return ["unknown"]
-def DownloadSong(drive_file):
-    print(f"Downloading '{drive_file["name"]}' ID: {drive_file["id"]}")
 
-    google_drive.DownloadFile(drive_file["id"])
-    songData = google_drive.GenerateMetaDataFromFile(drive_file["name"])
-    id = IDManager.NewId(Song)
+def DownloadSong(driveFile):
+    print(f"Downloading '{driveFile["name"]}' ID: {driveFile["id"]}")
 
-    singers = FolderToSingers(drive_file["folder"])
+    google_drive.DownloadFile(driveFile["id"])
+    nameData = metadata.MetadataFromFilename(driveFile["name"])
+    audioData = metadata.MetadataFromAudioData(paths.PROCESSING_DIR / driveFile["id"])
+    data = metadata.MergeMetadata(audioData, nameData)
 
+    id = IDManager.NewId(Song) 
     song = Song(
         id=id,
-        storage=SongExternalStorage(drive_file["id"]),
-        title=songData["title"],
-        artist=songData["artist"],
-        date=songData["date"],
-        singers=singers
+        title=data.titleTranslate or data.title or "unknown",
+        artist=", ".join(data.artists),
+        singers=data.singers,
+        date=data.date or datetime.min,
+        storage=SongExternalStorage(googleDriveId=driveFile["id"])
     )
-    CorrectMP3(paths.PROCESSING_DIR / drive_file["id"], paths.MP3_DIR / song.id)
-    os.remove(paths.PROCESSING_DIR / song.storage.googleDriveId) #type: ignore
+
+    CorrectMP3(paths.PROCESSING_DIR / driveFile["id"], paths.MP3_DIR / song.id)
+    os.remove(paths.PROCESSING_DIR / driveFile["id"])
     DataSystem.songs.Save(song)
 
-def ReDownloadSong(song):
-    print(f"ReDownloading '{song.title}' ID: {song.storage.googleDriveId}")
-    if (song.storage.googleDriveId is None):
+def ReDownloadSong(song: Song):
+    driveId = song.storage.googleDriveId
+    print(f"ReDownloading '{song.title}' ID: {driveId}")
+    if (driveId is None):
         return
     if (paths.MP3_DIR / song.id).exists():
         os.remove(paths.MP3_DIR / song.id)
-    google_drive.DownloadFile(song.storage.googleDriveId)
-    CorrectMP3(paths.PROCESSING_DIR / song.storage.googleDriveId, paths.MP3_DIR / song.id)
-    os.remove(paths.PROCESSING_DIR / song.storage.googleDriveId)
+    google_drive.DownloadFile(driveId)
+    metadata.DeleteID3Tags(paths.PROCESSING_DIR / driveId)
+    CorrectMP3(paths.PROCESSING_DIR / driveId, paths.MP3_DIR / song.id)
+    os.remove(paths.PROCESSING_DIR / driveId)
 
 async def DownloadSongs(drive_files):
-    downloadSemaphore = asyncio.Semaphore(50)
-    correctSemaphore = asyncio.Semaphore(6)
-    async def CreateSong(drive_file, session: ClientSession):
+    downloadSemaphore = asyncio.Semaphore(35)
+    correctSemaphore = asyncio.Semaphore(10)
+    async def CreateSong(driveFile, session: ClientSession):
         async with downloadSemaphore:
-            print(f"Downloading '{drive_file["name"]}' ID: {drive_file['id']}")
-            await google_drive.DownloadFileAsync(drive_file["id"], session)
-            songData = google_drive.GenerateMetaDataFromFile(drive_file["name"])
+            print(f"Downloading '{driveFile["name"]}' ID: {driveFile['id']}")
+            try:
+                await google_drive.DownloadFileAsync(driveFile["id"], session)
+            except Exception as e:
+                print("Error downloading file:", e)
+                return
+    
+            nameData = metadata.MetadataFromFilename(driveFile["name"])
+            audioData = metadata.MetadataFromAudioData(paths.PROCESSING_DIR / driveFile["id"])
+            data = metadata.MergeMetadata(audioData, nameData)
 
-            id = IDManager.NewId(Song)
-            singers = FolderToSingers(drive_file["folder"])
-        
+            id = IDManager.NewId(Song) 
             song = Song(
                 id=id,
-                storage=SongExternalStorage(drive_file["id"]),
-                title=songData["title"],
-                artist=songData["artist"],
-                date=songData["date"],
-                singers=singers
+                title=data.titleTranslate or data.title or "unknown",
+                artist=", ".join(data.artists),
+                singers=data.singers,
+                date=data.date or datetime.min,
+                storage=SongExternalStorage(googleDriveId=driveFile["id"])
             )
+
             DataSystem.songs.Save(song)
         async with correctSemaphore:
             print(f"Correcting '{song.title}' ID: {song.storage.googleDriveId}")
             if (song.storage.googleDriveId is None):
                 return
-            await asyncio.to_thread(CorrectMP3, paths.PROCESSING_DIR / song.storage.googleDriveId, paths.MP3_DIR / song.id)
-            os.remove(paths.PROCESSING_DIR / song.storage.googleDriveId)
+            try:
+                metadata.DeleteID3Tags(paths.PROCESSING_DIR / song.storage.googleDriveId)
+                await asyncio.to_thread(CorrectMP3, paths.PROCESSING_DIR / song.storage.googleDriveId, paths.MP3_DIR / song.id)
+                os.remove(paths.PROCESSING_DIR / song.storage.googleDriveId)
+            except Exception as e:
+                print("Failed to correct song:", e)
 
     async with ClientSession() as session:
-        tasks = [CreateSong(drive_file, session) for drive_file in drive_files]
+        tasks = [CreateSong(driveFile, session) for driveFile in drive_files]
         await asyncio.gather(*tasks)
 
     IDManager.Save()

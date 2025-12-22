@@ -15,5 +15,6 @@ from scripts.search import *
 import time
 import scripts.maintenance as maintenance
 from scripts.delete import DeleteManager
+from scripts.load_metadata import *
 
 IDManager.Load()
