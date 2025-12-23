@@ -26,6 +26,7 @@ from scripts.serializer import *
 import scripts.maintenance as maintenance
 import scripts.config as config
 from scripts.delete import DeleteManager
+from urllib.parse import quote
 
 def InitializeServer():
     global app, auth
@@ -227,8 +228,9 @@ def GetSongFile(id: str, export: bool = Query(False)):
         if song is None:
             raise HTTPException(404, detail="Song not found")
         filename = ExportSong(song) + ".mp3"
+        filename = quote(filename)
         file_path = paths.PROCESSING_DIR / id
-        return FileResponse(file_path, media_type="audio/mpeg", headers={"Content-Disposition": f"attachment; filename={filename}"})
+        return FileResponse(file_path, media_type="audio/mpeg", headers={"Content-Disposition": f"attachment; filename*=UTF-8''{filename}"})
     if not DataSystem.songs.Get(id):
         raise HTTPException(404, detail="Song not found")
     file_path = paths.MP3_DIR / id

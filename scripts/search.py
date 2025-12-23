@@ -26,49 +26,20 @@ class Searchable():
 def SplitAll(string: str):
     return re.findall(r'[A-Z]?[a-z]+|[A-Z]+(?=[A-Z]|$)|\d+', string)
 
-def GetDiff(queryWord: str, substring: str):
-    if queryWord == substring:
-        return 0
-    diff = 0
-    i = 0
-    for char in queryWord:
-        if char != substring[i]:
-            diff += 1
-            if i < len(substring) - 1:
-                if char == substring[i + 1]:
-                    i += 1
-        i += 1
-        if i >= len(substring):
-            break
-    if len(queryWord) > len(substring):
-        diff += len(queryWord) - len(substring)
-    return diff
-
 def Match(queryWord: str, itemWord: str):
     if queryWord == itemWord:
         return 0, 0
-    wordDiff = math.inf
-    caseDiff = math.inf
-    queryLower = queryWord.lower()
-    itemLower = itemWord.lower()
-    startPositions = []
-    pos = 0
-    while True:
-        pos = itemLower.find(queryLower[0], pos)
-        if pos == -1:
-            break
-        startPositions.append(pos)
-        pos += 1
-    if len(startPositions) == 0:
-        return len(queryWord), len(queryWord)
-    for start in startPositions:
-        diff = GetDiff(queryLower, itemLower[start:])
-        if diff < wordDiff:
-            wordDiff = diff
-            caseDiff = abs(GetDiff(itemLower[start:], itemWord[start:]) - GetDiff(queryLower, queryWord))
-            if diff == 0:
-                break
-    return wordDiff, caseDiff
+    wordDiff = 0
+    caseDiff = 0
+    for queryChar, itemChar in zip(queryWord, itemWord):
+        if queryChar.lower() != itemChar.lower():
+            wordDiff += 1
+        else:
+            if queryChar != itemChar:
+                caseDiff += 1
+    minimum = min(len(queryWord), len(itemWord))
+    wordDiff += max(0, len(queryWord) - len(itemWord))
+    return wordDiff / minimum, caseDiff / minimum
 
 def MatchEqualWords(queryWords: list[str], itemWords: list[str]):
     wordDiff = 0

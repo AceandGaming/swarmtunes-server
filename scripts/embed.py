@@ -12,14 +12,14 @@ def SongEmbed(song: Song):
         <title>{song.title} | SwarmTunes</title>
 
         <meta property="og:title" content="{song.title}" />
-        <meta property="og:description" content="by {song.artist}\nSung by: {", ".join(song.singers)}" />
+        <meta property="og:description" content="Artist: {song.artist}\nSung by: {", ".join(song.singers)}" />
         <meta property="og:image" content="{image_url}" />
         <meta property="og:url" content="https://share.swarmtunes.com?song={song.id}" />
         <meta property="og:type" content="music.song" />
 
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="{song.title}" />
-        <meta name="twitter:description" content="by {song.artist}" />
+        <meta name="twitter:description" content="Artist: {song.artist}" />
         <meta name="twitter:image" content="{image_url}" />
     </head>
     <body>
