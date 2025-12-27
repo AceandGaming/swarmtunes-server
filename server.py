@@ -223,19 +223,22 @@ def GetPlaylistFile(id: str, session: str):
 
 @app.get("/files/{id}")
 def GetSongFile(id: str, export: bool = Query(False)):
+    song = DataSystem.songs.Get(id)
+    if song is None:
+        raise HTTPException(404, detail="Song not found")
+    if song.isCopywrited:
+        raise HTTPException(404, detail="Song not found")
+    if not re.match(r"[a-z0-9_]+", id):
+        raise HTTPException(400, detail="Invaild Id")
+
     if export:
-        song = DataSystem.songs.Get(id)
-        if song is None:
-            raise HTTPException(404, detail="Song not found")
         filename = ExportSong(song) + ".mp3"
         filename = quote(filename)
         file_path = paths.PROCESSING_DIR / id
         return FileResponse(file_path, media_type="audio/mpeg", headers={"Content-Disposition": f"attachment; filename*=UTF-8''{filename}"})
-    if not DataSystem.songs.Get(id):
-        raise HTTPException(404, detail="Song not found")
+    
     file_path = paths.MP3_DIR / id
     ngnixPath = f"/protected/{file_path.relative_to(paths.DATA_DIR)}"
-    print(ngnixPath)
     response = Response()
     response.headers["X-Accel-Redirect"] = ngnixPath
     response.headers["Content-Type"] = "audio/mpeg"

@@ -29,6 +29,7 @@ class SongSerializer(BaseSerializer[Song]):
             "coverArt": item.coverArt,
             "date": item.date,
             "original": item.isOriginal,
+            "youtubeId": item.storage.youtubeId
         }
         if item.coverArt is not None:
             data["coverArt"] = item.coverArt

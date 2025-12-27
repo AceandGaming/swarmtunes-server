@@ -25,7 +25,7 @@ class BaseDatabase(Generic[T]):
             data = json.load(f)
             return self._serializer.Deserialize(data)
     
-    def GetAll(self):
+    def GetAll(self) -> list[T]:
         ids = IDManager.GetIds(self._objectType)
         if ids is None:
             print("Warning: No ids found in id manager for type", self._objectType.__name__.lower())

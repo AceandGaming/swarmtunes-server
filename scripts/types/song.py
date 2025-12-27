@@ -6,6 +6,7 @@ from .id_object import IDObject
 @dataclass
 class SongExternalStorage:
     googleDriveId: Optional[str] = None
+    youtubeId: Optional[str] = None
     
 
 @dataclass(eq=False)
@@ -14,9 +15,13 @@ class Song(IDObject):
     artist: str
     singers: list[str]
     date: datetime
-    isOriginal: Optional[bool] = False
+    isOriginal: bool = False
     coverArt: Optional[str] = None
     storage: SongExternalStorage = field(default_factory=lambda: SongExternalStorage())
+    isCopywrited: bool = False
+
+    def __post_init__(self):
+        self.isCopywrited = self.isCopywrited or self.isOriginal
 
     @property
     def coverType(self):
