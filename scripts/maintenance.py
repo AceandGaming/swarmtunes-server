@@ -2,6 +2,7 @@ from scripts.data_system import DataSystem
 from scripts.types import *
 import scripts.paths as paths
 from scripts.delete import DeleteManager
+import os
 
 
 def ClearOrphanedSongs():
@@ -32,7 +33,7 @@ def ClearOrphanedSongs():
 
         if not inSongFile and inMp3File:
             print(f"Deleting orphaned mp3: {id}")
-            DeleteManager.DeleteFile(paths.MP3_DIR / id)
+            os.remove(paths.MP3_DIR / id)
             continue
 
 def ClearOrphanedPlaylists():

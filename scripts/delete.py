@@ -45,6 +45,7 @@ class DeleteManager:
     @staticmethod
     def DeleteFile(path: Path):
         if not path.exists():
+            print("Warning: Attempted to delete file that does not exist")
             return
         contents = path.read_text()
         

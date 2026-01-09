@@ -89,6 +89,7 @@ def Search(query: str, items: list[Searchable], mult: SearchMultipliers):
     for item in items:
         if item.value == "":
             continue
+        item.value = item.value.replace("(", "").replace(")", "")
         itemWords = item.value.split()
         if len(itemWords) < len(queryWords):
             continue

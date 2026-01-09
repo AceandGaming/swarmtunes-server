@@ -66,8 +66,8 @@ def MetadataFromFilename(filename):
         elif re.match(r"^\D+$", match):
             translate = match
 
-    filename = re.sub(r"^\d+?\.", "", filename)
-    filename, extention = FindSub(r"\..+$", filename)
+    filename = re.sub(r"^\d+\.", "", filename)
+    filename, extention = FindSub(r"\..+?$", filename)
     if len(extention) > 0:
         data.filetype = extention[0].replace(".", "").upper()
 
@@ -97,6 +97,12 @@ def MetadataFromAudioData(path):
         audio = ID3(path)
     except ID3NoHeaderError:
         return data
+    
+    # for key in audio.keys():
+    #     try:
+    #         print(key, audio[key].text[0])
+    #     except:
+    #         print(key)
 
     def GetTitleInfo(text):
         title, match = FindSub(r"[\(\{\[]\D*?[\)\}\]]", text)
@@ -125,7 +131,7 @@ def MetadataFromAudioData(path):
             try:
                 data.date = datetime.fromisoformat(jsonData["Date"])
             except ValueError:
-                pass
+                print("Date error:", jsonData["Date"])
 
     if not data.title and "TIT2" in audio:
         data.title, data.titleExtra, data.titleTranslate = GetTitleInfo(audio["TIT2"].text[0])
@@ -135,15 +141,19 @@ def MetadataFromAudioData(path):
             data.artists = group.group(2).split(",")
             data.artists = [a.strip() for a in data.artists]
 
-            data.singers = GetSingers(group.group(1))
+            data.singers = GetSingers(
+                group.group(1))
+        else:
+            data.artists = audio["TPE1"].text[0].split(",")
+            data.artists = [a.strip() for a in data.artists]
     if not data.date:
         if "COMM::eng" in audio:
             text = audio["COMM::eng"].text[0]
             time = re.sub(r"//.*", "", text).strip()
             try:
-                data.date = datetime.fromisoformat(time)
+                data.date = datetime.strptime(time, "%Y-%m-%d")
             except ValueError:
-                pass
+                print("Date error:", text)
         elif "TDRC" in audio:
             text = audio["TDRC"].text[0]
             try:

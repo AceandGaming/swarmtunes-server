@@ -45,14 +45,18 @@ class AlbumManager(BaseManager[Album]):
         dateLookup = {}
         for album in self.items:
             dateLookup[album.date] = album
+            for song in album.songs:
+                if song.date != album.date:
+                    album.RemoveSong(song)
+                    self.Save(album)
         for song in SongManager().items:
             album = dateLookup.get(song.date)
             if album is None:
                 newAlbum = self.CreateFromDate(song.date)
                 dateLookup[newAlbum.date] = newAlbum
+                self.Save(newAlbum)
             else:
                 album.AddSong(song)
-        
-        for album in self.items:
-            self.Save(album)
+                self.Save(album)
+                
             
