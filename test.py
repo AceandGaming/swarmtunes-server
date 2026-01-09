@@ -18,3 +18,5 @@ from scripts.delete import DeleteManager
 from scripts.load_metadata import *
 
 IDManager.Load()
+
+DeleteManager.RecoverDeleted(DeleteManager.LoadDeleted("2025-12-22T10:56:20.372852"))

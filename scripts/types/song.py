@@ -28,7 +28,7 @@ class Song(IDObject):
         if self.coverArt is not None:
             return "custom"
         if len(self.singers) == 0:
-            return None
+            return "v1"
         if len(self.singers) > 1:
             return "duet"
         singer = self.singers[0]
@@ -36,8 +36,6 @@ class Song(IDObject):
             return "neuro"
         if singer == "Evil Neuro":
             return "evil"
-        if singer == "Hiyori":
-            return "v1"
         return None
         
 

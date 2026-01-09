@@ -244,32 +244,20 @@ def GetSongFile(id: str, export: bool = Query(False)):
     response.headers["Content-Type"] = "audio/mpeg"
     return response
 
-@app.get("/covers/{name}")
+@app.get("/covers/{name:path}")
 def GetCover(name: str, size: int = Query(128)):
     size = 2 ** round(math.log2(size))
     if size > 1024:
         size = 1024
     if size < 1:
         size = 1
-    path = None
-    match name:
-        case "neuro":
-            path = paths.ART_DIR / "neuro.png"
-        case "evil":
-            path = paths.ART_DIR / "evil.png"
-        case "duet":
-            path = paths.ART_DIR / "duet.png"
-        case "swarmfm":
-            path = paths.ART_DIR / "swarmfm.png"
-        case "v1":
-            path = paths.ART_DIR / "v1.png"
-        case _:
-            song = DataSystem.songs.Get(name)
-            if not song:
-                raise HTTPException(404, detail="Song not found")
-            path = GetCoverPathFromSong(song)
-
-    #TODO: Prevent path from excaping the directory
+    path = paths.ART_DIR / f"{name}.png"
+    print(path)
+    
+    if not path.resolve().is_relative_to(paths.ART_DIR.resolve()): # not in art dir
+        raise HTTPException(404, detail="Cover not found")
+    if not path.exists():
+        raise HTTPException(404, detail="Cover not found")
 
     file = ResizeCover(path, size)
     if not file:

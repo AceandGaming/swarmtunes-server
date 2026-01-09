@@ -18,8 +18,7 @@ def GetCover(path, scale):
         return None
     
 def GetCoverPathFromSong(song):
-
     if song.coverType == "custom":
-        return paths.COVERS_DIR / song.coverArt
+        return paths.COVERS_DIR / f"{song.coverArt}.png"
     else:
         return paths.ART_DIR / f"{song.coverType}.png"
