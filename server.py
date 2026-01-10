@@ -20,7 +20,6 @@ import os
 from scripts.search import SearchSongs
 from scripts.share import ShareManager
 from scripts.id_manager import IDManager
-from scripts.session_manager import SessionManager
 from scripts.data_system import DataSystem
 from scripts.serializer import *
 import scripts.maintenance as maintenance
@@ -29,14 +28,15 @@ from scripts.delete import DeleteManager
 from urllib.parse import quote
 
 def InitializeServer():
-    global app, auth
+    global app
     startTime = time.time()
 
     allow_origins = [
         "https://swarmtunes.com",
     ]
+    allow_origin_regex = ""
     if os.getenv("DATA_PATH") is not None: #dev only
-        allow_origins = ["*"]
+        allow_origin_regex = r".*"
     print("Starting server...")
     print("Allowing origins:", allow_origins)
     app = FastAPI()
@@ -46,9 +46,9 @@ def InitializeServer():
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
-        expose_headers=["token-expired", "session-expired"],
+        expose_headers=["invaild-token"],
+        allow_origin_regex=allow_origin_regex
     )
-    auth = OAuth2PasswordBearer(tokenUrl="login")
 
     print("FastAPI started")
     print("Loading data")
@@ -56,12 +56,28 @@ def InitializeServer():
     ShareManager.Load()
     emotes.Load()
     print(f"Server started in {math.floor((time.time() - startTime) * 1000)} miliseconds")
-    return app, auth
+    return app
 
-def VailidateUser(token: str) -> User:
-    user = SessionManager.GetUser(token)
+def VailidateToken(tokenString: str|None) -> Token:
+    if not tokenString:
+        raise HTTPException(401, detail="Token Required", headers={"invaild-token": "true"})
+
+    id, secret = tokenString.split(":")
+    token = DataSystem.tokens.Get(id)
+
+    if not token:
+        raise HTTPException(401, detail="Invalid token", headers={"invaild-token": "true"})
+    if not DataSystem.tokens.ValidateToken(token, secret):
+        raise HTTPException(401, detail="Invalid token", headers={"invaild-token": "true"})
+
+    return token
+def VailidateUser(tokenString: str) -> User:
+    token = VailidateToken(tokenString)
+
+    user = DataSystem.users.Get(token.userId)
     if not user:
-        raise HTTPException(401, detail="Invalid session token", headers={"session-expired": "true"})
+        raise HTTPException(401, detail="Invalid token", headers={"invaild-token": "true"})
+
     return user
 def VailidateAdmin(token: str) -> User:
     user = VailidateUser(token)
@@ -91,7 +107,7 @@ async def ResyncServer():
     DataSystem.albums.ReGenerate()
     print("New songs downloaded and albums generated")
 
-app, auth = InitializeServer()
+app = InitializeServer()
 
 @app.on_event("startup")
 async def Startup():
@@ -140,10 +156,6 @@ async def root(song = Query(None), s = Query(None), p = Query(None)):
         "current-path": paths.DATA_DIR
     }
 
-@app.get("/swarmfm")
-def SwarmFM():
-    return {"https://cast.sw.arm.fm/stream"}    
-
 @app.get("/songs")
 def GetSongs(ids: list[str] = Query(None), filters: str = Query(None), maxResults: int = Query(100)):
     if ids:
@@ -175,8 +187,8 @@ def GetSongShare(id: str):
     return {"link": link}
 
 @app.get("/playlists/{id}/share")
-def SharePlaylist(id: str, session: str = Depends(auth)):
-    playlist = VailidatePlaylist(session, id)
+def SharePlaylist(id: str, sessionToken: str = Cookie(None)):
+    playlist = VailidatePlaylist(sessionToken, id)
     if not playlist:
         raise HTTPException(404, detail="Playlist not found")
     link = ShareManager.SharePlaylist(playlist)
@@ -214,8 +226,8 @@ def GetAlbumFile(id: str):
     return FileResponse(file_path, media_type="application/zip", headers={"Content-Disposition": f"attachment; filename={filename}"})
 
 @app.get("/files/playlist/{id}")
-def GetPlaylistFile(id: str, session: str):
-    playlist = VailidatePlaylist(session, id)
+def GetPlaylistFile(id: str, sessionToken: str = Cookie(None)):
+    playlist = VailidatePlaylist(sessionToken, id)
     filename =  ExportPlaylist(playlist)
     file_path = paths.PROCESSING_DIR / id
     return FileResponse(file_path, media_type="application/zip", headers={"Content-Disposition": f"attachment; filename={filename}"})
@@ -340,48 +352,52 @@ def Login(req: LoginRequest, response: Response):
             raise HTTPException(400, detail="Username is reserved")
         
         DataSystem.users.CreateWithPassword(username, password)
-    token = SessionManager.Login(username, password)
-    if not token:
+    
+    user = DataSystem.users.GetUserFromLogin(username, password)
+    if not user:
         raise HTTPException(401, detail="Invalid username or password")
     
-    if req.remeber:
-        longToken, secret = DataSystem.tokens.CreateFromUser(token.user)
-        response.set_cookie(
-            key="token",
-            value=f"{longToken.id}:{secret}",
-            max_age=int(longToken.maxAge),
-            httponly=True,
-            secure=True,
-            samesite="none",
-            path="/"
-        )
+    token, secret = DataSystem.tokens.CreateFromUser(user)
+    response.set_cookie(
+        key="sessionToken",
+        value=f"{token.id}:{secret}",
+        max_age=int(token.maxAge),
+        httponly=True,
+        secure=True,
+        samesite="none",
+        path="/"
+    )
 
-    return {"token": token.token, "isAdmin": token.user.validAdmin}
+    return {"success": True, "isAdmin": user.validAdmin, "id": user.id, "username": user.username}
 
 @app.post("/me/logout")
-def Logout(response: Response, token: str = Cookie(None), session: str = Depends(auth)):
-    if SessionManager.TokenIsValid(session):
-        SessionManager.Logout(session)
-    if token:
-        response.delete_cookie("token")
-        id, secret = token.split(":")
+def Logout(response: Response, sessionToken: str = Cookie(None)):
+    if sessionToken:
+        response.delete_cookie("sessionToken")
+        id, secret = sessionToken.split(":")
         if id:
             DataSystem.tokens.RemoveId(id)
     return {"success": True}
 
 @app.get("/me/session")
-def GetSession(response: Response, token: str = Cookie(None)):
+def GetSession(response: Response, sessionToken: str = Cookie(None)):
+    if not sessionToken:
+        raise HTTPException(401, detail="Token Required", headers={"invaild-token": "true"})
+    id, secret = sessionToken.split(":")
+    token = DataSystem.tokens.Get(id)
     if not token:
-        raise HTTPException(401, detail="Invalid token", headers={"token-expired": "true"})
-    id, secret = token.split(":")
-    if DataSystem.tokens.HasExpired(id):
-        toke = DataSystem.tokens.GetWithSecret(id, secret)
-        if toke is None:
-            raise HTTPException(401, detail="Invalid token", headers={"token-expired": "true"})
+        raise HTTPException(401, detail="Invalid token", headers={"invaild-token": "true"})
+
+    if DataSystem.tokens.HasExpired(token):
+        if not DataSystem.tokens.ValidateSecret(token, secret):
+            raise HTTPException(401, detail="Invalid token", headers={"invaild-token": "true"})
         
-        newToken, newSecret = DataSystem.tokens.Refresh(toke)
+        newToken, newSecret = DataSystem.tokens.Refresh(token)
+        if newSecret is None:
+            raise HTTPException(401, detail="Token not renewable", headers={"invaild-token": "true"})
+    
         response.set_cookie(
-            key="token",
+            key="sessionToken",
             value=f"{id}:{newSecret}",
             max_age=int(newToken.maxAge),
             httponly=True,
@@ -390,21 +406,23 @@ def GetSession(response: Response, token: str = Cookie(None)):
             path="/"
         )
     else:
-        toke = DataSystem.tokens.Validate(id, secret)
-        if toke is None:
-            raise HTTPException(401, detail="Invalid token", headers={"token-expired": "true"})
-    if toke.user:
-        sessionToken = SessionManager.GetToken(toke.user)
-        return {"token": sessionToken.token, "isAdmin": sessionToken.user.validAdmin}
+        if not DataSystem.tokens.ValidateToken(token, secret):
+            raise HTTPException(401, detail="Invalid token", headers={"invaild-token": "true"})
+        
+    user = token.user
+    if not user:
+        raise HTTPException(401, detail="Invalid token", headers={"invaild-token": "true"})
+    return {"success": True, "username": user.username, "id": user.id, "isAdmin": user.validAdmin}
 
 @app.get("/me")
-def GetUser(session: str = Depends(auth)):
-    user = VailidateUser(session)
+def GetUser(sessionToken: str = Cookie(None)):
+    user = VailidateUser(sessionToken)
     return UserSerializer.SerializeToNetwork(user)
 
 @app.delete("/me")
-def DeleteUser(session: str = Depends(auth)):
-    user = VailidateUser(session)
+def DeleteUser(sessionToken: str = Cookie(None)):
+    #TODO: Require password
+    user = VailidateUser(sessionToken)
     DataSystem.users.Remove(user)
     return
 
@@ -413,8 +431,8 @@ class AddSharedPlaylistRequest(BaseModel):
     code: str
 
 @app.post("/playlists/shared")
-def AddSharedPlaylist(req: AddSharedPlaylistRequest, session: str = Depends(auth)):
-    user = VailidateUser(session)
+def AddSharedPlaylist(req: AddSharedPlaylistRequest, sessionToken: str = Cookie(None)):
+    user = VailidateUser(sessionToken)
     playlist = ShareManager.GetPlaylist(req.code)
     if not playlist:
         raise HTTPException(404, detail="Playlist not found")
@@ -429,12 +447,12 @@ def AddSharedPlaylist(req: AddSharedPlaylistRequest, session: str = Depends(auth
     return {"playlist": PlaylistSerializer.SerializeToNetwork(playlist)}
 
 @app.get("/playlists")
-def GetPlaylists(ids: list[str] = Query(None), filters: str = Query(None), session: str = Depends(auth)):
-    user = VailidateUser(session)
+def GetPlaylists(ids: list[str] = Query(None), filters: str = Query(None), sessionToken: str = Cookie(None)):
+    user = VailidateUser(sessionToken)
     if ids:
         playlists = []
         for id in ids:
-            playlist = VailidatePlaylist(session, id)
+            playlist = VailidatePlaylist(sessionToken, id)
             playlists.append(playlist)
         return PlaylistSerializer.SerializeAllToNetwork(playlists)
     elif filters:
@@ -454,8 +472,8 @@ class NewPlaylistRequest(BaseModel):
     songs: list[str] = []
 
 @app.post("/playlists")
-def NewPlaylist(req: NewPlaylistRequest, session: str = Depends(auth)):
-    user = VailidateUser(session)
+def NewPlaylist(req: NewPlaylistRequest, sessionToken: str = Cookie(None)):
+    user = VailidateUser(sessionToken)
     name = VerifyPlaylistName(req.name)
 
     if user.PlaylistLimitReached():
@@ -473,9 +491,9 @@ def NewPlaylist(req: NewPlaylistRequest, session: str = Depends(auth)):
     return PlaylistSerializer.SerializeToNetwork(playlist)
 
 @app.delete("/playlists/{id}")
-def DeletePlaylist(id: str,  session: str = Depends(auth)):
-    user = VailidateUser(session)
-    playlist = VailidatePlaylist(session, id)
+def DeletePlaylist(id: str,  sessionToken: str = Cookie(None)):
+    user = VailidateUser(sessionToken)
+    playlist = VailidatePlaylist(sessionToken, id)
     user.RemovePlaylist(playlist)
     DataSystem.playlists.Remove(playlist)
     DataSystem.users.Save(user)
@@ -485,8 +503,8 @@ class PlaylistSongUpdateRequest(BaseModel):
     songs: list[str]
 
 @app.patch("/playlists/{id}/add")
-def AddSongToPlaylist(id: str, req: PlaylistSongUpdateRequest, session: str = Depends(auth)):
-    playlist = VailidatePlaylist(session, id)
+def AddSongToPlaylist(id: str, req: PlaylistSongUpdateRequest, sessionToken: str = Cookie(None)):
+    playlist = VailidatePlaylist(sessionToken, id)
     for song in req.songs:
         song = DataSystem.songs.Get(song)
         if not song:
@@ -499,8 +517,8 @@ def AddSongToPlaylist(id: str, req: PlaylistSongUpdateRequest, session: str = De
     return {"success": True}
 
 @app.patch("/playlists/{id}/remove")
-def RemoveSongFromPlaylist(id: str, req: PlaylistSongUpdateRequest, session: str = Depends(auth)):
-    playlist = VailidatePlaylist(session, id)
+def RemoveSongFromPlaylist(id: str, req: PlaylistSongUpdateRequest, sessionToken: str = Cookie(None)):
+    playlist = VailidatePlaylist(sessionToken, id)
     for song in req.songs:
         song = DataSystem.songs.Get(song)
         if not song:
@@ -517,8 +535,8 @@ class PatchPlaylistRequest(BaseModel):
     songIds: Optional[list[str]]
 
 @app.patch("/playlists/{id}")
-def PatchPlaylist(id: str, req: PatchPlaylistRequest, session: str = Depends(auth)):
-    playlist = VailidatePlaylist(session, id)
+def PatchPlaylist(id: str, req: PatchPlaylistRequest, sessionToken: str = Cookie(None)):
+    playlist = VailidatePlaylist(sessionToken, id)
     if req.name:
         playlist.name = VerifyPlaylistName(req.name)
     if req.songIds:
@@ -538,8 +556,8 @@ def Search(query: str = Query(""), maxResults: int = Query(20)):
     return SongSerializer.SerializeAllToNetwork(results[:maxResults])
 
 @app.post("/resync")
-async def Resync(session: str = Depends(auth)):
-    VailidateAdmin(session)
+async def Resync(sessionToken: str = Cookie(None)):
+    VailidateAdmin(sessionToken)
     task = asyncio.create_task(ResyncServer())
     task.add_done_callback(lambda task: task.exception())
     return

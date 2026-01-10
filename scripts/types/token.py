@@ -10,6 +10,7 @@ class Token(IDObject):
     userId: str
     secret: str #hashed
     expires: datetime
+    renewable: bool = field(default=False)
 
     def AddResolver(self, userResolver: Callable[[str], Optional["User"]]):
         self.userResolver = userResolver
@@ -17,8 +18,7 @@ class Token(IDObject):
     @property
     def user(self):
         if not hasattr(self, "userResolver"):
-            print("Warning: Token does not have a user resolver")
-            return None
+            raise Exception("Token does not have a user resolver")
         return self.userResolver(self.userId)
     
     @property

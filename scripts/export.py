@@ -5,6 +5,7 @@ from scripts.types import Song, Album, Playlist
 import shutil
 import zipfile
 import json
+from scripts.cover import GetCoverPathFromSong
 
 def CreateAlbumName(song):
     return f"{" and ".join(song.singers)} Karaoke"
@@ -23,7 +24,7 @@ def ExportSong(song: Song):
 
     cover = paths.COVERS_DIR / song.id
     if not cover.exists():
-        cover = paths.ART_DIR / ((song.coverType or "duet") + ".png")
+        cover = GetCoverPathFromSong(song)
     with open(cover, "rb") as f:
         audio["APIC"] = ID3Frames.APIC( #cover
             encoding=3,
@@ -61,6 +62,8 @@ def ExportAlbum(album: Album):
 def ExportPlaylist(playlist: Playlist):
     files = []
     for song in playlist.songs:
+        if song.isCopywrited:
+            continue
         filename = ExportSong(song)
         files.append((
             paths.PROCESSING_DIR / song.id,

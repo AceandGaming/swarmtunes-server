@@ -8,8 +8,7 @@ from scripts.types import Token
 from datetime import datetime, timedelta
 from hashlib import sha256
 import hmac
-
-TOKEN_MAX_EXPIRATION_DAYS = 30
+import scripts.config as config
 
 class TokenManager(BaseManager[Token]):
     def __init__(self):
@@ -29,14 +28,20 @@ class TokenManager(BaseManager[Token]):
         token.AddResolver(UserManager().Get)
         return token
     
-    def CreateFromUser(self, user: User):
+    def CreateFromUser(self, user: User, renewable: bool = False):
         secret = token_urlsafe(32)
-        expires = datetime.now() + timedelta(days=TOKEN_MAX_EXPIRATION_DAYS)
+        if renewable:
+            expires = datetime.now() + timedelta(days=config.TOKEN_EXPIRATION_DAYS)
+        else:
+            expires = datetime.now() + timedelta(days=config.SESSION_EXPIRATION_HOURS)
+
         secretHash = sha256(secret.encode()).hexdigest()
-        return self.Create(userId=user.id, secret=secretHash, expires=expires), secret
+        return self.Create(userId=user.id, secret=secretHash, expires=expires, renewable=renewable), secret
     
     def Refresh(self, token: Token):
-        token.expires = datetime.now() + timedelta(days=TOKEN_MAX_EXPIRATION_DAYS)
+        if not token.renewable:
+            return token, None
+        token.expires = datetime.now() + timedelta(days=config.TOKEN_EXPIRATION_DAYS)
         secret = token_urlsafe(32)
         token.secret = sha256(secret.encode()).hexdigest()
         self._database.Save(token)
@@ -47,33 +52,31 @@ class TokenManager(BaseManager[Token]):
             if token.userId == userId:
                 self.Remove(token)
     
-    def HasExpired(self, id: str):
-        token = self.Get(id)
+    def HasExpired(self, token: Token):
         if token is None:
             return True
         return token.expires < datetime.now()
     
-    def GetWithSecret(self, id: str, secret: str):
-        token = self.Get(id)
+    def ValidateSecret(self, token: Token, secret: str):
         if token is None:
-            return None
+            return False
         if not hmac.compare_digest(token.secret, sha256(secret.encode()).hexdigest()):
-            return None
-        return token
+            return False
+        return True
 
-    def Validate(self, id: str, secret: str):
-        token = self.Get(id)
+    def ValidateToken(self, token: Token, secret: str):
         if token is None:
-            return None
-        if token.expires < datetime.now():
-            return None
+            return False
+        if self.HasExpired(token):
+            self.Remove(token)
+            return False
         if UserManager().Get(token.userId) is None:
             self.DeleteTokensOfUser(token.userId)
-            return None
-        if not hmac.compare_digest(token.secret, sha256(secret.encode()).hexdigest()):
+            return False
+        if not self.ValidateSecret(token, secret):
             self.DeleteTokensOfUser(token.userId)
-            return None
-        return token
+            return False
+        return True
     
     def RemoveId(self, id: str):
         token = self.Get(id)
