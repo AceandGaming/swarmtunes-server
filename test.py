@@ -19,4 +19,12 @@ from scripts.load_metadata import *
 
 IDManager.Load()
 
-DeleteManager.RecoverDeleted(DeleteManager.LoadDeleted("2025-12-22T10:56:20.372852"))
+print("Getting files")
+files = GetAllFiles()
+driveIds = [driveFiles["id"] for driveFiles in files]
+
+for song in DataSystem.songs.items:
+    print(song.title)
+    if song.storage.googleDriveId and song.storage.googleDriveId not in driveIds:
+        print("Not found")
+        DeleteManager.DeleteFile(paths.SONGS_DIR / song.id)

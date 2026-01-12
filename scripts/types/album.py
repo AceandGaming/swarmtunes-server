@@ -27,16 +27,13 @@ class Album(IDObject):
     @property
     def coverType(self):
         if len(self.singers) == 0:
-            return None
+            return "v1"
         if len(self.singers) > 1:
             return "duet"
-        singer = self.singers[0]
-        if singer == "Neuro-sama":
+        if "Neuro-sama" in self.singers:
             return "neuro"
-        if singer == "Evil Neuro":
+        if "Evil Neuro" in self.singers:
             return "evil"
-        if singer == "Hiyori":
-            return "v1"
         return None
     
     @property

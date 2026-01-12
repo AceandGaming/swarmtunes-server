@@ -1,5 +1,6 @@
 from scripts.api.drive_verify import get_drive_service
 import googleapiclient.http as driveAPI
+import googleapiclient.errors
 from aiohttp import ClientSession
 from scripts.paths import PROCESSING_DIR as PENDING_DIR
 

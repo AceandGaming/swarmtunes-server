@@ -84,7 +84,7 @@ def MetadataFromFilename(filename):
         data.artists = artists
 
     if translate is not None:
-        if not re.match(r"^[a-zA-Z0-9_ -]+$", data.title or ""):
+        if not re.match(r"^[a-zA-Z0-9_ \-.;:]+$", data.title or ""):
             data.titleTranslate = translate
         else:
             data.titleExtra = translate
@@ -105,16 +105,17 @@ def MetadataFromAudioData(path):
     #         print(key)
 
     def GetTitleInfo(text):
-        title, match = FindSub(r"[\(\{\[]\D*?[\)\}\]]", text)
+        #title, match = FindSub(r"[\(\{\[]\D*?[\)\}\]]", text)
+        title = text
         title = title.strip()
         titleExtra = None
         titleTranslate = None
-        if match:
-            extra = re.sub(r"[\[\{\(\)\}\]]*", "", match[0])
-            if not re.match(r"^[a-zA-Z0-9_\- ]+$", title):
-                titleTranslate = extra
-            else:
-                titleExtra = extra
+        # if match:
+        #     extra = re.sub(r"[\[\{\(\)\}\]]*", "", match[0])
+        #     if not re.match(r"^[a-zA-Z0-9_ \-.;:]+$", title):
+        #         titleTranslate = extra
+        #     else:
+        #         titleExtra = extra
 
         return title, titleExtra, titleTranslate
 
