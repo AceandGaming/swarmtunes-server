@@ -24,6 +24,12 @@ class Song(IDObject):
         self.isCopywrited = self.isCopywrited or self.isOriginal
 
     @property
+    def cover(self):
+        if self.coverArt is not None:
+            return self.coverArt
+        return self.coverType
+
+    @property
     def coverType(self):
         if self.coverArt is not None:
             return "custom"
@@ -37,6 +43,7 @@ class Song(IDObject):
         if singer == "Evil Neuro":
             return "evil"
         return None
+        
         
 
     def __repr__(self):

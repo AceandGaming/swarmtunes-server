@@ -37,6 +37,12 @@ class Album(IDObject):
         return None
     
     @property
+    def cover(self):
+        if len(self.songIds) == 1:
+            return self.songs[0].cover
+        return self.coverType
+    
+    @property
     def PrettyName(self):
         return " and ".join(self.singers) + " Karaoke"
 
