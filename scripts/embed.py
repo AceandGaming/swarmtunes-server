@@ -3,7 +3,7 @@ from scripts.serializer import PlaylistSerializer
 
 def SongEmbed(song: Song):
     redirect_url = f"https://swarmtunes.com?song={song.id}"
-    image_url = f"https://api.swarmtunes.com/covers/{song.id}?size=256"
+    image_url = f"https://api.swarmtunes.com/covers/{song.cover}"
     return f"""
     <!DOCTYPE html>
     <html lang="en">
