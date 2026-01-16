@@ -19,7 +19,7 @@ def ExportSong(song: Song):
     shutil.copy(fromPath, toPath)
     audio = ID3(toPath)
     audio["TIT2"] = ID3Frames.TIT2(encoding=3, text=song.title) #title
-    audio["TPE1"] = ID3Frames.TPE1(encoding=3, text=song.artist) #artist
+    audio["TPE1"] = ID3Frames.TPE1(encoding=3, text=song.prettyArtists) #artist
     audio["TALB"] = ID3Frames.TALB(encoding=3, text=CreateAlbumName(song)) #album
 
     cover = paths.COVERS_DIR / song.id
@@ -49,7 +49,6 @@ def ExportAlbum(album: Album):
     path = paths.PROCESSING_DIR / album.id
     metadata = {
         "date": album.date.isoformat(),
-        "type": album.coverType,
         "title": album.PrettyName
     }
     with zipfile.ZipFile(path, "w") as zipf:
@@ -73,7 +72,6 @@ def ExportPlaylist(playlist: Playlist):
     path = paths.PROCESSING_DIR / playlist.id
     metadata = {
         "date": playlist.date.isoformat(),
-        "type": playlist.coverType,
         "title": playlist.name
     }
     with zipfile.ZipFile(path, "w") as zipf:

@@ -18,7 +18,16 @@ def GetCover(path, scale):
         return None
     
 def GetCoverPathFromSong(song):
-    if song.coverType == "custom":
-        return paths.ART_DIR / f"{song.coverArt}.png"
-    else:
-        return paths.ART_DIR / f"{song.coverType}.png"
+    return paths.COVERS_DIR / f"{song.coverArt}.png"
+
+def CreateArtworkFromSingers(singers):
+    if len(singers) == 0:
+        return "v1"
+    if len(singers) > 1:
+        return "duet"
+    singer = singers[0]
+    if singer == "Neuro-sama":
+        return "neuro"
+    if singer == "Evil Neuro":
+        return "evil"
+    return None

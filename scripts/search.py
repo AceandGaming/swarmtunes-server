@@ -134,7 +134,7 @@ def SearchSongs(query: str, songs: Optional[list[Song]] = None, multipliers: Opt
     if not songs:
         songs = DataSystem.songs.items
     titleSearchables = [Searchable(song.title, song.id, song.date) for song in songs]
-    artistSearchables = [Searchable(song.artist, song.id, song.date) for song in songs]
+    artistSearchables = [Searchable(song.prettyArtists, song.id, song.date) for song in songs]
     matches = Search(query, titleSearchables + artistSearchables, multipliers)
     if matches == {}:
         return DataSystem.songs.items

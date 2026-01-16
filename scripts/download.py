@@ -12,6 +12,7 @@ from scripts.id_manager import IDManager
 import scripts.load_metadata as metadata
 from scripts.check_audio import compare_audio_perceptual as CompareAudio
 from datetime import datetime
+from scripts.cover import CreateArtworkFromSingers
 
 TARGET_LUFS = -16
 MIN_DBFS = -55 #trim audio lower then this
@@ -52,10 +53,11 @@ def DownloadSong(driveFile):
     song = Song(
         id=id,
         title=data.titleTranslate or data.title or "unknown",
-        artist=", ".join(data.artists),
+        artists=data.artists,
         singers=data.singers,
         date=data.date or datetime.min,
-        storage=SongExternalStorage(googleDriveId=driveFile["id"])
+        storage=SongExternalStorage(googleDriveId=driveFile["id"]),
+        coverArt=CreateArtworkFromSingers(data.singers)
     )
 
     CorrectMP3(paths.PROCESSING_DIR / driveFile["id"], paths.MP3_DIR / song.id)
@@ -94,10 +96,11 @@ async def DownloadSongs(drive_files):
             song = Song(
                 id=id,
                 title=data.titleTranslate or data.title or "unknown",
-                artist=", ".join(data.artists),
+                artists=data.artists,
                 singers=data.singers,
                 date=data.date or datetime.min,
-                storage=SongExternalStorage(googleDriveId=driveFile["id"])
+                storage=SongExternalStorage(googleDriveId=driveFile["id"]),
+                coverArt=CreateArtworkFromSingers(data.singers)
             )
 
             DataSystem.songs.Save(song)

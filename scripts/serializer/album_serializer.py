@@ -2,6 +2,7 @@ from .serializer import BaseSerializer
 from scripts.types import Album
 from dataclasses import asdict
 from datetime import datetime
+from scripts.cover import CreateArtworkFromSingers
 
 class AlbumSerializer(BaseSerializer[Album]):
     @staticmethod
@@ -9,12 +10,14 @@ class AlbumSerializer(BaseSerializer[Album]):
         data = asdict(item)
         data["date"] = item.date.isoformat()
         data["songIds"] = list(item.songIds)
+
         return data
     
     @staticmethod
     def Deserialize(data: dict):
         data["date"] = datetime.fromisoformat(data["date"])
         data["songIds"] = set(data["songIds"])
+    
         return Album(**data)
     
     @staticmethod
@@ -23,8 +26,7 @@ class AlbumSerializer(BaseSerializer[Album]):
             "id": item.id,
             "date": item.date,
             "singers": item.singers,
-            "coverType": item.coverType, #backward compatibility
-            "cover": item.cover,
+            "cover": item.coverArt,
             "songIds": list(item.songIds)
         }
     

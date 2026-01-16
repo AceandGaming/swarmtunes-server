@@ -12,39 +12,25 @@ class SongExternalStorage:
 @dataclass(eq=False)
 class Song(IDObject):
     title: str
-    artist: str
+    artists: list[str]
     singers: list[str]
     date: datetime
-    isOriginal: bool = False
     coverArt: Optional[str] = None
+    subtitle: Optional[str] = None
+    isOriginal: bool = False
     storage: SongExternalStorage = field(default_factory=lambda: SongExternalStorage())
     isCopywrited: bool = False
+
+    @property
+    def prettyArtists(self):
+        return ", ".join(self.artists)
+    
+    @property
+    def prettySingers(self):
+        return ", ".join(self.singers)
 
     def __post_init__(self):
         self.isCopywrited = self.isCopywrited or self.isOriginal
 
-    @property
-    def cover(self):
-        if self.coverArt is not None:
-            return self.coverArt
-        return self.coverType
-
-    @property
-    def coverType(self):
-        if self.coverArt is not None:
-            return "custom"
-        if len(self.singers) == 0:
-            return "v1"
-        if len(self.singers) > 1:
-            return "duet"
-        singer = self.singers[0]
-        if singer == "Neuro-sama":
-            return "neuro"
-        if singer == "Evil Neuro":
-            return "evil"
-        return None
-        
-        
-
     def __repr__(self):
-        return f"{self.title} by {self.artist} ({", ".join(self.singers)})"
+        return f"{self.title} by {" and ".join(self.artists)} ({", ".join(self.singers)})"

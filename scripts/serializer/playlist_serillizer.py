@@ -22,7 +22,7 @@ class PlaylistSerializer(BaseSerializer[Playlist]):
             "title": item.name,
             "singers": item.singers,
             "date": item.date,
-            "coverType": item.coverType,
+            "cover": item.coverArt,
             "songIds": list(item.songIds)
         }
     

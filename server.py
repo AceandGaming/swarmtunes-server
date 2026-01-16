@@ -263,10 +263,10 @@ def GetCover(name: str, size: int = Query(128)):
         size = 1024
     if size < 1:
         size = 1
-    path = paths.ART_DIR / f"{name}.png"
+    path = paths.COVERS_DIR / f"{name}.png"
     print(path)
     
-    if not path.resolve().is_relative_to(paths.ART_DIR.resolve()): # not in art dir
+    if not path.resolve().is_relative_to(paths.COVERS_DIR.resolve()): # not in art dir
         raise HTTPException(404, detail="Cover not found")
     if not path.exists():
         raise HTTPException(404, detail="Cover not found")

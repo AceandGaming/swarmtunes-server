@@ -7,6 +7,7 @@ from .id_object import IDObject
 @dataclass(eq=False)
 class Album(IDObject):
     date: datetime
+    coverArt: Optional[str] = None
     songIds: set[str] = field(default_factory=lambda: set())
 
     @property
@@ -23,24 +24,6 @@ class Album(IDObject):
     @property
     def singers(self):
         return self._GetSingers()
-    
-    @property
-    def coverType(self):
-        if len(self.singers) == 0:
-            return "v1"
-        if len(self.singers) > 1:
-            return "duet"
-        if "Neuro-sama" in self.singers:
-            return "neuro"
-        if "Evil Neuro" in self.singers:
-            return "evil"
-        return None
-    
-    @property
-    def cover(self):
-        if len(self.songIds) == 1:
-            return self.songs[0].cover
-        return self.coverType
     
     @property
     def PrettyName(self):

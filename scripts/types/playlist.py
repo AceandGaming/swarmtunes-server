@@ -5,7 +5,7 @@ from typing import Optional, Callable, TYPE_CHECKING
 from .id_object import IDObject
 if TYPE_CHECKING:
     from scripts.types import User 
-
+from scripts.cover import CreateArtworkFromSingers
 
 @dataclass(eq=False)
 class Playlist(IDObject):
@@ -13,7 +13,6 @@ class Playlist(IDObject):
     userId: str
     date: datetime = field(default_factory=lambda: datetime.now())
     songIds: list[str] = field(default_factory=lambda: [])
-
 
     @property
     def songs(self) -> list[Song]:
@@ -31,22 +30,8 @@ class Playlist(IDObject):
         return self._GetSingers()
     
     @property
-    def coverType(self):
-        if len(self.singers) == 0:
-            return None
-        if len(self.singers) > 1:
-            return "duet"
-        singer = self.singers[0]
-        if singer == "Neuro-sama":
-            return "neuro"
-        if singer == "Evil Neuro":
-            return "evil"
-        return None
-    # @property
-    # def user(self) -> Optional["User"]:
-    #     if self.userResolver is None:
-    #         return None
-    #     return self.userResolver(self.userId)
+    def coverArt(self):
+        return CreateArtworkFromSingers(self.singers)
     
     def AddResolver(self, songResolver: Optional[Callable[[str], Optional[Song]]] = None, userResolver: Optional[Callable[[str], Optional["User"]]] = None):
         if songResolver is not None:
