@@ -3,7 +3,7 @@ name = "swarmtunes-server"
 version = "0.1.0"
 description = "Swarmtunes Server."
 readme = "README.md"
-requires-python = ">=3.10, <3.13"
+requires-python = ">=3.12, <3.13"
 dependencies = [
     "aiohttp==3.13.3",
     "fastapi==0.128.0",
