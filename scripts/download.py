@@ -1,4 +1,8 @@
+from pathlib import Path
 import scripts.api.google_drive as google_drive
+import scripts.api.rclone as rclone_api
+import multiprocessing
+import concurrent.futures
 from scripts.types.song import Song, SongExternalStorage
 from scripts.data_system import DataSystem
 from pydub import AudioSegment, silence
@@ -8,6 +12,7 @@ import numpy as np
 import asyncio
 from aiohttp import ClientSession
 import os
+import warnings
 from scripts.id_manager import IDManager
 import scripts.load_metadata as metadata
 from scripts.check_audio import compare_audio_perceptual as CompareAudio
@@ -34,7 +39,11 @@ def CorrectMP3(inputFile, output):
     samples = np.array(song.get_array_of_samples()) / (1 << 15)
     meter = loudnorm.Meter(song.frame_rate)
     loudness = meter.integrated_loudness(samples)
-    samples = loudnorm.normalize.loudness(samples, loudness, TARGET_LUFS)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        samples = loudnorm.normalize.loudness(samples, loudness, TARGET_LUFS)
+
     samples = np.clip(samples, -1.0, 0.9995) #prevents clipping
 
     song = song._spawn((samples * (1 << 15)).astype(np.int16).tobytes())
@@ -133,3 +142,105 @@ async def DownloadMissingSongs():
             filesToDownload.append(drive_file)
     print(f"Found {len(filesToDownload)} new files to download")
     await DownloadSongs(filesToDownload)
+
+def _ProcessSong(driveFile: dict, rclone_dir: Path, mp3_dir: Path):
+    rel_path = str(driveFile["name"])
+    file_path = rclone_dir / rel_path
+
+    if not file_path.exists():
+        print(f"File missing after download: {rel_path}")
+        return None
+
+    print(f"Processing '{rel_path}' ID: {driveFile['id']}")
+
+    filename = os.path.basename(rel_path)
+    nameData = metadata.MetadataFromFilename(filename)
+
+    try:
+         audioData = metadata.MetadataFromAudioData(file_path)
+    except Exception:
+         audioData = metadata.AudioMetadata()
+
+    data = metadata.MergeMetadata(audioData, nameData)
+
+    id = IDManager.NewId(Song) 
+    song = Song(
+        id=id,
+        title=data.titleTranslate or data.title or "unknown",
+        artists=data.artists,
+        singers=data.singers,
+        date=data.date or datetime.min,
+        storage=SongExternalStorage(googleDriveId=driveFile["id"]),
+        coverArt=CreateArtworkFromSingers(data.singers)
+    )
+
+    try:
+        CorrectMP3(file_path, mp3_dir / song.id)
+    except Exception as e:
+        print(f"Failed to correct song {song.title}: {e}")
+        return None
+
+    return song
+
+async def DownloadMissingSongsRClone() -> None:
+    """Downloads missing songs using RClone for bulk download and processing."""
+    rclone_dir = paths.PROCESSING_DIR / "rclone_dump"
+    rclone_dir.mkdir(parents=True, exist_ok=True)
+
+    print("Fetching file list from RClone...")
+    files = await asyncio.to_thread(rclone_api.GetAllFiles)
+
+    driveToUUID = {}
+    for song in DataSystem.songs.items:
+        if song.storage.googleDriveId is not None:
+            driveToUUID[song.storage.googleDriveId] = song
+
+    filesToProcess = []
+    for f in files:
+        if f["id"] not in driveToUUID:
+            filesToProcess.append(f)
+
+    if not filesToProcess:
+        print("No new files found.")
+        return
+
+    print(f"Found {len(filesToProcess)} new files. Downloading entire drive via RClone...")
+
+    try:
+        await asyncio.to_thread(rclone_api.DownloadFiles, str(rclone_dir))
+    except Exception as e:
+        print(f"RClone download failed: {e}")
+        return
+
+    print("Download complete. Processing files...")
+
+    cpu_count = multiprocessing.cpu_count()
+    max_workers = min(6, max(1, cpu_count - 2))
+
+    loop = asyncio.get_running_loop()
+    executor = concurrent.futures.ProcessPoolExecutor(max_workers=max_workers)
+    semaphore = asyncio.Semaphore(max_workers + 2)
+
+    async def _wrapped_process(f):  # Limit to prevent too many concurrent tasks
+        async with semaphore:
+            return await loop.run_in_executor(executor, _ProcessSong, f, rclone_dir, paths.MP3_DIR)
+
+    try:
+        tasks = [asyncio.create_task(_wrapped_process(f)) for f in filesToProcess]
+
+        for task in asyncio.as_completed(tasks):
+            try:
+                song = await task
+                if song:
+                    DataSystem.songs.Save(song)
+                    print(f"Processed: {song.title}")
+            except Exception as e:
+                print(f"Error processing song: {e}")
+
+    except asyncio.CancelledError:
+        print("\nOperation cancelled. Shutting down workers...")
+        executor.shutdown(wait=False, cancel_futures=True)
+    finally:
+        executor.shutdown(wait=False)
+
+    IDManager.Save()
