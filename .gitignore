@@ -1,3 +1,14 @@
+# Python
+.venv/
+build/
+__pycache__/
+*.pyc
+
+# Mac
+.DS_Store
+Thumbs.db
+
+# Data
 /data/*
 /cache/
 /processing/*
@@ -5,11 +16,11 @@
 /deleted/*
 /covers/custom/*
 
-token.json
-
 *.mp3
 *.wav
 *.flac
 
-__pycache__/
+# Credentials
 credentials.json
+token.json
+*.pem
