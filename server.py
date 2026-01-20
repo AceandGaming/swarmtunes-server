@@ -248,7 +248,11 @@ def GetSongFile(id: str, export: bool = Query(False)):
         filename = quote(filename)
         file_path = paths.PROCESSING_DIR / id
         return FileResponse(file_path, media_type="audio/mpeg", headers={"Content-Disposition": f"attachment; filename*=UTF-8''{filename}"})
-    
+
+    if os.getenv("LOCAL") is not None:
+        file_path = paths.MP3_DIR / id
+        return FileResponse(file_path, media_type="audio/mpeg", headers={"Accept-Ranges": "bytes"})
+
     file_path = paths.MP3_DIR / id
     ngnixPath = f"/protected/{file_path.relative_to(paths.DATA_DIR)}"
     response = Response()
