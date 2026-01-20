@@ -251,7 +251,7 @@ def GetSongFile(id: str, export: bool = Query(False)):
 
     if os.getenv("LOCAL") is not None:
         file_path = paths.MP3_DIR / id
-        return FileResponse(file_path, media_type="audio/mpeg")
+        return FileResponse(file_path, media_type="audio/mpeg", headers={"Accept-Ranges": "bytes"})
 
     file_path = paths.MP3_DIR / id
     ngnixPath = f"/protected/{file_path.relative_to(paths.DATA_DIR)}"
