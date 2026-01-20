@@ -9,7 +9,7 @@ import scripts.embed as embeds
 import scripts.api.emotes as emotes
 import time, math
 import scripts.paths as paths
-from scripts.download import DownloadMissingSongs
+from scripts.download import DownloadMissingSongs, DownloadMissingSongsRClone
 import scripts.filters as Filter
 from scripts.export import ExportSong, ExportAlbum, ExportPlaylist
 from scripts.cover import GetCover as ResizeCover
@@ -26,6 +26,7 @@ import scripts.maintenance as maintenance
 import scripts.config as config
 from scripts.delete import DeleteManager
 from urllib.parse import quote
+from rclone_python import rclone
 
 def InitializeServer():
     global app
@@ -102,7 +103,10 @@ def VerifyPlaylistName(name: str):
 
 async def ResyncServer():
     print("Downloading new files...")
-    await DownloadMissingSongs()
+    if rclone.is_installed():
+        await DownloadMissingSongsRClone()
+    else:
+        await DownloadMissingSongs()
     print("Downloading new files complete")
     DataSystem.albums.ReGenerate()
     print("New songs downloaded and albums generated")
