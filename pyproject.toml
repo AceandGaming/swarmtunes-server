@@ -1,0 +1,31 @@
+[project]
+name = "swarmtunes-server"
+version = "0.1.0"
+description = "Swarmtunes Server."
+readme = "README.md"
+requires-python = ">=3.12, <3.13"
+dependencies = [
+    "aiohttp==3.13.3",
+    "fastapi==0.128.0",
+    "google-api-python-client==2.188.0",
+    "google-auth-oauthlib==1.2.4",
+    "librosa==0.11.0",
+    "mutagen==1.47.0",
+    "nanoid==2.0.0",
+    "passlib==1.7.4",
+    "pillow==12.1.0",
+    "prompt-toolkit==3.0.52",
+    "pydantic==2.12.5",
+    "pydub==0.25.1",
+    "pyloudnorm==0.2.0",
+    "rclone-python==0.1.23",
+    "uvicorn==0.40.0",
+]
+
+[dependency-groups]
+dev = [
+    "ruff==0.14.13",
+]
+
+[tool.setuptools.packages.find]
+include = ["scripts"]
