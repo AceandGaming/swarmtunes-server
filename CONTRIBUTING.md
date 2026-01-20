@@ -6,7 +6,7 @@ This project is open to contributions. The following guide will help you set up 
 
 ## Setup
 
-[Python](https://www.python.org/) is required to run this project. We strongly recommend using [uv](https://docs.astral.sh/uv/) to manage this project.
+[Python](https://www.python.org/) is required to run this project. Optionally [uv](https://docs.astral.sh/uv/) can be used to manage this project.
 
 1. Fork the project
 
