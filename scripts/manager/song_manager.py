@@ -20,3 +20,8 @@ class SongManager(BaseManager[Song]):
         elif item.coverArt == item.id:
             item.coverArt = None
         return super().Save(item)
+    
+    def GetSimilar(self, song: Song) -> Song|None:
+        for songItem in self.items:
+            if songItem.title == song.title and songItem.artists == song.artists and songItem.date == song.date:
+                return songItem

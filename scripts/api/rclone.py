@@ -9,7 +9,12 @@ DEFAULT_DRIVE_ID = "1B1VaWp-mCKk15_7XpFnImsTdBJPOGx7a"
 
 def GetRcloneFlags() -> list[str]:
     """Generate rclone flags from local credentials and token files to avoid needing rclone.conf."""
-    creds = json.loads(Path("credentials.json").read_text())["installed"]
+    creds = json.loads(Path("credentials.json").read_text())
+    try:
+        creds = creds["installed"]
+    except KeyError:
+        creds = creds["web"]
+
     token_data = json.loads(Path("token.json").read_text())
 
     # rclone expects the token in a specific JSON format

@@ -68,6 +68,10 @@ def DownloadSong(driveFile):
         storage=SongExternalStorage(googleDriveId=driveFile["id"]),
         coverArt=CreateArtworkFromSingers(data.singers)
     )
+    similar = DataSystem.songs.GetSimilar(song)
+    if similar is not None:
+        print(f"Duplicate song: {song.title} by {song.artists}")
+        song.id = similar.id
 
     CorrectMP3(paths.PROCESSING_DIR / driveFile["id"], paths.MP3_DIR / song.id)
     os.remove(paths.PROCESSING_DIR / driveFile["id"])
@@ -173,6 +177,10 @@ def _ProcessSong(driveFile: dict, rclone_dir: Path, mp3_dir: Path):
         storage=SongExternalStorage(googleDriveId=driveFile["id"]),
         coverArt=CreateArtworkFromSingers(data.singers)
     )
+    similar = DataSystem.songs.GetSimilar(song)
+    if similar is not None:
+        print(f"Duplicate song: {song.title} by {song.artists}")
+        song.id = similar.id
 
     try:
         CorrectMP3(file_path, mp3_dir / song.id)

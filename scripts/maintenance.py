@@ -1,9 +1,11 @@
 from scripts.data_system import DataSystem
 from scripts.types import *
 import scripts.paths as paths
-from scripts.delete import DeleteManager
 import os
+from scripts.api.google_drive import GetAllFiles
 
+#this code should make more checks then it does
+#databases accidentally deleted = 3
 
 def ClearOrphanedSongs():
     songFileIds: set[str] = set()
@@ -28,13 +30,23 @@ def ClearOrphanedSongs():
 
         if inSongFile and not inMp3File:
             print(f"Deleting orphaned song: {id}")
-            DeleteManager.DeleteFile(paths.SONGS_DIR / id)
+            DataSystem.songs.RemoveById(id)
             continue
 
         if not inSongFile and inMp3File:
             print(f"Deleting orphaned mp3: {id}")
             os.remove(paths.MP3_DIR / id)
             continue
+
+def RemoveSourcelessSongs():
+    pass #To whome it may concern. DO NOT RUN THIS CODE
+    # driveFiles = GetAllFiles()
+    # for song in DataSystem.songs.items:
+    #     if song.storage.youtubeId:
+    #         continue
+    #     if not song.storage.googleDriveId or song.storage.googleDriveId not in driveFiles:
+    #         print(f"Deleting sourceless song: {song.title} - {song.id}")
+    #         DataSystem.songs.Remove(song)
 
 def ClearOrphanedPlaylists():
     playlists = set([playlist.id for playlist in DataSystem.playlists.items])
@@ -84,6 +96,7 @@ def ClearOrphanedLinksToSongs():
             DataSystem.albums.Save(album)
 
 def ClearAllOrphaned():
+    RemoveSourcelessSongs()
     ClearOrphanedSongs()
     ClearOrphanedPlaylists()
     ClearOrphanedTokens()
@@ -92,6 +105,8 @@ def ClearAllOrphaned():
 def ClearProcessing():
     count = 0
     for file in paths.PROCESSING_DIR.iterdir():
+        if not file.is_file():
+            continue
         file.unlink()
         count += 1
     print(f"Deleted {count} files from processing")

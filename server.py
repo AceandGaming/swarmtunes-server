@@ -27,6 +27,8 @@ import scripts.config as config
 from scripts.delete import DeleteManager
 from urllib.parse import quote
 from rclone_python import rclone
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.triggers.cron import CronTrigger
 
 def InitializeServer():
     global app
@@ -38,6 +40,8 @@ def InitializeServer():
     allow_origin_regex = ""
     if os.getenv("DATA_PATH") is not None: #dev only
         allow_origin_regex = r".*"
+        print("WARNING: Running in dev mode. This will allow all origins!")
+
     print("Starting server...")
     print("Allowing origins:", allow_origins)
     app = FastAPI()
@@ -50,6 +54,7 @@ def InitializeServer():
         expose_headers=["invaild-token"],
         allow_origin_regex=allow_origin_regex
     )
+    scheduler = AsyncIOScheduler()
 
     print("FastAPI started")
     print("Loading data")
@@ -57,6 +62,17 @@ def InitializeServer():
     ShareManager.Load()
     emotes.Load()
     print(f"Server started in {math.floor((time.time() - startTime) * 1000)} miliseconds")
+
+    if os.getenv("DATA_PATH") is None: #release only
+        print("Starting scheduler")
+        scheduler.add_job(
+            ResyncServer,
+            trigger=CronTrigger(hour=2, minute=0),  # daily at 2:00 AM
+            id="resync",
+            replace_existing=True,
+        )
+        scheduler.start()
+    
     return app
 
 def VailidateToken(tokenString: str|None) -> Token:
@@ -103,20 +119,21 @@ def VerifyPlaylistName(name: str):
 
 async def ResyncServer():
     print("Downloading new files...")
-    if rclone.is_installed():
-        await DownloadMissingSongsRClone()
-    else:
-        await DownloadMissingSongs()
+    # if rclone.is_installed():
+    #     await DownloadMissingSongsRClone()
+    # else:
+    await DownloadMissingSongs()
     print("Downloading new files complete")
     DataSystem.albums.ReGenerate()
     print("New songs downloaded and albums generated")
+    IDManager.Load()
 
 app = InitializeServer()
 
 @app.on_event("startup")
 async def Startup():
     if os.getenv("DATA_PATH") is None:
-        await CleanUp()
+        #await CleanUp()
         await ResyncServer()
 
 async def CleanUp():

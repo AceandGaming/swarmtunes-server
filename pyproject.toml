@@ -20,6 +20,7 @@ dependencies = [
     "pyloudnorm==0.2.0",
     "rclone-python==0.1.23",
     "uvicorn==0.40.0",
+    "apscheduler==3.11.2"
 ]
 
 [dependency-groups]

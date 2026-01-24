@@ -20,3 +20,18 @@ from scripts.load_metadata import *
 
 IDManager.Load()
 
+
+# songsToDelete = []
+# driveFiles = GetAllFiles()
+# ids = [file["id"] for file in driveFiles]
+
+# print(ids)
+
+# for song in DataSystem.songs.items:
+#     if song.storage.youtubeId:
+#         continue
+#     if song.storage.googleDriveId not in ids:
+#         print(f"Deleting sourceless song: {song.title} - {song.id}")
+#         songsToDelete.append(song.id)
+        
+# print(len(songsToDelete))
