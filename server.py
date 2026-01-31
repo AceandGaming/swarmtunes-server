@@ -1,19 +1,16 @@
-from typing import Literal, Optional
+from typing import Optional
 from pydantic import BaseModel
 from scripts.types import *
-from fastapi import FastAPI, HTTPException, Query, Depends, Response, Cookie, Request
+from fastapi import FastAPI, HTTPException, Query, Response, Cookie
 from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.security import OAuth2PasswordBearer
 import scripts.embed as embeds
 import scripts.api.emotes as emotes
 import time, math
 import scripts.paths as paths
-from scripts.download import DownloadMissingSongs, DownloadMissingSongsRClone
 import scripts.filters as Filter
 from scripts.export import ExportSong, ExportAlbum, ExportPlaylist
 from scripts.cover import GetCover as ResizeCover
-from scripts.cover import GetCoverPathFromSong
 import asyncio
 import re
 import os
@@ -26,24 +23,24 @@ import scripts.maintenance as maintenance
 import scripts.config as config
 from scripts.delete import DeleteManager
 from urllib.parse import quote
-from rclone_python import rclone
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
+from scripts.log import logger
+import scripts.maintenance as maintenance
 
 def InitializeServer():
-    global app
     startTime = time.time()
 
     allow_origins = [
         "https://swarmtunes.com",
     ]
     allow_origin_regex = ""
-    if os.getenv("DATA_PATH") is not None: #dev only
+    if not config.CORS_ENABLED:
         allow_origin_regex = r".*"
-        print("WARNING: Running in dev mode. This will allow all origins!")
+        logger.warning("Allowing all origins!")
 
-    print("Starting server...")
-    print("Allowing origins:", allow_origins)
+    logger.info("Starting server...")
+    logger.info("Allowing origins: " + ",".join(allow_origins))
     app = FastAPI()
     app.add_middleware(
         CORSMiddleware,
@@ -56,17 +53,17 @@ def InitializeServer():
     )
     scheduler = AsyncIOScheduler()
 
-    print("FastAPI started")
-    print("Loading data")
+    logger.debug("FastAPI started")
+    logger.debug("Loading data")
     IDManager.Load()
     ShareManager.Load()
     emotes.Load()
-    print(f"Server started in {math.floor((time.time() - startTime) * 1000)} miliseconds")
+    logger.info(f"Server started in {math.floor((time.time() - startTime) * 1000)} miliseconds")
 
-    if os.getenv("DATA_PATH") is None: #release only
-        print("Starting scheduler")
+    if config.MAINTENACE_ENABLED:
+        logger.debug("Starting scheduler")
         scheduler.add_job(
-            ResyncServer,
+            Maintenance,
             trigger=CronTrigger(hour=2, minute=0),  # daily at 2:00 AM
             id="resync",
             replace_existing=True,
@@ -74,6 +71,29 @@ def InitializeServer():
         scheduler.start()
     
     return app
+
+def Maintenance():
+    maintenance.Run()
+    DataSystem.albums.ReGenerate()
+    logger.debug("Regenerated albums")
+
+    DeleteManager.DeleteExtraFiles()
+
+    IDManager.Load()
+
+app = InitializeServer()
+
+@app.on_event("startup")
+async def Startup():
+    if config.MAINTENACE_ENABLED:
+        Maintenance()
+
+@app.on_event("shutdown")
+async def Shutdown():
+    logger.info("Saving...")
+    ShareManager.Save()
+    logger.info("Saved!")
+
 
 def VailidateToken(tokenString: str|None) -> Token:
     if not tokenString:
@@ -116,37 +136,6 @@ def VerifyPlaylistName(name: str):
     if not re.match(r"^[0-9A-Za-z_ :]+$", name):
         raise HTTPException(400, detail="Playlist name contains invalid characters")
     return name
-
-async def ResyncServer():
-    print("Downloading new files...")
-    # if rclone.is_installed():
-    #     await DownloadMissingSongsRClone()
-    # else:
-    await DownloadMissingSongs()
-    print("Downloading new files complete")
-    DataSystem.albums.ReGenerate()
-    print("New songs downloaded and albums generated")
-    IDManager.Load()
-
-app = InitializeServer()
-
-@app.on_event("startup")
-async def Startup():
-    if os.getenv("DATA_PATH") is None:
-        #await CleanUp()
-        await ResyncServer()
-
-async def CleanUp():
-    print("Cleaning up...")
-    maintenance.ClearAllOrphaned()
-    maintenance.ClearProcessing()
-    DeleteManager.DeleteExtraFiles()
-
-@app.on_event("shutdown")
-async def Shutdown():
-    print("Saving...")
-    ShareManager.Save()
-    print("Saved!")
 
 @app.get("/")
 @app.head("/")
@@ -270,16 +259,8 @@ def GetSongFile(id: str, export: bool = Query(False)):
         file_path = paths.PROCESSING_DIR / id
         return FileResponse(file_path, media_type="audio/mpeg", headers={"Content-Disposition": f"attachment; filename*=UTF-8''{filename}"})
 
-    if os.getenv("LOCAL") is not None:
-        file_path = paths.MP3_DIR / id
-        return FileResponse(file_path, media_type="audio/mpeg", headers={"Accept-Ranges": "bytes"})
-
     file_path = paths.MP3_DIR / id
-    ngnixPath = f"/protected/{file_path.relative_to(paths.DATA_DIR)}"
-    response = Response()
-    response.headers["X-Accel-Redirect"] = ngnixPath
-    response.headers["Content-Type"] = "audio/mpeg"
-    return response
+    return FileResponse(file_path, media_type="audio/mpeg", headers={"Accept-Ranges": "bytes"})
 
 @app.get("/covers/{name:path}")
 def GetCover(name: str, size: int = Query(128)):
@@ -580,9 +561,9 @@ def Search(query: str = Query(""), maxResults: int = Query(20)):
     results = SearchSongs(query)
     return SongSerializer.SerializeAllToNetwork(results[:maxResults])
 
-@app.post("/resync")
-async def Resync(sessionToken: str = Cookie(None)):
-    VailidateAdmin(sessionToken)
-    task = asyncio.create_task(ResyncServer())
-    task.add_done_callback(lambda task: task.exception())
-    return
+# @app.post("/resync")
+# async def Resync(sessionToken: str = Cookie(None)):
+#     VailidateAdmin(sessionToken)
+#     task = asyncio.create_task(ResyncServer())
+#     task.add_done_callback(lambda task: task.exception())
+#     return

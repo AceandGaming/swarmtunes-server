@@ -22,7 +22,7 @@ def GetCoverPathFromSong(song):
 
 def CreateArtworkFromSingers(singers):
     if len(singers) == 0:
-        return "v1"
+        return None
     if len(singers) > 1:
         return "duet"
     singer = singers[0]

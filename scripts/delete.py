@@ -61,6 +61,8 @@ class DeleteManager:
 
     @staticmethod
     def DeleteExtraFiles():
+        if not paths.DELETED_DIR.exists():
+            return
         class DatedFile:
             def __init__(self, path: Path, dateDeleted: datetime):
                 self.path = path

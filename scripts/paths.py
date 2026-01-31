@@ -3,6 +3,7 @@ import os
 
 DELETED_DIR = Path("deleted")
 DATA_DIR = Path(os.getenv("DATA_PATH") or "data")
+SECRETS_DIR = Path(os.getenv("SECRETS_PATH") or "secrets")
 COVERS_DIR = Path("covers")
 COVER_CACHE = Path("cache", "covers")
 PROCESSING_DIR = Path("processing")

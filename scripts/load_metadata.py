@@ -20,6 +20,10 @@ class AudioMetadata:
     date: Optional[datetime] = None
     datetype: str = ""
 
+    @property
+    def MainTitle(self):
+        return f"{self.titleTranslate or self.title}{self.titleExtra and f" ({self.titleExtra})" or ''}"
+
 def FindSub(pattern, text):
     matches = re.findall(pattern, text)
     return re.sub(pattern, "", text), matches

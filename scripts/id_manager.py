@@ -2,6 +2,7 @@ import uuid
 import scripts.paths as paths
 from scripts.types import *
 import scripts.types as t
+from scripts.log import logger
 
 class IDManager:
     _ids: dict[str, list[str]] = {}
@@ -40,7 +41,7 @@ class IDManager:
             ids = []
             for file in path.iterdir():
                 ids.append(file.name)
-            print(f"Found {len(ids)} ids in {path}")
+            logger.info(f"Found {len(ids)} ids in {path}")
             return ids
 
         types = [eval(name) for name in t.__all__]

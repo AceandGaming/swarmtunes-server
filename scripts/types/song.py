@@ -34,3 +34,11 @@ class Song(IDObject):
 
     def __repr__(self):
         return f"{self.title} by {" and ".join(self.artists)} ({", ".join(self.singers)})"
+    
+    def compare(self, other: "Song"):
+        """Compare metadata with other song. Returns true if they are similar"""
+        if self == other:
+            return True
+        if self.title == other.title and self.artists == other.artists and self.date == other.date and self.singers == other.singers:
+            return True
+        return False
