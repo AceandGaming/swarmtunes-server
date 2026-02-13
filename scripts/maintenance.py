@@ -71,7 +71,7 @@ def _AddNewSong(file: DriveFile):
     os.rename(tempPath, paths.MP3_DIR / song.id)
     DataSystem.songs.Save(song)
 
-    logger.debug(f"Added new song: '{song.title}' SongID: {song.id}!")
+    logger.info(f"Added new song: '{song.title}' SongID: {song.id}!")
 
 def _RedownloadSong(song: Song, file: DriveFile, updateMetadata = False):
     logger.debug(f"ReDownloading '{song.title}' DriveID: {song.storage.googleDriveId}")
@@ -115,10 +115,10 @@ def _RedownloadSong(song: Song, file: DriveFile, updateMetadata = False):
     os.rename(tempPath, out)
     DataSystem.songs.Save(song)
 
-    logger.debug(f"ReDownloaded song: '{song.title}' SongID: {song.id}!")
+    logger.info(f"ReDownloaded song: '{song.title}' SongID: {song.id}!")
     
 def _ReplaceSong(song: Song, file: DriveFile):
-    logger.debug(f"ReDownloading '{song.title}' DriveID: {song.storage.googleDriveId}")
+    logger.debug(f"Replacing '{song.title}' DriveID: {song.storage.googleDriveId}")
 
     path = RCLONE_DUMP / file.path
 
@@ -156,7 +156,7 @@ def _ReplaceSong(song: Song, file: DriveFile):
     os.rename(tempPath, out)
     DataSystem.songs.Save(song)
 
-    logger.debug(f"Replaced song: '{song.title}' SongID: {song.id}!")
+    logger.info(f"Replaced song: '{song.title}' SongID: {song.id}!")
 
 def _FindReplacements(songs: list[Song], files: list[DriveFile]):
     replacements: dict[Song, DriveFile] = {}
@@ -198,7 +198,7 @@ def Run():
     logger.debug(f"Found {len(orphinedMp3Ids)} orphaned mp3s")
     logger.debug(f"Found {len(orphinedSongIds)} orphaned songs")
 
-    logger.info("Scanning drive...")
+    logger.info("Scanning drive (this may take a while)...")
     driveFiles: dict[str, DriveFile] = {}
     for file in rclone.GetAllFiles():
         driveFiles[file.id] = file
@@ -300,6 +300,7 @@ def Run():
     logger.debug(f"Replacing {len(replaceTasks)} songs")
 
     logger.info(f"Deleting {len(mp3sToDelete)} mp3s...")
+
     for path in mp3sToDelete:
         (paths.MP3_DIR / path).unlink(missing_ok=True)
 

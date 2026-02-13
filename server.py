@@ -64,7 +64,7 @@ def InitializeServer():
         logger.debug("Starting scheduler")
         scheduler.add_job(
             Maintenance,
-            trigger=CronTrigger(hour=2, minute=0),  # daily at 2:00 AM
+            trigger=CronTrigger(hour=2, minute=0),  # daily at 2:00 AM UTC
             id="resync",
             replace_existing=True,
         )

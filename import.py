@@ -1,11 +1,12 @@
 from scripts.id_manager import IDManager
-from scripts.download import *
+from scripts.correct import CorrectMP3
 import scripts.paths as paths
 from datetime import datetime
 from pathlib import Path
 from scripts.search import *
 from scripts.data_system import DataSystem
 import socket
+import os
 
 IDManager.Load()
 
@@ -60,7 +61,7 @@ print("Found cover file: ", cover.name)
 RequireConfirmation()
 
 title = input("Title: ").strip()
-artist = input("Artist: ").strip()
+artists = input("Artists: ").split(",")
 singers = input("Singers: ").split(",")
 date = datetime.min
 
@@ -75,14 +76,14 @@ while True:
 singers = [s.strip() for s in singers]
 
 id = IDManager.NewId(Song)
-print(f"Creating song with:\nID: {id}\nTitle: {title}\nArtist: {artist}\nSingers: {singers}\nDate: {date}")
+print(f"Creating song with:\nID: {id}\nTitle: {title}\nArtist: {artists}\nSingers: {singers}\nDate: {date}")
 
 RequireConfirmation()
 
 song = Song(
     id=id,
     title=title,
-    artist=artist,
+    artists=artists,
     date=date,
     singers=singers
 )
