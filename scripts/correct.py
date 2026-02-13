@@ -2,13 +2,15 @@ from pydub import AudioSegment, silence
 import pyloudnorm as loudnorm
 import numpy as np
 import warnings
-import scripts.load_metadata as metadata
+from scripts.load_metadata import DeleteID3Tags
+import acoustid
+from os import PathLike
 
 TARGET_LUFS = -16
 MIN_DBFS = -55 #trim audio lower then this
 
-def CorrectMP3(inputFile, output):
-    metadata.DeleteID3Tags(inputFile)
+def CorrectMP3(inputFile: PathLike, output: PathLike):
+    DeleteID3Tags(inputFile)
     
     song = AudioSegment.from_file(inputFile, format="mp3")
 
@@ -35,4 +37,7 @@ def CorrectMP3(inputFile, output):
 
     song = song._spawn((samples * (1 << 15)).astype(np.int16).tobytes())
 
-    song.export(output, format="mp3")
+    #song.export(output, format="ogg", codec="vorbis", bitrate="128k")
+    song.export(output, format="mp3", bitrate="128k")
+
+    return acoustid.fingerprint_file(str(output))

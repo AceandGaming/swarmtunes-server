@@ -15,6 +15,7 @@ import os
 import logging
 import scripts.config as config
 import textwrap
+import acoustid
 
 logger = logging.getLogger(__name__)
 
@@ -59,11 +60,14 @@ def _AddNewSong(file: DriveFile):
         raise FileExistsError("MP3 already exists for song with id: " + song.id)
 
     try:
-        CorrectMP3(RCLONE_DUMP / path, tempPath)
+        duration, fingerprint = CorrectMP3(RCLONE_DUMP / path, tempPath)
     except Exception as e:
         logger.exception("Error correcting mp3:")
         tempPath.unlink(missing_ok=True)
         return
+    
+    if fingerprint is not None and duration > 0:
+        DataSystem.songs.SetFingerprint(song, (duration, fingerprint))
 
     if (paths.MP3_DIR / song.id).exists():
         raise FileExistsError("MP3 already exists for song with id: " + song.id)
@@ -102,11 +106,14 @@ def _RedownloadSong(song: Song, file: DriveFile, updateMetadata = False):
         raise FileExistsError("MP3 already exists for song with id: " + song.id)
 
     try:
-        CorrectMP3(path, tempPath)
+        duration, fingerprint = CorrectMP3(path, tempPath)
     except Exception as e:
         logger.exception("Error correcting mp3:")
         tempPath.unlink(missing_ok=True)
         return
+
+    if fingerprint is not None and duration > 0:
+        DataSystem.songs.SetFingerprint(song, (duration, fingerprint))
     
     out = paths.MP3_DIR / song.id
 
@@ -143,11 +150,14 @@ def _ReplaceSong(song: Song, file: DriveFile):
         raise FileExistsError("MP3 already exists for song with id: " + song.id)
 
     try:
-        CorrectMP3(path, tempPath)
+        duration, fingerprint = CorrectMP3(path, tempPath)
     except Exception as e:
         logger.exception("Error correcting mp3:")
         tempPath.unlink(missing_ok=True)
         return
+    
+    if fingerprint is not None and duration > 0:
+        DataSystem.songs.SetFingerprint(song, (duration, fingerprint))
     
     out = paths.MP3_DIR / song.id
 
@@ -160,24 +170,60 @@ def _ReplaceSong(song: Song, file: DriveFile):
 
 def _FindReplacements(songs: list[Song], files: list[DriveFile]):
     replacements: dict[Song, DriveFile] = {}
-    tempSongs = {}
+    fileFingerprints = {}
     for file in files:
-        metadata, _ = _GetMetadata(file)
-        tempSongs[file] = (Song(
-            id="temp",
-            title=metadata.MainTitle,
-            artists=metadata.artists,
-            singers=metadata.singers,
-            date=metadata.date or datetime.min,
-        ))
+        fingerprint = acoustid.fingerprint_file(RCLONE_DUMP / file.path)
+        fileFingerprints[fingerprint] = file
 
     for song in songs:
-        for file, tempSong in tempSongs.items():
-            if song.compare(tempSong):
+        if not song.fingerprint:
+            logger.warning(f"Song {song.id} has no fingerprint")
+            continue
+        if not song.duration:
+            logger.warning(f"Song {song.id} has no duration info")
+            continue
+
+        acustFingerprint = DataSystem.songs.GetAcustId(song)
+        for fingerprint, file in fileFingerprints.items():
+            if (abs(song.duration - fingerprint[0]) / (song.duration + fingerprint[0])) > 0.2:
+                continue
+            if acoustid.compare_fingerprints(acustFingerprint, fingerprint) > 0.8:
+                logger.debug(f"Found replacement for {song.id}. File: {file.id}")
                 replacements[song] = file
+                break
 
     return replacements
         
+def PostCheck():
+    songs = {file.name for file in paths.SONGS_DIR.iterdir()}
+    mp3s = {file.name for file in paths.MP3_DIR.iterdir()}
+
+    orphinedSongIds: set[str] = songs - mp3s
+    orphinedMp3Ids: set[str] = mp3s - songs
+
+    if len(orphinedMp3Ids & orphinedSongIds) > 0:
+        logger.error("Detected inconsistency between mp3s and songs")
+        return
+
+    if len(orphinedMp3Ids) > 0:
+        logger.warning(f"Found {len(orphinedMp3Ids)} orphaned mp3s")
+
+    if len(orphinedSongIds) > 0:
+        logger.warning(f"Found {len(orphinedSongIds)} orphaned songs")
+
+    for id in mp3s:
+        path = paths.MP3_DIR / id
+        if not path.exists() or path.stat().st_size == 0:
+            logger.warning(f"Found empty mp3: {id}")
+
+    for id in songs:
+        path = paths.SONGS_DIR / id
+        if not path.exists() or path.stat().st_size == 0:
+            logger.warning(f"Found empty song: {id}")
+
+    for file in CORRECT.iterdir():
+        file.unlink()
+
 
 def Run():
     logger.info("Running maintenance...")
@@ -248,6 +294,8 @@ def Run():
         song = songLookup[file.id]
         redownloadTasks.append((song, file,))
 
+    fingerprintlessSongs = [song for song in DataSystem.songs.items if not song.fingerprint]
+
     logger.info(textwrap.dedent(f"""
         Report:
         Files to download: {len(filesToDownload)}
@@ -256,6 +304,7 @@ def Run():
         Songs to redownload: {len(redownloadTasks)}
         MP3s to delete: {len(mp3sToDelete)}
         Songs to replace (estimate): {len(lostSongs)}
+        Fingerprints missing: {len(fingerprintlessSongs)}
     """))
 
     count = len(DataSystem.songs.items)
@@ -270,10 +319,20 @@ def Run():
             logger.error(f"Too many files to redownload. Download count: {len(redownloadTasks)}. Max: {count * config.MAX_MAINTENACE_REDOWNLOAD_PERCENT}")
             return
 
+    logger.info(f"Generating fingerprints for {len(fingerprintlessSongs)} songs...")
+
+    for song in fingerprintlessSongs:
+        logger.debug(f"Generating fingerprint for song: {song.id}")
+        duration, fingerprint = acoustid.fingerprint_file(paths.MP3_DIR / song.id)
+        if fingerprint is not None and duration > 0:
+            DataSystem.songs.SetFingerprint(song, (duration, fingerprint))
+            DataSystem.songs.Save(song)
+
     logger.info(f"Downloading {len(filesToDownload)} files...")
     rclone.DownloadFiles(list(filesToDownload), str(RCLONE_DUMP))
     logger.info(f"Download complete!")
 
+    logger.debug(f"Searching for replacements...")
     songsToBeReplaced = _FindReplacements(list(lostSongs), list(newFiles))
     logger.debug(f"Found {len(songsToBeReplaced)} songs to replace")
 
@@ -300,8 +359,8 @@ def Run():
     logger.debug(f"Replacing {len(replaceTasks)} songs")
 
     logger.info(f"Deleting {len(mp3sToDelete)} mp3s...")
-
     for path in mp3sToDelete:
+        logger.debug(f"Deleting {path}")
         (paths.MP3_DIR / path).unlink(missing_ok=True)
 
     workerCount = cpu_count() - 1

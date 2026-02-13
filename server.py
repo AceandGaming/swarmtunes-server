@@ -74,11 +74,14 @@ def InitializeServer():
 
 def Maintenance():
     maintenance.Run()
+    maintenance.PostCheck()
+    logger.debug("Regenerating albums")
     DataSystem.albums.ReGenerate()
-    logger.debug("Regenerated albums")
 
+    logger.debug("Deleting extra files")
     DeleteManager.DeleteExtraFiles()
 
+    logger.debug("Updating ids")
     IDManager.Load()
 
 app = InitializeServer()

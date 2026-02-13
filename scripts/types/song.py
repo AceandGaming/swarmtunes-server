@@ -15,11 +15,13 @@ class Song(IDObject):
     artists: list[str]
     singers: list[str]
     date: datetime
+    duration: Optional[float] = None
     coverArt: Optional[str] = None
     subtitle: Optional[str] = None
     isOriginal: bool = False
     storage: SongExternalStorage = field(default_factory=lambda: SongExternalStorage())
     isCopywrited: bool = False
+    fingerprint: Optional[str] = None
 
     @property
     def prettyArtists(self):

@@ -7,12 +7,16 @@ import zipfile
 import json
 from scripts.cover import GetCoverPathFromSong
 
+EXPORT_PATH = paths.PROCESSING_DIR / "export"
+
 def CreateAlbumName(song):
     return f"{" and ".join(song.singers)} Karaoke"
 
 def ExportSong(song: Song):
+    EXPORT_PATH.mkdir(parents=True, exist_ok=True)
+
     fromPath = paths.MP3_DIR / song.id
-    toPath = paths.PROCESSING_DIR / song.id
+    toPath = EXPORT_PATH / song.id
     if not fromPath.exists():
         raise Exception("Song not found")
 
