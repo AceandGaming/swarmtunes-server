@@ -6,6 +6,4 @@ import scripts.maintenance as maintenance
 
 IDManager.Load()
 
-for i in range(10):
-    files = GetAllFiles()
-    print(len(files))
+print(IDManager.NewId(Song))

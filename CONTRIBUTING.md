@@ -105,6 +105,7 @@ The server can be configured using environment variables. Below is a full list w
 |---|---|---|
 | `MAINTENANCE`                         | Enables automatic maintenance tasks (downloads, cleanup, album regeneration). First run may take 20–60 minutes to download initial data. | `false` |
 | `CORS`                                | Enables CORS domain checks. Changing the allowed domain requires rebuilding. | `true` |
+| `LOG_LEVEL`                           | Sets the log level of the server | `INFO` |
 |---|---|---|
 | `DATA_PATH`                           | Directory where the server stores data (songs, albums, playlists, etc.). | `data` |
 | `SECRETS_PATH`                        | Directory for Google Drive API credentials and SSL keys. | `secrets` |

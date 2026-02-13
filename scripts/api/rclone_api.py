@@ -45,7 +45,7 @@ def GetRcloneFlags() -> list[str]:
         "--drive-token", f"'{json.dumps(rclone_token)}'"
     ]
 
-def GetAllFiles():
+def GetAllFiles() -> list[DriveFile]:
     """Recursively list all files."""
 
     service = build("drive", "v3", credentials=get_drive_service())
