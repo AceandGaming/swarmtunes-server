@@ -323,7 +323,11 @@ def Run():
 
     for song in fingerprintlessSongs:
         logger.debug(f"Generating fingerprint for song: {song.id}")
-        duration, fingerprint = acoustid.fingerprint_file(paths.MP3_DIR / song.id)
+        path = paths.MP3_DIR / song.id
+        if not path.exists():
+            logger.warning(f"Could not find mp3 for song: {song.id}")
+            continue
+        duration, fingerprint = acoustid.fingerprint_file(path)
         if fingerprint is not None and duration > 0:
             DataSystem.songs.SetFingerprint(song, (duration, fingerprint))
             DataSystem.songs.Save(song)

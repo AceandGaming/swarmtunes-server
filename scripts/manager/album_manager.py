@@ -3,6 +3,7 @@ from scripts.manager import SongManager
 from scripts.database import AlbumDatabase
 from scripts.types import Album
 from scripts.id_manager import IDManager
+from scripts.cover import CreateArtworkFromSingers
 
 
 class AlbumManager(BaseManager[Album]):
@@ -12,8 +13,15 @@ class AlbumManager(BaseManager[Album]):
     def Create(self, **kwargs) -> Album:
         id = IDManager.NewId(Album)
         album = Album(id=id, **kwargs)
+
         self.Save(album)
         return album
+    
+    def Save(self, item: Album):
+        if item.coverArt is None:
+            item.coverArt = CreateArtworkFromSingers(item.singers)
+
+        return super().Save(item)
     
     def Get(self, id: str):
         album = self._database.Get(id)
@@ -30,18 +38,16 @@ class AlbumManager(BaseManager[Album]):
         return albums
     
     def CreateFromDate(self, date):
-        id = IDManager.NewId(Album)
         songs = []
         for song in SongManager().items:
             if song.date == date:
                 songs.append(song.id)
-        album = Album(id=id, date=date, songIds=set(songs))
+        album = self.Create(date=date, songIds=songs)
         
-        album.AddResolver(SongManager().Get)
-        self.Save(album)
         return album
     
     def ReGenerate(self):
+        IDManager.Load()
         dateLookup = {}
         for album in self.items:
             dateLookup[album.date] = album

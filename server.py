@@ -89,7 +89,8 @@ app = InitializeServer()
 @app.on_event("startup")
 async def Startup():
     if config.MAINTENACE_ENABLED:
-        Maintenance()
+        pass
+        #Maintenance()
 
 @app.on_event("shutdown")
 async def Shutdown():

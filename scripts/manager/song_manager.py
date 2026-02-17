@@ -15,13 +15,6 @@ class SongManager(BaseManager[Song]):
         song = Song(id=id, **kwargs)
         self.Save(song)
         return song
-
-    def Save(self, item: Song):
-        if (paths.COVERS_DIR / item.id).exists():
-            item.coverArt = item.id
-        elif item.coverArt == item.id:
-            item.coverArt = None
-        return super().Save(item)
     
     def GetAcustId(self, item: Song):
         if not item.fingerprint:
