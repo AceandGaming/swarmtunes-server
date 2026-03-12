@@ -6,6 +6,7 @@ from dataclasses import dataclass
 import tempfile
 import os
 from googleapiclient.discovery import build
+import httplib2
 
 DRIVE_FOLDER = "1B1VaWp-mCKk15_7XpFnImsTdBJPOGx7a"
 
@@ -48,7 +49,12 @@ def GetRcloneFlags() -> list[str]:
 def GetAllFiles() -> list[DriveFile]:
     """Recursively list all files."""
 
-    service = build("drive", "v3", credentials=get_drive_service())
+    service = build(
+        "drive", 
+        "v3", 
+        credentials=get_drive_service(),
+        cache_discovery=False
+    )
     all_files = []
 
     def _recurse(current_folder_id, path=""):
@@ -59,7 +65,9 @@ def GetAllFiles() -> list[DriveFile]:
                 q=query,
                 fields="nextPageToken, files(id, name, mimeType)",
                 pageSize=1000,
-                pageToken=page_token
+                pageToken=page_token,
+                supportsAllDrives=True,
+                includeItemsFromAllDrives=True
             ).execute()
             for f in response.get("files", []):
                 f["path"] = f"{path}/{f['name']}".removeprefix("/")

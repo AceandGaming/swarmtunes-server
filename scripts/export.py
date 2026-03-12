@@ -46,11 +46,11 @@ def ExportAlbum(album: Album):
     for song in album.songs:
         filename = ExportSong(song)
         files.append((
-            paths.PROCESSING_DIR / song.id,
+            EXPORT_PATH / song.id,
             filename + ".mp3"
         ))
 
-    path = paths.PROCESSING_DIR / album.id
+    path = EXPORT_PATH / album.id
     metadata = {
         "date": album.date.isoformat(),
         "title": album.PrettyName
@@ -69,11 +69,11 @@ def ExportPlaylist(playlist: Playlist):
             continue
         filename = ExportSong(song)
         files.append((
-            paths.PROCESSING_DIR / song.id,
+            EXPORT_PATH / song.id,
             filename + ".mp3"
         ))
 
-    path = paths.PROCESSING_DIR / playlist.id
+    path = EXPORT_PATH / playlist.id
     metadata = {
         "date": playlist.date.isoformat(),
         "title": playlist.name

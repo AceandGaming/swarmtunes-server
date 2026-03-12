@@ -89,8 +89,7 @@ app = InitializeServer()
 @app.on_event("startup")
 async def Startup():
     if config.MAINTENACE_ENABLED:
-        pass
-        #Maintenance()
+        asyncio.create_task(asyncio.to_thread(Maintenance))
 
 @app.on_event("shutdown")
 async def Shutdown():
@@ -236,14 +235,14 @@ def GetAlbumFile(id: str):
     if not album:
         raise HTTPException(404, detail="Album not found")
     filename = ExportAlbum(album)
-    file_path = paths.PROCESSING_DIR / id
+    file_path = paths.PROCESSING_DIR / "export" / id
     return FileResponse(file_path, media_type="application/zip", headers={"Content-Disposition": f"attachment; filename={filename}"})
 
 @app.get("/files/playlist/{id}")
 def GetPlaylistFile(id: str, sessionToken: str = Cookie(None)):
     playlist = VailidatePlaylist(sessionToken, id)
     filename =  ExportPlaylist(playlist)
-    file_path = paths.PROCESSING_DIR / id
+    file_path = paths.PROCESSING_DIR / "export" / id
     return FileResponse(file_path, media_type="application/zip", headers={"Content-Disposition": f"attachment; filename={filename}"})
     
 
@@ -260,7 +259,7 @@ def GetSongFile(id: str, export: bool = Query(False)):
     if export:
         filename = ExportSong(song) + ".mp3"
         filename = quote(filename)
-        file_path = paths.PROCESSING_DIR / id
+        file_path = paths.PROCESSING_DIR / "export" / id
         return FileResponse(file_path, media_type="audio/mpeg", headers={"Content-Disposition": f"attachment; filename*=UTF-8''{filename}"})
 
     file_path = paths.MP3_DIR / id
