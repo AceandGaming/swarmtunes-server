@@ -16,7 +16,8 @@ import logging
 import scripts.config as config
 import textwrap
 import acoustid
-
+from concurrent.futures import as_completed, ThreadPoolExecutor
+ 
 logger = logging.getLogger(__name__)
 
 RCLONE_DUMP = paths.PROCESSING_DIR / "rclone_dump"
@@ -171,9 +172,22 @@ def _ReplaceSong(song: Song, file: DriveFile):
 def _FindReplacements(songs: list[Song], files: list[DriveFile]):
     replacements: dict[Song, DriveFile] = {}
     fileFingerprints = {}
-    for file in files:
-        fingerprint = acoustid.fingerprint_file(RCLONE_DUMP / file.path)
-        fileFingerprints[fingerprint] = file
+
+    with ThreadPoolExecutor(max_workers=cpu_count()) as executor:
+        futures = {}
+        
+        for file in files:
+            future = executor.submit(
+                acoustid.fingerprint_file,
+                RCLONE_DUMP / file.path
+            )
+            futures[future] = file  # map future → file
+
+        for future in as_completed(futures):
+            file = futures[future]
+            duration, fingerprint = future.result()
+            
+            fileFingerprints[fingerprint] = (duration, file)
 
     for song in songs:
         if not song.fingerprint:
@@ -336,9 +350,9 @@ def Run():
     rclone.DownloadFiles(list(filesToDownload), str(RCLONE_DUMP))
     logger.info(f"Download complete!")
 
-    logger.debug(f"Searching for replacements...")
+    logger.info(f"Searching for replacements...")
     songsToBeReplaced = _FindReplacements(list(lostSongs), list(newFiles))
-    logger.debug(f"Found {len(songsToBeReplaced)} songs to replace")
+    logger.info(f"Found {len(songsToBeReplaced)} songs to replace")
 
     if count > 0:
         if len(mp3sToDelete) + len(songsToBeReplaced) > count * config.MAX_MAINTENACE_DELETE_PERCENT:
@@ -347,9 +361,9 @@ def Run():
     
     refrencelessSongs = lostSongs - set(songsToBeReplaced.keys())
     if len(refrencelessSongs) > 0:
-        if len(refrencelessSongs) > 100:
-            logger.error(f"Too many songs with no drive refrence. Found: {len(refrencelessSongs)}")
-            return
+        # if len(refrencelessSongs) > 100:
+        #     logger.error(f"Too many songs with no drive refrence. Found: {len(refrencelessSongs)}")
+        #     return
         logger.warning(f"Found {len(refrencelessSongs)} songs with no drive refrence")
 
     addTasks = []

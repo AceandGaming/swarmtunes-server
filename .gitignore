@@ -28,3 +28,6 @@ token.json
 
 #logs
 *.log
+
+#editors
+*.vscode

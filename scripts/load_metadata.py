@@ -124,19 +124,22 @@ def MetadataFromAudioData(path):
         return title, titleExtra, titleTranslate
 
     if "COMM::ved" in audio:
-        jsonData = json.loads(audio["COMM::ved"].text[0])
-        if "Title" in jsonData:
-            data.title, data.titleExtra, data.titleTranslate = GetTitleInfo(jsonData["Title"])
-        if "Artist" in jsonData:
-            artists = jsonData["Artist"].split(",")
-            data.artists = [a.strip() for a in artists]
-        if "CoverArtist" in jsonData:
-            data.singers = GetSingers(jsonData["CoverArtist"])
-        if "Date" in jsonData:
-            try:
-                data.date = datetime.fromisoformat(jsonData["Date"])
-            except ValueError:
-                print("Date error:", jsonData["Date"])
+        try:
+            jsonData = json.loads(audio["COMM::ved"].text[0])
+            if "Title" in jsonData:
+                data.title, data.titleExtra, data.titleTranslate = GetTitleInfo(jsonData["Title"])
+            if "Artist" in jsonData:
+                artists = jsonData["Artist"].split(",")
+                data.artists = [a.strip() for a in artists]
+            if "CoverArtist" in jsonData:
+                data.singers = GetSingers(jsonData["CoverArtist"])
+            if "Date" in jsonData:
+                try:
+                    data.date = datetime.fromisoformat(jsonData["Date"])
+                except ValueError:
+                    print("Date error:", jsonData["Date"])
+        except json.JSONDecodeError as e:
+            print(f"JSON parse error for file {path}: {e}")
 
     if not data.title and "TIT2" in audio:
         data.title, data.titleExtra, data.titleTranslate = GetTitleInfo(audio["TIT2"].text[0])
