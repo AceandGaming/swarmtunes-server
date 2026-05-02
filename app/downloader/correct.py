@@ -37,7 +37,6 @@ def CorrectMP3(inputFile: PathLike, output: PathLike):
 
     song = song._spawn((samples * (1 << 15)).astype(np.int16).tobytes())
 
-    #song.export(output, format="ogg", codec="vorbis", bitrate="128k")
-    song.export(output, format="mp3", bitrate="128k")
+    song.export(output, format="ogg", codec="vorbis", bitrate="128k")
 
     return acoustid.fingerprint_file(str(output))

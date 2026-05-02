@@ -9,22 +9,26 @@ __pycache__/
 .DS_Store
 Thumbs.db
 
+# Linux
+.desktop
+
 # Data
-/data/*
-/cache/
-/processing/
-/import/
-/deleted/*
-/covers/custom/*
+/data
 
 *.mp3
-*.wav
-*.flac
+*.ogg
 
 # Credentials
-credentials.json
-token.json
 *.pem
+/secrets
 
-#logs
+# Config
+*.env
+!.env.example
+
+# Logs
 *.log
+/logs
+
+# Editors
+*.vscode

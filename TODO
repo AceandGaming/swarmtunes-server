@@ -1,0 +1,18 @@
+# In progress
+- Switch DB to SQLite
+
+# Code
+- Make better use of cache
+- Update metadata retreval
+- Rewrite Maitence (again)
+- Make artwork automatic
+- Change all type objects and add MUCH more info + inhertince
+- Switch to better search system
+- Switch configs to pydantic_settings
+
+# Data
+- HLS
+
+# Fastapi
+- Create new v2 endpoint with new api stuff
+- Rewrite v1 endpoint

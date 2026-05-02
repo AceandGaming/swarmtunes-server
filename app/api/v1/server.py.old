@@ -29,15 +29,15 @@ from scripts.log import logger
 import scripts.maintenance as maintenance
 
 def InitializeServer():
-    startTime = time.time()
+    #startTime = time.time()
 
     allow_origins = [
         "https://swarmtunes.com",
     ]
-    allow_origin_regex = ""
-    if not config.CORS_ENABLED:
-        allow_origin_regex = r".*"
-        logger.warning("Allowing all origins!")
+    # allow_origin_regex = ""
+    # if not config.CORS_ENABLED:
+    #     allow_origin_regex = r".*"
+    #     logger.warning("Allowing all origins!")
 
     logger.info("Starting server...")
     logger.info("Allowing origins: " + ",".join(allow_origins))
@@ -49,9 +49,9 @@ def InitializeServer():
         allow_methods=["*"],
         allow_headers=["*"],
         expose_headers=["invaild-token"],
-        allow_origin_regex=allow_origin_regex
+        #allow_origin_regex=allow_origin_regex
     )
-    scheduler = AsyncIOScheduler()
+    #scheduler = AsyncIOScheduler()
 
     logger.debug("FastAPI started")
     logger.debug("Loading data")
@@ -60,42 +60,43 @@ def InitializeServer():
     emotes.Load()
     logger.info(f"Server started in {math.floor((time.time() - startTime) * 1000)} miliseconds")
 
-    if config.MAINTENACE_ENABLED:
-        logger.debug("Starting scheduler")
-        scheduler.add_job(
-            Maintenance,
-            trigger=CronTrigger(hour=2, minute=0),  # daily at 2:00 AM UTC
-            id="resync",
-            replace_existing=True,
-        )
-        scheduler.start()
+    # if config.MAINTENACE_ENABLED:
+    #     logger.debug("Starting scheduler")
+    #     scheduler.add_job(
+    #         Maintenance,
+    #         trigger=CronTrigger(hour=2, minute=0),  # daily at 2:00 AM UTC
+    #         id="resync",
+    #         replace_existing=True,
+    #     )
+    #     scheduler.start()
     
     return app
 
-def Maintenance():
-    maintenance.Run()
-    maintenance.PostCheck()
-    logger.debug("Regenerating albums")
-    DataSystem.albums.ReGenerate()
+# def Maintenance():
+#     maintenance.Run()
+#     maintenance.PostCheck()
+#     logger.debug("Regenerating albums")
+#     DataSystem.albums.ReGenerate()
 
-    logger.debug("Deleting extra files")
-    DeleteManager.DeleteExtraFiles()
+#     logger.debug("Deleting extra files")
+#     DeleteManager.DeleteExtraFiles()
 
-    logger.debug("Updating ids")
-    IDManager.Load()
+#     logger.debug("Updating ids")
+#     IDManager.Load()
 
 app = InitializeServer()
 
-@app.on_event("startup")
-async def Startup():
-    if config.MAINTENACE_ENABLED:
-        asyncio.create_task(asyncio.to_thread(Maintenance))
+# @app.on_event("startup")
+# async def Startup():
+#     pass
+#     # if config.MAINTENACE_ENABLED:
+#     #     asyncio.create_task(asyncio.to_thread(Maintenance))
 
-@app.on_event("shutdown")
-async def Shutdown():
-    logger.info("Saving...")
-    ShareManager.Save()
-    logger.info("Saved!")
+# @app.on_event("shutdown")
+# async def Shutdown():
+#     logger.info("Saving...")
+#     ShareManager.Save()
+#     logger.info("Saved!")
 
 
 def VailidateToken(tokenString: str|None) -> Token:
