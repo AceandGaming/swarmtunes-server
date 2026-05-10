@@ -1,31 +1,29 @@
 from pathlib import Path
 import os
 
-DELETED_DIR = Path("deleted")
-DATA_DIR = Path(os.getenv("DATA_PATH") or "data")
-SECRETS_DIR = Path(os.getenv("SECRETS_PATH") or "secrets")
-COVERS_DIR = Path("covers")
-COVER_CACHE = Path("cache", "covers")
-PROCESSING_DIR = Path("processing")
-
-os.makedirs(DATA_DIR, exist_ok=True)
-os.makedirs(COVER_CACHE, exist_ok=True)
-os.makedirs(PROCESSING_DIR, exist_ok=True)
-
-MP3_DIR = DATA_DIR / "mp3"
-SONGS_DIR = DATA_DIR / "songs"
-ALBUMS_DIR = DATA_DIR / "albums"
-USERS_DIR = DATA_DIR / "users"
-PLAYLISTS_DIR = DATA_DIR / "playlists"
-TOKENS_DIR = DATA_DIR / "tokens"
+def _create(path: Path) -> Path:
+    path.mkdir(parents=True, exist_ok=True)
+    return path
 
 
-os.makedirs(MP3_DIR, exist_ok=True)
-os.makedirs(SONGS_DIR, exist_ok=True)
-os.makedirs(ALBUMS_DIR, exist_ok=True)
-os.makedirs(USERS_DIR, exist_ok=True)
-os.makedirs(PLAYLISTS_DIR, exist_ok=True)
-os.makedirs(COVERS_DIR, exist_ok=True)
-os.makedirs(TOKENS_DIR, exist_ok=True)
+BASE = Path(os.path.dirname(os.path.abspath(__file__)))
 
-SHARE_FILE = DATA_DIR / "shares.json"
+# Folders
+DATA = _create(BASE / "data")
+
+PERSISTENT_DATA = _create(DATA / "persistent")
+AUDIO = _create(PERSISTENT_DATA / "audio")
+ARTWORK = _create(PERSISTENT_DATA / "artwork")
+
+TEMP = _create(DATA / "temp")
+DOWNLOADS = _create(TEMP / "downloads")
+PROCESSING = _create(TEMP / "processing")
+
+CACHE = _create(DATA / "cache")
+HLS_CACHE = _create(CACHE / "hls")
+EXPORT_CACHE = _create(CACHE / "export")
+ART_CACHE = _create(CACHE / "artwork")
+
+BACKUPS = _create(BASE / "backups")
+SECRETS = _create(BASE / "secrets")
+LOGS = _create(BASE / "logs")

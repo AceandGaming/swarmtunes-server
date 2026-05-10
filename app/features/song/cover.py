@@ -1,33 +1,60 @@
 from PIL import Image
-import scripts.paths as paths
+from core.paths import ARTWORK, ART_CACHE, TEMP
 from zlib import adler32
+from .song import Song
+import os
+import tempfile
 
-def GetCover(path, scale):
+class Artwork:
+    def __init__(self, type: str, name: str):
+        self.type = type
+        self.name = name
+
+def get_song_artwork(song: Song) -> list[Artwork]:
+    if song is None:
+        return []
+    art = []
+
+    if song.disc is not None:
+        art.append(Artwork("disc", str(song.disc)))
+    short = song.singers_short
+    if short is not None:
+        art.append(Artwork("default", short))
+        art.append(Artwork("plush", short))
+    if song.custom_artwork is not None:
+        art.append(Artwork("custom", song.custom_artwork))
+
+    return art
+
+def get_artwork_path(artwork: Artwork):
+    return ARTWORK / f"{artwork.type}/{artwork.name}.png"
+
+def export_artwork(artwork: Artwork, scale: int = 512):
+    path = get_artwork_path(artwork)
+    if not path.exists():
+        return None
+
+    name = f"{adler32(str(path).encode())}.webp"
+    cache = ART_CACHE / name
+
+    if cache.exists():
+        return cache
+
+    with tempfile.NamedTemporaryFile(dir=TEMP, suffix=".tmp", delete=False) as tmp_file:
+        temp_path = tmp_file.name
+
     try:
-        key = str(path).encode() + str(scale).encode()
-        file = paths.COVER_CACHE / f"{adler32(key)}.webp"
-        if file.exists():
-            return file
-
         image = Image.open(path)
         image = image.resize((scale, scale))
-        image.save(file, "webp")
+        image.save(temp_path, "webp")
 
-        return file
-    except (FileNotFoundError):
-        return None
-    
-def GetCoverPathFromSong(song):
-    return paths.COVERS_DIR / f"{song.coverArt}.png"
+        os.replace(temp_path, cache)
 
-def CreateArtworkFromSingers(singers):
-    if len(singers) == 0:
-        return None
-    if len(singers) > 1:
-        return "duet"
-    singer = singers[0]
-    if singer == "Neuro-sama":
-        return "neuro"
-    if singer == "Evil Neuro":
-        return "evil"
-    return None
+    finally:
+        if os.path.exists(temp_path):
+            try:
+                os.unlink(temp_path)
+            except FileNotFoundError:
+                pass
+
+    return cache

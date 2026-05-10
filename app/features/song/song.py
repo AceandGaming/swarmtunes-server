@@ -1,46 +1,51 @@
 from dataclasses import dataclass, field
-from typing import Optional
+from typing import Optional, Literal
 from datetime import datetime
-from .id_object import IDObject
+from abstract.id_object import IDObject
 
 @dataclass
-class SongExternalStorage:
-    googleDriveId: Optional[str] = None
-    youtubeId: Optional[str] = None
-    
+class SongAudio:
+    type: Literal["gdrive", "youtube", "audio"]
+    id: str
 
-@dataclass(eq=False)
+@dataclass(eq=False, kw_only=True)
 class Song(IDObject):
+    @property
+    def duration(self):
+        return self.seconds
+    @property
+    def singers_short(self):
+        neuro = "Neuro-sama" in self.singers
+        evil = "Evil Neuro" in self.singers
+        if neuro and evil:
+            return "duet"
+        if neuro:
+            return "neuro"
+        if evil:
+            return "evil"
+        return None
+
     title: str
+    title_original: Optional[str] = None
+
     artists: list[str]
-    singers: list[str]
-    date: datetime
-    duration: Optional[float] = None
-    coverArt: Optional[str] = None
-    subtitle: Optional[str] = None
-    isOriginal: bool = False
-    storage: SongExternalStorage = field(default_factory=lambda: SongExternalStorage())
-    isCopywrited: bool = False
-    fingerprint: Optional[str] = None
+    singers: list[str] # Typically 'Neuro-sama' or 'Evil Neuro'
+    type: Literal["original", "collab", "cover"]
 
-    @property
-    def prettyArtists(self):
-        return ", ".join(self.artists)
-    
-    @property
-    def prettySingers(self):
-        return ", ".join(self.singers)
+    date_released: datetime
+    disc: Optional[int] = None
+    is_copyrighted: bool
+    custom_artwork: Optional[str] = None
 
-    def __post_init__(self):
-        self.isCopywrited = self.isCopywrited or self.isOriginal
+    seconds: float
+    audio_references: list[SongAudio] = field(default_factory=lambda: [])
+    metadata_source: Literal["json", "id3", "filename", "manual"]
 
     def __repr__(self):
-        return f"{self.title} by {" and ".join(self.artists)} ({", ".join(self.singers)})"
+        artists = " & ".join(self.artists) if self.artists else "unknown"
+        singers = "".join(s[0] for s in self.singers if s) or "?"
+
+        return f"'{self.title}' by '{artists}' ({singers}) [{self.id[:5]}]"
     
-    def compare(self, other: "Song"):
-        """Compare metadata with other song. Returns true if they are similar"""
-        if self == other:
-            return True
-        if self.title == other.title and self.artists == other.artists and self.date == other.date and self.singers == other.singers:
-            return True
-        return False
+    def get_audio(self, type: str) -> SongAudio | None:
+        return next((a for a in self.audio_references if a.type == type), None)
