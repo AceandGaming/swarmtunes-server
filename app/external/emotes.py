@@ -1,4 +1,6 @@
 import requests
+import logging
+log = logging.getLogger("Swarmtunes")
 
 emotes = {}
 def Load():
@@ -9,11 +11,12 @@ def Load():
     if swarmFMResponse.status_code == 200:
         twitchEmotes.extend(swarmFMResponse.json()["emotes"])
     else:
-        print("Failed to get swarmfm emotes")
+        log.error("Failed to get swarmfm emotes")
 
     vedalResponse = requests.get("https://7tv.io/v3/emote-sets/01GN2QZDS0000BKRM8E4JJD3NV") #vedal987
     if vedalResponse.status_code != 200:
-        raise Exception("Failed to get emotes")
+        log.exception("Failed to get vedal987 emotes")
+        return
     twitchEmotes.extend(vedalResponse.json()["emotes"])
 
     for emote in twitchEmotes:

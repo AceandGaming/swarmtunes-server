@@ -1,8 +1,8 @@
 [project]
 name = "swarmtunes-server"
-version = "0.1.0"
+version = "0.2.0"
 description = "Swarmtunes Server."
-readme = "README.md"
+readme = "README"
 requires-python = ">=3.12, <3.13"
 dependencies = [
     "aiohttp==3.13.3",
@@ -22,11 +22,6 @@ dependencies = [
     "uvicorn==0.40.0",
     "apscheduler==3.11.2",
     "pyacoustid==1.3.0"
-]
-
-[dependency-groups]
-dev = [
-    "ruff==0.14.13",
 ]
 
 [tool.setuptools.packages.find]

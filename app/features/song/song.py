@@ -30,7 +30,7 @@ class Song(IDObject):
 
     artists: list[str]
     singers: list[str] # Typically 'Neuro-sama' or 'Evil Neuro'
-    type: Literal["original", "collab", "cover"]
+    type: Literal["original", "collab", "cover", "mashup"]
 
     date_released: datetime
     disc: Optional[int] = None
@@ -39,7 +39,7 @@ class Song(IDObject):
 
     seconds: float
     audio_references: list[SongAudio] = field(default_factory=lambda: [])
-    metadata_source: Literal["json", "id3", "filename", "manual"]
+    metadata_source: Literal["json", "id3", "manual"]
 
     def __repr__(self):
         artists = " & ".join(self.artists) if self.artists else "unknown"

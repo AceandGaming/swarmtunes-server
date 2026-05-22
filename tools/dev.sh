@@ -1,5 +1,7 @@
 #!/bin/bash
 
+cd app
+
 export CORS=false
 export MAINTENANCE=false
 export LOG_LEVEL=DEBUG

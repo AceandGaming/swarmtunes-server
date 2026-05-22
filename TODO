@@ -1,14 +1,15 @@
 # In progress
-- Switch DB to SQLite
+- Update metadata retreval
 
 # Code
-- Make better use of cache
-- Update metadata retreval
 - Rewrite Maitence (again)
 - Make artwork automatic
-- Change all type objects and add MUCH more info + inhertince
+- Update albums
+- Update playlists
+- Update users
 - Switch to better search system
 - Switch configs to pydantic_settings
+- Use OAuth (Google, Discord) logins and depricate username+password logins
 
 # Data
 - HLS
@@ -16,3 +17,11 @@
 # Fastapi
 - Create new v2 endpoint with new api stuff
 - Rewrite v1 endpoint
+
+# Other
+- Update pyproject.toml
+
+# Goals
+- Make better use of cache
+- Switch DB to SQLite
+- Change all type objects and add MUCH more info + inhertince
