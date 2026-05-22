@@ -105,4 +105,12 @@ def from_sql(song: SQLSong) -> Song:
         metadata_source = song.metadata_source
     )
 
-__all__ = ["Song", "SongAudio", "get_song_artwork", "to_network_v1", "to_network_v2", "to_sql", "from_sql"]
+__all__ = [
+    "Song", 
+    "SongAudio", 
+    "get_song_artwork", 
+    "to_network_v1", 
+    "to_network_v2", 
+    "to_sql", 
+    "from_sql"
+]

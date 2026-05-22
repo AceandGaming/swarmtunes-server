@@ -24,7 +24,6 @@ class Song(IDObject):
         if evil:
             return "evil"
         return None
-
     title: str
     title_original: Optional[str] = None
 

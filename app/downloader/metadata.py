@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from typing import Literal
 from pathlib import Path
 import logging
-log = logging.getLogger("Downloader")
+log = logging.getLogger("swarmtunes")
 
 @dataclass
 class Metadata:

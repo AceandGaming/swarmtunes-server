@@ -18,7 +18,7 @@ class NetworkSongV2(TypedDict):
 
     artists: list[str]
     singers: list[str]
-    type: Literal["original", "collab", "cover"]
+    type: Literal["original", "collab", "cover", "mashup"]
 
     dateReleased: str
     seconds: int

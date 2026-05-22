@@ -66,6 +66,6 @@ class SQLSong(SQLIDObject):
 
     seconds: Mapped[float] = mapped_column(Float, nullable=False)
     audio_references: Mapped[list[AudioReference]] = mapped_column(JSON, nullable=False)
-    metadata_source: Mapped[Literal["json", "id3", "filename", "manual"]] = mapped_column(String, nullable=False)
+    metadata_source: Mapped[Literal["json", "id3", "manual"]] = mapped_column(String, nullable=False)
     
     
