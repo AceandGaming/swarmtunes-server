@@ -1,7 +1,8 @@
 from .song import Song, SongAudio
 from .json import NetworkSongV1, NetworkSongV2
 from .cover import get_song_artwork
-from .sqlite import SQLSong, SQLArtist
+from database.models.song import SQLSong
+from database.models.artist import SQLArtist
 from typing import Literal, cast
 from dataclasses import asdict
 
@@ -56,6 +57,7 @@ def to_sql(song: Song) -> SQLSong:
         id = song.id,
         date_created = song.date_created,
         disabled_at = song.disabled_at,
+        hidden=song.hidden,
 
         title = song.title,
         title_original = song.title_original,
@@ -87,6 +89,7 @@ def from_sql(song: SQLSong) -> Song:
         id = song.id,
         date_created = song.date_created,
         disabled_at = song.disabled_at,
+        hidden=song.hidden,
 
         title = song.title,
         title_original = song.title_original,

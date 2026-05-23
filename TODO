@@ -1,11 +1,9 @@
 # In progress
-- Update metadata retreval
+- Update playlists
 
 # Code
 - Rewrite Maitence (again)
 - Make artwork automatic
-- Update albums
-- Update playlists
 - Update users
 - Switch to better search system
 - Switch configs to pydantic_settings

@@ -1,41 +1,13 @@
 from abstract.id_object import SQLIDObject
-from core.database import Base
-from sqlalchemy import Column, String, Integer, Boolean, Float, Table, ForeignKey, DateTime, JSON
+from sqlalchemy import String, Integer, Boolean, Float, DateTime, JSON
 from sqlalchemy.orm import relationship, mapped_column, Mapped
 from datetime import datetime
-from typing import Literal, Optional, TypedDict
+from typing import Literal, Optional, TypedDict, TYPE_CHECKING
+from .relationships import song_artists, song_singers, playlist_songs
+from .artist import SQLArtist
 
-song_artists = Table(
-    "song_artists",
-    Base.metadata,
-    Column("song_id", String, ForeignKey("songs.id"), primary_key=True),
-    Column("artist_id", Integer, ForeignKey("artists.id"), primary_key=True)
-)
-
-song_singers = Table(
-    "song_singers",
-    Base.metadata,
-    Column("song_id", String, ForeignKey("songs.id"), primary_key=True),
-    Column("artist_id", Integer, ForeignKey("artists.id"), primary_key=True)
-)
-
-class SQLArtist(Base):
-    __tablename__ = "artists"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    name: Mapped[str] = mapped_column(String, nullable=False, unique=True)
-
-    songs_artist = relationship(
-        "Song",
-        secondary=song_artists,
-        back_populates="artists"
-    )
-
-    songs_singer = relationship(
-        "Song",
-        secondary=song_singers,
-        back_populates="singers"
-    )
+if TYPE_CHECKING:
+    from .playlist import SQLPlaylist
 
 class AudioReference(TypedDict):
     type: Literal["gdrive", "youtube", "audio"]
@@ -48,12 +20,12 @@ class SQLSong(SQLIDObject):
     title_original: Mapped[Optional[str]] = mapped_column(String)
 
     artists: Mapped[list[SQLArtist]] = relationship(
-        "Artist",
+        "SQLArtist",
         secondary=song_artists,
         back_populates="songs_artist"
     )
     singers: Mapped[list[SQLArtist]] = relationship(
-        "Artist",
+        "SQLArtist",
         secondary=song_singers,
         back_populates="songs_singer"
     )
@@ -67,5 +39,11 @@ class SQLSong(SQLIDObject):
     seconds: Mapped[float] = mapped_column(Float, nullable=False)
     audio_references: Mapped[list[AudioReference]] = mapped_column(JSON, nullable=False)
     metadata_source: Mapped[Literal["json", "id3", "manual"]] = mapped_column(String, nullable=False)
+
+    playlists: Mapped[list["SQLPlaylist"]] = relationship(
+        "SQLPlaylist",
+        secondary=playlist_songs,
+        back_populates="songs"
+    )
     
     

@@ -1,5 +1,7 @@
 # Swarmtunes - Server
 
+***THIS VERSION IS UNDER ACTIVE DEVELPMENT AND WILL NOT WORK***
+
 The server-side code that runs Swarmtunes. It provides the backend API for the main website at [api.swarmtunes.com](https://api.swarmtunes.com).
 
 See [`Swarmtunes - Client`](https://github.com/AceandGaming/Swarmtunes-client) for the main website and client code.
