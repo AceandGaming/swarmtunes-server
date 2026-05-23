@@ -1,7 +1,7 @@
 from .playlist import Playlist
 from .json import NetworkPlaylistV1, NetworkPlaylistV2
 from database.models.playlist import SQLPlaylist
-from types.song import to_sql as song_to_sql, from_sql as song_from_sql
+from features.song import to_sql as song_to_sql, from_sql as song_from_sql
 
 def get_singers(playlist: Playlist) -> list[str]:
     pass

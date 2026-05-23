@@ -1,6 +1,6 @@
-from .song import Song, SongAudio
+from .song import Song, SongAudio, SongMetadataSource, SongType
 from .json import NetworkSongV1, NetworkSongV2
-from .cover import get_song_artwork
+from core.cover import get_song_artwork
 from database.models.song import SQLSong
 from database.models.artist import SQLArtist
 from typing import Literal, cast
@@ -42,7 +42,7 @@ def to_network_v2(song: Song) -> NetworkSongV2:
         "titleOriginal": song.title_original,
         "artists": song.artists,
         "singers": song.singers,
-        "type": song.type,
+        "type": song.type.value,
         "dateReleased": song.date_released.isoformat(),
         "seconds": int(song.duration),
         "artworks": {artwork.type: artwork.name for artwork in get_song_artwork(song)},
@@ -111,6 +111,8 @@ def from_sql(song: SQLSong) -> Song:
 __all__ = [
     "Song", 
     "SongAudio", 
+    "SongMetadataSource",
+    "SongType",
     "get_song_artwork", 
     "to_network_v1", 
     "to_network_v2", 

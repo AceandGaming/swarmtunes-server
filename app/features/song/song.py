@@ -2,6 +2,18 @@ from dataclasses import dataclass, field
 from typing import Optional, Literal
 from datetime import datetime
 from abstract.id_object import IDObject
+from enum import Enum
+
+class SongType(Enum):
+    ORIGINAL = "original"
+    COLLAB = "collab"
+    COVER = "cover"
+    MASHUP = "mashup"
+
+class SongMetadataSource(Enum):
+    JSON = "json"
+    ID3 = "id3"
+    MANUAL = "manual"
 
 @dataclass
 class SongAudio:
@@ -29,7 +41,7 @@ class Song(IDObject):
 
     artists: list[str]
     singers: list[str] # Typically 'Neuro-sama' or 'Evil Neuro'
-    type: Literal["original", "collab", "cover", "mashup"]
+    type: SongType = SongType.COVER
 
     date_released: datetime
     disc: Optional[int] = None
@@ -38,7 +50,7 @@ class Song(IDObject):
 
     seconds: float
     audio_references: list[SongAudio] = field(default_factory=lambda: [])
-    metadata_source: Literal["json", "id3", "manual"]
+    metadata_source: SongMetadataSource
 
     def __repr__(self):
         artists = " & ".join(self.artists) if self.artists else "unknown"

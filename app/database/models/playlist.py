@@ -1,5 +1,5 @@
 from abstract.id_object import SQLIDObject
-from sqlalchemy import String, Boolean, DateTime
+from sqlalchemy import String, Boolean, DateTime, ForeignKey
 from sqlalchemy.orm import relationship, mapped_column, Mapped
 from datetime import datetime
 from typing import Optional, TYPE_CHECKING
@@ -20,3 +20,4 @@ class SQLPlaylist(SQLIDObject):
         back_populates="playlists"
     )
     protected: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), nullable=False)

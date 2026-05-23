@@ -3,7 +3,7 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from types.song import Song
+    from features.song import Song
 
 @dataclass(kw_only=True)
 class SongCollection(ABC):
