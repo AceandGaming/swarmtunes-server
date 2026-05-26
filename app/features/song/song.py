@@ -17,8 +17,9 @@ class SongMetadataSource(Enum):
 
 @dataclass
 class SongAudio:
-    type: Literal["gdrive", "youtube", "audio"]
+    type: Literal["gdrive", "youtube"]
     id: str
+    audio_hash: Optional[str] = None
 
 @dataclass(eq=False, kw_only=True)
 class Song(IDObject):

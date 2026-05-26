@@ -1,11 +1,13 @@
 # In progress
+- Switch configs to pydantic_settings
 
 # Code
-- Rewrite Maitence (again)
+- Rewrite Maitnence (again)
 - Make artwork automatic
 - Switch to better search system
-- Switch configs to pydantic_settings
-- Use OAuth (Google, Discord) logins and depricate username+password logins
+- Use OAuth (Google, Discord) for user logins and depricate username+password
+- Automatic backups
+- Update existing scripts to use new systems
 
 # Data
 - HLS

@@ -6,7 +6,9 @@ def _create(path: Path) -> Path:
     return path
 
 
-BASE = Path(os.path.dirname(os.path.abspath(__file__)))
+BASE = Path(__file__).resolve().parents[2] # project root
+if not (BASE / "app").is_dir():
+    raise Exception(f"Base path doesn't point to project root! Path {BASE} is missing 'app' folder")
 
 # Folders
 DATA = _create(BASE / "data")

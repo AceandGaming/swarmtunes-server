@@ -11,8 +11,9 @@ if TYPE_CHECKING:
     from .playlist import SQLPlaylist
 
 class AudioReference(TypedDict):
-    type: Literal["gdrive", "youtube", "audio"]
+    type: Literal["gdrive", "youtube"]
     id: str
+    audio_hash: Optional[str]
 
 class SQLSong(SQLIDObject):
     __tablename__ = "songs"

@@ -81,7 +81,8 @@ def from_sql(song: SQLSong) -> Song:
     for audio in song.audio_references:
         refrences.append(SongAudio(
             type=audio["type"], 
-            id=audio["id"]
+            id=audio["id"],
+            audio_hash=audio["audio_hash"]
         ))
 
     return Song(
