@@ -1,10 +1,13 @@
-from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Literal
 from abstract.id_object import IDObject
+from sqlalchemy import String, JSON, Enum as SQLAlchemyEnum
+from sqlalchemy.orm import relationship, mapped_column, Mapped
+from typing import TYPE_CHECKING, TypedDict, Literal
 from datetime import datetime
+from dataclasses import dataclass
 from enum import Enum
 if TYPE_CHECKING:
-    from features import Playlist
+    from ..playlist.playlist import Playlist
+
 
 class UserRoles(Enum):
     USER = "user"
@@ -16,16 +19,16 @@ class UserRoles(Enum):
 class Auth:
     type: Literal["google", "discord", "legacy"]
     expires: datetime
-    token: str
 
-@dataclass(eq=False, kw_only=True)
 class User(IDObject):
-    username: str
-    email: str
-    auth: Auth
-    playlists: list["Playlist"] = field(default_factory=list)
-    role: UserRoles = UserRoles.USER
+    __tablename__ = "users"
 
-    @property
-    def is_admin(self):
-        return self.role == UserRoles.ADMIN
+    username: Mapped[str] = mapped_column(String, unique=True)
+    email: Mapped[str] = mapped_column(String, unique=True)
+
+    role: Mapped[UserRoles] = mapped_column(SQLAlchemyEnum(UserRoles), default=UserRoles.USER)
+    auth: Mapped[Auth] = mapped_column(JSON)
+
+    playlists: Mapped[list["Playlist"]] = relationship(
+        back_populates="user"
+    )

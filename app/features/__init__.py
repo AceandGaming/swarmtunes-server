@@ -1,11 +1,9 @@
 from .song import Song
-from .collection import SongCollection
 from .playlist import Playlist
-from .album import Album
+from .user import User
 
 __all__ = [
     "Song",
-    "SongCollection",
     "Playlist",
-    "Album"
+    "User"
 ]

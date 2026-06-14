@@ -1,8 +1,14 @@
-from dataclasses import dataclass, field
-from typing import Optional, Literal
-from datetime import datetime
 from abstract.id_object import IDObject
+from sqlalchemy import JSON, Enum as SQLAlchemyEnum
+from sqlalchemy.orm import relationship, mapped_column, Mapped
+from datetime import datetime
+from typing import Literal, Optional, TYPE_CHECKING
+from database.relationships import song_artists, song_singers, playlist_songs
+from dataclasses import dataclass
 from enum import Enum
+if TYPE_CHECKING:
+    from features.artist import Artist
+    from features.playlist import Playlist
 
 class SongType(Enum):
     ORIGINAL = "original"
@@ -21,11 +27,13 @@ class SongAudio:
     id: str
     audio_hash: Optional[str] = None
 
-@dataclass(eq=False, kw_only=True)
 class Song(IDObject):
+    __tablename__ = "songs"
+
     @property
     def duration(self):
         return self.seconds
+
     @property
     def singers_short(self):
         neuro = "Neuro-sama" in self.singers
@@ -37,27 +45,50 @@ class Song(IDObject):
         if evil:
             return "evil"
         return None
-    title: str
-    title_original: Optional[str] = None
 
-    artists: list[str]
-    singers: list[str] # Typically 'Neuro-sama' or 'Evil Neuro'
-    type: SongType = SongType.COVER
+    @property
+    def artist_names(self):
+        return [a.name for a in self.artists]
 
-    date_released: datetime
-    disc: Optional[int] = None
-    is_copyrighted: bool
-    custom_artwork: Optional[str] = None
+    @property
+    def singer_names(self):
+        return [a.name for a in self.singers]
 
-    seconds: float
-    audio_references: list[SongAudio] = field(default_factory=lambda: [])
-    metadata_source: SongMetadataSource
+
+    title: Mapped[str] = mapped_column()
+    title_original: Mapped[Optional[str]] = mapped_column()
+
+    artists: Mapped[list["Artist"]] = relationship(
+        secondary=song_artists,
+        back_populates="songs_artist"
+    )
+    singers: Mapped[list["Artist"]] = relationship(
+        secondary=song_singers,
+        back_populates="songs_singer"
+    )
+    type: Mapped[SongType] = mapped_column(SQLAlchemyEnum(SongType))
+
+    date_released: Mapped[datetime] = mapped_column()
+    disc: Mapped[Optional[int]] = mapped_column()
+    is_copyrighted: Mapped[bool] = mapped_column()
+    custom_artwork: Mapped[Optional[str]] = mapped_column()
+
+    seconds: Mapped[float] = mapped_column()
+    audio_references: Mapped[list[SongAudio]] = mapped_column(JSON)
+    metadata_source: Mapped[SongMetadataSource] = mapped_column(SQLAlchemyEnum(SongMetadataSource))
+
+    playlists: Mapped[list["Playlist"]] = relationship(
+        secondary=playlist_songs,
+        back_populates="songs"
+    )
+    
 
     def __repr__(self):
-        artists = " & ".join(self.artists) if self.artists else "unknown"
-        singers = "".join(s[0] for s in self.singers if s) or "?"
+        artists = " & ".join([a.name for a in self.artists]) if self.artists else "unknown"
+        singers = "".join(s[0] for s in self.singer_names if s) or "?"
 
-        return f"'{self.title}' by '{artists}' ({singers}) [{self.id[:5]}]"
+        return f"'{self.title}' by '{artists}' ({singers}) [{str(self.id)[:5]}]"
     
     def get_audio(self, type: str) -> SongAudio | None:
         return next((a for a in self.audio_references if a.type == type), None)
+    

@@ -1,5 +1,5 @@
 from typing import TypedDict, Optional, Literal
-
+from features.artist.api import NetworkArtistV2
 
 class NetworkSongV1(TypedDict):
     id: str
@@ -16,8 +16,8 @@ class NetworkSongV2(TypedDict):
     title: str
     titleOriginal: Optional[str]
 
-    artists: list[str]
-    singers: list[str]
+    artists: list[NetworkArtistV2]
+    singers: list[NetworkArtistV2]
     type: Literal["original", "collab", "cover", "mashup"]
 
     dateReleased: str
