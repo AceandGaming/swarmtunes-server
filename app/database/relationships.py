@@ -21,3 +21,10 @@ playlist_songs = Table(
     Column("playlist_id", ForeignKey("playlists.id"), primary_key=True),
     Column("song_id", ForeignKey("songs.id"), primary_key=True),
 )
+
+album_songs = Table(
+    "album_songs",
+    Base.metadata,
+    Column("album_id", ForeignKey("albums.id"), primary_key=True),
+    Column("song_id", ForeignKey("songs.id"), primary_key=True),
+)

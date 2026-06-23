@@ -1,62 +1,44 @@
-from scripts.types import Song, Playlist
-from scripts.serializer import PlaylistSerializer
+from features.song import Song
 
-def SongEmbed(song: Song):
-    redirect_url = f"https://swarmtunes.com?song={song.id}"
-    image_url = f"https://api.swarmtunes.com/covers/{song.coverArt}"
+def _create_embed(title: str, description: str, image: str, redirect: str):
     return f"""
     <!DOCTYPE html>
     <html lang="en">
     <head>
         <meta charset="utf-8">
-        <title>{song.title} | SwarmTunes</title>
+        <title>{title} | SwarmTunes</title>
 
-        <meta property="og:title" content="{song.title}" />
-        <meta property="og:description" content="Artist: {song.prettyArtists}\nSung by: {", ".join(song.singers)}" />
-        <meta property="og:image" content="{image_url}" />
-        <meta property="og:url" content="https://share.swarmtunes.com?song={song.id}" />
+        <meta property="og:title" content="{title}" />
+        <meta property="og:description" content="{description}" />
+        <meta property="og:image" content="{image}" />
+        <meta property="og:url" content="{redirect}" />
         <meta property="og:type" content="music.song" />
 
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="{song.title}" />
-        <meta name="twitter:description" content="Artist: {song.prettyArtists}" />
-        <meta name="twitter:image" content="{image_url}" />
+        <meta name="twitter:title" content="{title}" />
+        <meta name="twitter:description" content="{description}" />
+        <meta name="twitter:image" content="{image}" />
     </head>
     <body>
         <script>
-            window.location.href = "{redirect_url}";
+            window.location.href = "{redirect}";
         </script>
-        <p>Redirecting to <a href="{redirect_url}">{redirect_url}</a>...</p>
+        <p>Redirecting to <a href="{redirect}">{redirect}</a>...</p>
     </body>
     </html>
     """
 
-def PlaylistEmbed(playlist: Playlist, shareCode: str):
-    redirect_url = f"https://swarmtunes.com?playlist={shareCode}"
-    image_url = f"https://api.swarmtunes.com/covers/{playlist.coverArt}"
-    return f"""
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="utf-8">
-        <title>{playlist.name} | SwarmTunes</title>
-
-        <meta property="og:title" content="{playlist.name}" />
-        <meta property="og:description" content="Created on: {playlist.date.strftime("%d %B %Y")}\n{len(playlist.songIds)} songs" />
-        <meta property="og:image" content="{image_url}" />
-        <meta property="og:url" content="https://share.swarmtunes.com?p={shareCode}" />
-        <meta property="og:type" content="music.playlist" />
-
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="{playlist.name}" />
-        <meta name="twitter:description" content="Created on: {playlist.date.strftime("%d %B %Y")}\n{len(playlist.songIds)} songs" />
-        <meta name="twitter:image" content="{image_url}" />
-    </head>
-    <body>
-        <script>
-            window.location.href = "{redirect_url}";
-        </script>
-        <p>Redirecting to <a href="{redirect_url}">{redirect_url}</a>...</p>
-    </body>
-    </html>
-    """
+def create_song_embed(song: Song):
+    redirect_url = f"https://swarmtunes.com?song={song.id}"
+    image_url = f"https://api.swarmtunes.com/covers/{song.coverArt}"
+    
+    return _create_embed(
+        title = song.title,
+        description = f"""
+        Artists: {', '.join([artist.name for artist in song.artists])}
+        Covered by: {', '.join([artist.name for artist in song.singers])}
+        {song.date_released.strftime("%d/%m/%Y")}
+        """,
+        image = image_url,
+        redirect = redirect_url
+    )

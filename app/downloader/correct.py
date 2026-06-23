@@ -9,7 +9,7 @@ from os import PathLike
 TARGET_LUFS = -16
 MIN_DBFS = -55 #trim audio lower then this
 
-def CorrectMP3(inputFile: PathLike, output: PathLike):
+def correct_and_covert_mp3(inputFile: PathLike, output: PathLike):
     DeleteID3Tags(inputFile)
     
     song = AudioSegment.from_file(inputFile, format="mp3")

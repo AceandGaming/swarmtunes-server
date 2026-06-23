@@ -1,20 +1,22 @@
 # In progress
-- Switch configs to pydantic_settings
+- Rewrite v1 endpoint
 
 # Code
+- Sharing
+- Login/Sessions
 - Rewrite Maitnence (again)
 - Make artwork automatic
 - Switch to better search system
 - Use OAuth (Google, Discord) for user logins and depricate username+password
 - Automatic backups
-- Update existing scripts to use new systems
+
 
 # Data
 - HLS
 
 # Fastapi
 - Create new v2 endpoint with new api stuff
-- Rewrite v1 endpoint
+
 
 # Other
 - Update pyproject.toml

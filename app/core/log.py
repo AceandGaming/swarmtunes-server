@@ -15,5 +15,3 @@ logging.basicConfig(
     datefmt='%Y-%m-%d %H:%M:%S',
     handlers=[logging.FileHandler('server.log'), logging.StreamHandler()]
 )
-
-logger = logging.getLogger("Swarmtunes")

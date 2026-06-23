@@ -5,8 +5,10 @@ class NetworkSongV1(TypedDict):
     id: str
     title: str
     artist: str
+    artists: list[str]
     singers: list[str]
     cover: Optional[str]
+    coverArt: Optional[str] # same as above
     date: str
     isOriginal: bool
     youtubeId: Optional[str]

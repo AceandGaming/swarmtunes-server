@@ -7,17 +7,21 @@ from typing import Literal, cast
 
 
 def to_network_v1(song: Song) -> NetworkSongV1:
-    artworks = {artwork.type: f"{artwork.type}/{artwork.name}" for artwork in get_song_artwork(song)}
     ytId = None
     for audio in song.audio_references:
         if audio.type == "youtube":
             ytId = audio.id
 
+    artworks = {artwork.type: f"{artwork.type}/{artwork.name}" for artwork in get_song_artwork(song)}
+    art = artworks["custom"] or artworks["default"] or artworks["plush"] or None
+
     return {
         "id": str(song.id),
         "title": song.title,
         "artist": ", ".join(song.artist_names),
-        "cover": artworks["custom"] or artworks["default"] or artworks["plush"] or None,
+        "artists": song.artist_names,
+        "cover": art,
+        "coverArt": art,
         "singers": song.singer_names,
         "date": song.date_released.strftime("%Y-%m-%d"),
         "isOriginal": song.type == "original",

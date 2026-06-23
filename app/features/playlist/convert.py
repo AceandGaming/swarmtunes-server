@@ -1,6 +1,7 @@
 from .playlist import Playlist
 from .api import NetworkPlaylistV1, NetworkPlaylistV2
 from features.playlist.playlist import Playlist
+from core.cover import get_collection_artwork
 
 def get_singers(playlist: Playlist) -> list[str]:
     singers = set()
@@ -9,12 +10,15 @@ def get_singers(playlist: Playlist) -> list[str]:
     return list(singers)
 
 def to_network_v1(playlist: Playlist) -> NetworkPlaylistV1:
+    artworks = {artwork.type: f"{artwork.type}/{artwork.name}" for artwork in get_collection_artwork(playlist)}
+    art = artworks["custom"] or artworks["default"] or artworks["plush"] or None
+
     return NetworkPlaylistV1(
         id=str(playlist.id),
         title=playlist.title,
         singers=get_singers(playlist),
         date=playlist.date_created.isoformat(),
-        cover=playlist.artwork,
+        cover=art,
         songIds=[str(song.id) for song in playlist.songs]
     )
 
@@ -22,7 +26,7 @@ def to_network_v2(playlist: Playlist) -> NetworkPlaylistV2:
     return NetworkPlaylistV2(
         id=str(playlist.id),
         title=playlist.title,
-        artwork=playlist.artwork,
+        artworks={artwork.type: artwork.name for artwork in get_collection_artwork(playlist)},
         songIds=[str(song.id) for song in playlist.songs],
         dateCreated=playlist.date_created.isoformat()
     )

@@ -1,7 +1,8 @@
 from PIL import Image
 from core.paths import ARTWORK, ART_CACHE, TEMP
 from zlib import adler32
-from features.song import Song
+from features.song.song import Song
+from features.collection import Collection
 import os
 import tempfile
 
@@ -26,9 +27,18 @@ def get_song_artwork(song: Song) -> list[Artwork]:
 
     return art
 
-# def get_collection_artwork(collection: SongCollection) -> list[Artwork]:
-#     type, name = collection.artwork.split("/")
-#     return [Artwork(type, name)]
+def get_collection_artwork(collection: Collection) -> list[Artwork]:
+    if collection is None:
+        return []
+    art = set()
+
+    for song in collection.songs:
+        art.update(get_song_artwork(song))
+
+    if collection.custom_artwork is not None:
+        art.add(Artwork("custom", collection.custom_artwork))
+
+    return list(art)
 
 def get_artwork_path(artwork: Artwork):
     return ARTWORK / f"{artwork.type}/{artwork.name}.png"
