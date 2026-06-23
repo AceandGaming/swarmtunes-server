@@ -1,5 +1,5 @@
 from typing import TypedDict, Optional
-from song.api import NetworkSongV2
+from features.song.api import NetworkSongV2
 
 class NetworkAlbumV1(TypedDict):
     id: str

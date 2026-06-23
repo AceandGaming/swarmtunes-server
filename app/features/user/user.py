@@ -30,5 +30,6 @@ class User(IDObject):
     auth: Mapped[Auth] = mapped_column(JSON)
 
     playlists: Mapped[list["Playlist"]] = relationship(
+        "Playlist",
         back_populates="user"
     )

@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Optional
 from database.relationships import playlist_songs
 if TYPE_CHECKING:
     from features.song.song import Song
+    from features.user.user import User
 
 class Playlist(IDObject):
     __tablename__ = "playlists"
@@ -18,5 +19,10 @@ class Playlist(IDObject):
         back_populates="playlists"
     )
     protected: Mapped[bool] = mapped_column(default=False)
-    user_id: Mapped[str] = mapped_column(ForeignKey("users.id"))
+
+    user_id = mapped_column(ForeignKey("users.id"))
+    user: Mapped[Optional["User"]] = relationship(
+        "User",
+        back_populates="playlists"
+    )
 

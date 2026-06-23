@@ -1,6 +1,5 @@
 # In progress
 - Rewrite v1 endpoint
-- New search
 
 # Code
 - Sharing
@@ -11,13 +10,11 @@
 - Use OAuth (Google, Discord) for user logins and depricate username+password
 - Automatic backups
 
-
 # Data
 - HLS
 
 # Fastapi
 - Create new v2 endpoint with new api stuff
-
 
 # Other
 - Update pyproject.toml

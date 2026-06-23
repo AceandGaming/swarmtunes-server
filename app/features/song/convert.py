@@ -1,6 +1,6 @@
 from .song import Song
 from .api import NetworkSongV1, NetworkSongV2
-from core.cover import get_song_artwork
+from features.artwork.song import get_song_artwork
 from features.song.song import Song
 from features.artist.convert import to_network_v2 as to_network_v2_artist
 from typing import Literal, cast

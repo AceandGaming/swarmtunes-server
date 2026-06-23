@@ -6,7 +6,7 @@ from uuid import UUID
 album_router = APIRouter()
 
 
-@album_router.get("/albums")
+@album_router.get("/")
 def get_albums(ids: list[UUID] = Query(None), db = Depends(get_db)):
     service = create_album_service(db)
 

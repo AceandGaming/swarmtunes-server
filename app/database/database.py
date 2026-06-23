@@ -18,3 +18,11 @@ SessionLocal = sessionmaker(
 
 class Base(DeclarativeBase):
     pass
+
+def create():
+    import features.song.song
+    import features.artist.artist
+    import features.album.album
+    import features.playlist.playlist
+    import features.user.user
+    Base.metadata.create_all(bind=engine)

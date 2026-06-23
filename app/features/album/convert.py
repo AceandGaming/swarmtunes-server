@@ -2,7 +2,7 @@ from .album import Album
 from .api import NetworkAlbumV1, NetworkAlbumV2
 from features.song.convert import to_network_v2 as to_network_v2_song
 from datetime import datetime
-from core.cover import get_collection_artwork
+from features.artwork.collection import get_collection_artwork
 
 def to_network_v1(album: Album) -> NetworkAlbumV1:
     artworks = {artwork.type: f"{artwork.type}/{artwork.name}" for artwork in get_collection_artwork(album)}

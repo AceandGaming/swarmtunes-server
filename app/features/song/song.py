@@ -3,12 +3,13 @@ from sqlalchemy import JSON, Enum as SQLAlchemyEnum
 from sqlalchemy.orm import relationship, mapped_column, Mapped
 from datetime import datetime
 from typing import Literal, Optional, TYPE_CHECKING
-from database.relationships import song_artists, song_singers, playlist_songs
+from database.relationships import song_artists, song_singers, playlist_songs, album_songs
 from dataclasses import dataclass
 from enum import Enum
 if TYPE_CHECKING:
     from features.artist import Artist
     from features.playlist import Playlist
+    from features.album import Album
 
 class SongType(Enum):
     ORIGINAL = "original"
@@ -79,6 +80,10 @@ class Song(IDObject):
 
     playlists: Mapped[list["Playlist"]] = relationship(
         secondary=playlist_songs,
+        back_populates="songs"
+    )
+    albums: Mapped[list["Album"]] = relationship(
+        secondary=album_songs,
         back_populates="songs"
     )
     

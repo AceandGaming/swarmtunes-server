@@ -1,7 +1,7 @@
 from .playlist import Playlist
 from .api import NetworkPlaylistV1, NetworkPlaylistV2
 from features.playlist.playlist import Playlist
-from core.cover import get_collection_artwork
+from features.artwork import get_collection_artwork
 
 def get_singers(playlist: Playlist) -> list[str]:
     singers = set()

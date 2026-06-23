@@ -5,7 +5,7 @@ from uuid import UUID
 
 song_router = APIRouter()
 
-@song_router.get("/songs")
+@song_router.get("/")
 def get_songs(ids: list[UUID] = Query(None), filters: str = Query(None), maxResults: int = Query(100), db = Depends(get_db)):
     service = create_song_service(db)
 
@@ -25,7 +25,7 @@ def get_songs(ids: list[UUID] = Query(None), filters: str = Query(None), maxResu
 
     return [to_network_v1(song) for song in songs]
 
-@song_router.get("/songs/{id}/share")
+@song_router.get("/{id}/share")
 def share_song():
     # TODO
     pass

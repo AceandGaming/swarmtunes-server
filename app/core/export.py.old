@@ -12,6 +12,7 @@ EXPORT_PATH = paths.PROCESSING_DIR / "export"
 def CreateAlbumName(song):
     return f"{" and ".join(song.singers)} Karaoke"
 
+
 def ExportSong(song: Song):
     EXPORT_PATH.mkdir(parents=True, exist_ok=True)
 

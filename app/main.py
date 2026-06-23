@@ -1,8 +1,9 @@
+import core.paths
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 from api.v1.server import v1_router
-import database.models #init db
+from database.database import create
 
 app = FastAPI()
 app.add_middleware(
@@ -14,6 +15,10 @@ app.add_middleware(
 )
 
 app.include_router(v1_router, prefix="/v1")
+
+@app.on_event("startup")
+async def startup():
+    create()
 
 @app.get("/")
 async def root():
