@@ -18,7 +18,7 @@ class Album(IDObject):
     type: Mapped[AlbumType] = mapped_column(SQLAlchemyEnum(AlbumType))
 
     custom_artwork: Mapped[Optional[str]] = mapped_column()
-    date: Mapped[Optional[datetime]] = mapped_column()
+    date: Mapped[Optional[datetime]] = mapped_column(timezone=True)
 
     songs: Mapped[list["Song"]] = relationship(
         "Song",

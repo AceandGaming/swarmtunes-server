@@ -1,4 +1,5 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from functools import lru_cache
 
 class FastAPI(BaseSettings):
     enable_v1: bool = True
@@ -29,10 +30,19 @@ class Backups(BaseSettings):
     full_weekly_count: int = 3
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", env_nested_delimiter="_")
+    model_config = SettingsConfigDict(env_file=".env", env_nested_delimiter="__")
 
     fastapi: FastAPI = FastAPI()
     sync: Sync = Sync()
     cache: Cache = Cache()
     backups: Backups = Backups()
 
+    token_expiry_hours: int = 24
+
+    playlist_max_name_length: int = 100
+    user_max_playlists: int = 30
+
+
+@lru_cache
+def get_config() -> Settings:
+    return Settings()

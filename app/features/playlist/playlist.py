@@ -20,9 +20,15 @@ class Playlist(IDObject):
     )
     protected: Mapped[bool] = mapped_column(default=False)
 
-    user_id = mapped_column(ForeignKey("users.id"))
+    user_id = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
     user: Mapped[Optional["User"]] = relationship(
         "User",
         back_populates="playlists"
     )
+
+    def add_song(self, song: "Song"):
+        self.songs.append(song)
+
+    def remove_song(self, song: "Song"):
+        self.songs.remove(song)
 

@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 from typing import Optional
 from database.database import Base
 from sqlalchemy.orm import Mapped, mapped_column
-from uuid import UUID
+from uuid import UUID, uuid4
 
 class IDObject(Base):
     __abstract__ = True
@@ -13,10 +13,9 @@ class IDObject(Base):
     def str_id(self):
         return str(self.id)
 
-    id: Mapped[UUID] = mapped_column(primary_key=True)
-    hidden: Mapped[bool] = mapped_column(default=False)
-    date_created: Mapped[datetime] = mapped_column(default=lambda: datetime.now(timezone.utc))
-    disabled_at: Mapped[Optional[datetime]] = mapped_column(nullable=True)
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    date_created: Mapped[datetime] = mapped_column(timezone=True, default=lambda: datetime.now(timezone.utc))
+    disabled_at: Mapped[Optional[datetime]] = mapped_column()
 
     def __hash__(self):
         return hash(self.id)

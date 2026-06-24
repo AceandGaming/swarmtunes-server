@@ -69,7 +69,7 @@ class Song(IDObject):
     )
     type: Mapped[SongType] = mapped_column(SQLAlchemyEnum(SongType))
 
-    date_released: Mapped[datetime] = mapped_column()
+    date_released: Mapped[datetime] = mapped_column(timezone=True)
     disc: Mapped[Optional[int]] = mapped_column()
     is_copyrighted: Mapped[bool] = mapped_column()
     custom_artwork: Mapped[Optional[str]] = mapped_column()

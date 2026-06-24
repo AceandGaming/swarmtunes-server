@@ -9,6 +9,14 @@ log = logging.getLogger()
 
 file_router = APIRouter(prefix="/files")
 
+@file_router.get("/album/{id}")
+def get_album_file(id: UUID, export: bool = Query(False), db = Depends(get_db)):
+    pass
+
+@file_router.get("/playlist/{id}")
+def get_playlist_file(id: UUID, export: bool = Query(False), db = Depends(get_db)):
+    pass
+
 @file_router.get("/{id}")
 def get_file(id: UUID, export: bool = Query(False), db = Depends(get_db)):
     service = create_song_service(db)

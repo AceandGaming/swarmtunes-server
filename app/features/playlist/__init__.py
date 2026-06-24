@@ -2,9 +2,19 @@ from .playlist import Playlist
 from .convert import to_network_v1, to_network_v2
 from core.service import Service
 from sqlalchemy.orm import Session
+from typing import TYPE_CHECKING
+from uuid import UUID
+if TYPE_CHECKING:
+    from features.user.user import User
+
+class PlaylistService(Service):
+    def get_in_user(self, user: User, id: UUID) -> Playlist | None:
+        return self.query().filter(self._model.userId == user.id, self._model.id == id).first()
+    def get_many_in_user(self, user: User, ids: list[UUID]) -> list[Playlist]:
+        return self.query().filter(self._model.userId == user.id, self._model.id.in_(ids)).all()
 
 def create_playlist_service(db: Session):
-    return Service(db, Playlist)
+    return PlaylistService(db, Playlist)
 
 __all__ = [
     "Playlist",

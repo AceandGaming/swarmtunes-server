@@ -2,6 +2,7 @@ from typing import TypeVar, Generic
 from sqlalchemy.orm import Session
 from abstract.id_object import IDObject
 from uuid import UUID
+from datetime import datetime, timezone
 
 T = TypeVar("T", bound=IDObject)
 
@@ -10,16 +11,18 @@ class Service(Generic[T]):
         self._db = db
         self._model = model
 
-    def query(self):
-        return self._db.query(self._model)
+    def query(self, include_disabled=False):
+        if include_disabled:
+            return self._db.query(self._model)
+
+        return self._db.query(self._model).filter(self._model.disabled_at.is_(None))
 
     def get_all(self) -> list[T]:
         return self.query().all()
 
-    def create(self, data: dict) -> T:
-        item = self._model(**data)
+    def add(self, item: T) -> T:
         self._db.add(item)
-        self._db.commit()
+        self._db.flush()
         self._db.refresh(item)
         return item
 
@@ -30,5 +33,4 @@ class Service(Generic[T]):
         return self.query().filter(self._model.id.in_(ids)).all()
 
     def delete(self, item: T) -> None:
-        self._db.delete(item)
-        self._db.commit()
+        item.disabled_at = datetime.now(timezone.utc)

@@ -5,7 +5,13 @@ from fastapi.responses import RedirectResponse
 from api.v1.server import v1_router
 from database.database import create
 
-app = FastAPI()
+app = FastAPI(
+    title="SwarmTunes API",
+    version="2.0.0-beta",
+    openapi_url=None,
+    docs_url=None,
+    redoc_url=None
+)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["swarmtunes.com"],
