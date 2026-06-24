@@ -13,7 +13,7 @@ class AuthProvider(Enum):
     LEGACY = "legacy"
 
 class Identity(IDObject):
-    __tablename__ = "auths"
+    __tablename__ = "identities"
     
     user_id = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
     user: Mapped["User"] = relationship(

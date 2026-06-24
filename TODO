@@ -1,8 +1,7 @@
 # In progress
-- Rewrite v1 endpoint
+- Sharing
 
 # Todo
-- Sharing
 - Rewrite Maitnence (again)
 - Make artwork automatic
 - Use OAuth (Google, Discord) for user logins and depricate username+password

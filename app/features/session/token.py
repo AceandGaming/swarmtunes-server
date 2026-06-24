@@ -3,6 +3,7 @@ from sqlalchemy.orm import relationship, mapped_column, Mapped
 from sqlalchemy import ForeignKey
 from datetime import datetime, timezone
 from typing import TYPE_CHECKING
+from database.types import UTCDateTime
 if TYPE_CHECKING:
     from features.user.user import User
 
@@ -22,5 +23,5 @@ class Token(IDObject):
         back_populates="tokens"
     )
 
-    expires_at: Mapped[datetime] = mapped_column(timezone=True)
+    expires_at: Mapped[datetime] = mapped_column(UTCDateTime())
     secret_hash: Mapped[str] # Hashed

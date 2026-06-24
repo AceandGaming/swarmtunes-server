@@ -4,6 +4,7 @@ from sqlalchemy.orm import relationship, mapped_column, Mapped
 from datetime import datetime
 from typing import Literal, Optional, TYPE_CHECKING
 from database.relationships import song_artists, song_singers, playlist_songs, album_songs
+from database.types import UTCDateTime
 from dataclasses import dataclass
 from enum import Enum
 if TYPE_CHECKING:
@@ -69,7 +70,7 @@ class Song(IDObject):
     )
     type: Mapped[SongType] = mapped_column(SQLAlchemyEnum(SongType))
 
-    date_released: Mapped[datetime] = mapped_column(timezone=True)
+    date_released: Mapped[datetime] = mapped_column(UTCDateTime())
     disc: Mapped[Optional[int]] = mapped_column()
     is_copyrighted: Mapped[bool] = mapped_column()
     custom_artwork: Mapped[Optional[str]] = mapped_column()

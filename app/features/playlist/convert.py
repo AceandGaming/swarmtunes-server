@@ -11,7 +11,7 @@ def get_singers(playlist: Playlist) -> list[str]:
 
 def to_network_v1(playlist: Playlist) -> NetworkPlaylistV1:
     artworks = {artwork.type: f"{artwork.type}/{artwork.name}" for artwork in get_collection_artwork(playlist)}
-    art = artworks["custom"] or artworks["default"] or artworks["plush"] or None
+    art = artworks.get("custom") or artworks.get("default") or artworks.get("plush")
 
     return NetworkPlaylistV1(
         id=str(playlist.id),

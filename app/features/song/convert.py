@@ -13,7 +13,7 @@ def to_network_v1(song: Song) -> NetworkSongV1:
             ytId = audio.id
 
     artworks = {artwork.type: f"{artwork.type}/{artwork.name}" for artwork in get_song_artwork(song)}
-    art = artworks["custom"] or artworks["default"] or artworks["plush"] or None
+    art = artworks.get("custom") or artworks.get("default") or artworks.get("plush")
 
     return {
         "id": str(song.id),

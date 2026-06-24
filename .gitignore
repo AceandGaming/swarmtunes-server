@@ -20,6 +20,7 @@ Thumbs.db
 
 # Credentials
 *.pem
+*.key
 /secrets
 
 # Config

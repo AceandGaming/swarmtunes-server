@@ -45,6 +45,7 @@ class AuthManager:
             legacy = LegacyCredentials(identity_id=identity.id, password_hash=hash)
             self._db.add(legacy)
         except IntegrityError:
+            log.exception("Failed to create user")
             return None
 
         return identity
@@ -84,7 +85,7 @@ class AuthManager:
             return None
         if token.expired:
             return None
-        if hmac.compare_digest(token.secret_hash, sha256(secret.encode("utf-8")).hexdigest()):
+        if not hmac.compare_digest(token.secret_hash, sha256(secret.encode("utf-8")).hexdigest()):
             return None
 
         return token

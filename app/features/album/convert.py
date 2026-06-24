@@ -6,7 +6,7 @@ from features.artwork.collection import get_collection_artwork
 
 def to_network_v1(album: Album) -> NetworkAlbumV1:
     artworks = {artwork.type: f"{artwork.type}/{artwork.name}" for artwork in get_collection_artwork(album)}
-    art = artworks["custom"] or artworks["default"] or artworks["plush"] or None
+    art = artworks.get("custom") or artworks.get("default") or artworks.get("plush")
 
     return NetworkAlbumV1(
         id=str(album.id),

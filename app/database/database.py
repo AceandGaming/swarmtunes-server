@@ -25,4 +25,6 @@ def create():
     import features.album.album
     import features.playlist.playlist
     import features.user.user
+    import features.session.token
+    import features.identity.identity
     Base.metadata.create_all(bind=engine)

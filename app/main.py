@@ -1,9 +1,11 @@
 import core.paths
+import core.log
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 from api.v1.server import v1_router
 from database.database import create
+
 
 app = FastAPI(
     title="SwarmTunes API",

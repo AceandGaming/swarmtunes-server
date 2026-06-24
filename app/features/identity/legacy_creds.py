@@ -8,9 +8,9 @@ if TYPE_CHECKING:
 class LegacyCredentials(Base):
     __tablename__ = "legacy_creds"
 
-    identity_id = mapped_column(
+    identity_id: Mapped[int] = mapped_column(
         ForeignKey("identities.id", ondelete="CASCADE"),
-        unique=True
+        primary_key=True
     )
     identity: Mapped["Identity"] = relationship(
         "Identity",
