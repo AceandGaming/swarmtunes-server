@@ -1,12 +1,18 @@
+import logging
+import os
+
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
-import os
+
 from core.paths import SECRETS
 
-SCOPES = ['https://www.googleapis.com/auth/drive.readonly']
+log = logging.getLogger()
 
-TOKEN_PATH = SECRETS / 'token.json'
-CREDENTIALS_PATH = SECRETS / 'credentials.json'
+SCOPES = ["https://www.googleapis.com/auth/drive.readonly"]
+
+TOKEN_PATH = SECRETS / "token.json"
+CREDENTIALS_PATH = SECRETS / "credentials.json"
+
 
 def get_drive_service():
     creds = None
@@ -16,13 +22,13 @@ def get_drive_service():
         flow = InstalledAppFlow.from_client_secrets_file(CREDENTIALS_PATH, SCOPES)
         creds = flow.run_local_server(
             port=0,
-            authorization_prompt_message='Please visit this URL: {url}',
-            success_message='The auth flow is complete; you can close this tab.',
+            authorization_prompt_message="Please visit this URL: {url}",
+            success_message="The auth flow is complete; you can close this tab.",
             open_browser=True,
-            prompt='consent',
-            access_type='offline'
+            prompt="consent",
+            access_type="offline",
         )
-        with open(TOKEN_PATH, 'w') as token:
+        with open(TOKEN_PATH, "w") as token:
             token.write(creds.to_json())
-
+    log.info("Drive credentials verified and saved.")
     return creds

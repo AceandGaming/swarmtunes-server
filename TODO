@@ -1,8 +1,9 @@
 # In progress
-- Sharing
+- Rewrite Maitnence (again)
+
 
 # Todo
-- Rewrite Maitnence (again)
+- Sharing
 - Make artwork automatic
 - Use OAuth (Google, Discord) for user logins and depricate username+password
 - Automatic backups

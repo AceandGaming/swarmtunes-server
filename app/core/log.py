@@ -1,43 +1,27 @@
-import logging
-import os
-from logging.handlers import RotatingFileHandler
-from core.paths import LOGS
+import json
+import logging.config
+from logging import LogRecord
+from queue import Queue
 
-LOG_LEVELS = {
-    "DEBUG": logging.DEBUG,
-    "INFO": logging.INFO,
-    "WARNING": logging.WARNING,
-    "ERROR": logging.ERROR,
-}
+from core.paths import CONFIG, LOGS
 
-level = LOG_LEVELS.get(os.getenv("LOG_LEVEL", "INFO").upper(), logging.INFO)
-
-LOGS.mkdir(parents=True, exist_ok=True)
-log_file = LOGS / "server.log"
-
-formatter = logging.Formatter(
-    "%(asctime)s %(funcName)s:%(lineno)d @%(name)s [%(levelname)s]: %(message)s",
-    "%Y-%m-%d %H:%M:%S",
-)
-
-file_handler = RotatingFileHandler(
-    log_file,
-    maxBytes=10 * 1024 * 1024,
-    backupCount=5,
-    encoding="utf-8",
-)
-file_handler.setFormatter(formatter)
-file_handler.setLevel(level)
-
-console_handler = logging.StreamHandler()
-console_handler.setFormatter(formatter)
-console_handler.setLevel(level)
+log_queue: Queue[LogRecord] = Queue()
 
 
-# Attach file logging to root (this is the key trick)
-root_logger = logging.getLogger()
-root_logger.setLevel(level)
-root_logger.addHandler(file_handler)
+class QueueLogHandler(logging.Handler):
+    def emit(self, record):
+        log_queue.put(record)
 
 
-root_logger.addHandler(console_handler)
+def setup_logging():
+    with open(CONFIG / "log_config.json", "r") as f:
+        dict = json.load(f)
+        for handler in dict["handlers"].values():
+            if "filename" not in handler:
+                continue
+            handler["filename"] = str(LOGS / handler["filename"])
+        logging.config.dictConfig(dict)
+
+        for name in dict["loggers"].keys():
+            logger = logging.getLogger(name)
+            logger.addHandler(QueueLogHandler())

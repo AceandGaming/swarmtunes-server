@@ -1,34 +1,35 @@
 import json
-from mutagen.id3 import ID3
-from typing import Optional
+import logging
 import re
 from datetime import datetime
-from dataclasses import dataclass
-from typing import Literal
 from pathlib import Path
-import logging
-log = logging.getLogger("swarmtunes")
 
-@dataclass
-class Metadata:
-    source: Literal["json", "id3"]
-    title: str
-    title_og: Optional[str]
-    artists: list[str]
-    singers: list[str]
-    date: datetime
-    disc: int
-    hash: Optional[str] #audio hash
+from mutagen.mp3 import MP3
+
+from features.metadata import MetaArtist, Metadata, MetadataSource
+
+log = logging.getLogger()
 
 
-def convert_name(name: str) -> str:
-    name = re.sub(r"\(.*\)", "", name).strip()
-    return {
-        "neuro": "Neuro-sama",
-        "evil": "Evil Neuro",
-    }.get(name.lower(), name)
+def convert_name(name: str) -> MetaArtist:
+    match = re.match(r"(.*) \((.*?)\)", name)
+    if match is not None:
+        name = match.group(2)
+        og_name = match.group(1)
+    else:
+        name = name
+        og_name = None
 
-def convert_to_singers(cover_artist: str) -> list[str]:
+    if og_name is None:
+        if name == "neuro":
+            name = "Neuro-sama"
+        elif name == "evil":
+            name = "Evil Neuro"
+
+    return MetaArtist(name=name, name_og=og_name)
+
+
+def convert_to_singers(cover_artist: str) -> list[MetaArtist]:
     cover_artist = cover_artist.strip()
 
     match = re.match(r"duet \((.*)\)", cover_artist, re.IGNORECASE)
@@ -42,9 +43,9 @@ def convert_to_singers(cover_artist: str) -> list[str]:
         return singers
 
     return [convert_name(cover_artist)]
-    
 
-def create_from_id3(file: ID3):
+
+def create_from_id3(file):
     if not {"TIT2", "TPE1", "COMM::eng"} <= set(file.keys()):
         raise ValueError("Invalid metadata")
 
@@ -68,17 +69,19 @@ def create_from_id3(file: ID3):
     date = datetime.fromisoformat(file["COMM::eng"].text[0])
 
     data = Metadata(
-        source="id3",
+        source=MetadataSource.ID3,
         title=title,
         title_og=title_og,
         artists=artists,
         singers=singers,
         date=date,
         disc=int(file["TPOS"].text[0]),
-        hash=None
+        hash=None,
+        seconds=file.info.length,
     )
     log.debug(f"Created Metadata from ID3: {data}")
     return data
+
 
 def create_from_json(file: dict):
     artists = file["Artist"].split(",")
@@ -86,7 +89,7 @@ def create_from_json(file: dict):
     singers = convert_to_singers(file["CoverArtist"])
 
     data = Metadata(
-        source="json",
+        source=MetadataSource.JSON,
         title=file["Title"],
         title_og=file["TitleOG"],
         artists=artists,
@@ -94,15 +97,19 @@ def create_from_json(file: dict):
         date=datetime.fromisoformat(file["Date"]),
         disc=file["Discnumber"],
         hash=file["xxHash"],
+        seconds=0,
     )
     log.debug(f"Created Metadata from JSON: {data}")
     return data
 
+
 def load_file_metadata(path: Path) -> Metadata | None:
-    file = ID3(path)
-    if  "COMM::ved" in file:
+    file = MP3(path)
+    if "COMM::ved" in file:
         try:
-            return create_from_json(json.loads(file["COMM::ved"].text[0]))
+            meta = create_from_json(json.loads(file["COMM::ved"].text[0]))
+            meta.seconds = file.info.length
+            return meta
         except Exception as e:
             log.error(f"Error parsing json metadata: {e}")
             pass
@@ -111,4 +118,3 @@ def load_file_metadata(path: Path) -> Metadata | None:
     except Exception as e:
         log.error(f"Error parsing id3 metadata: {e}")
         return None
-    

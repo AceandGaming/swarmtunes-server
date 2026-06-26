@@ -26,6 +26,8 @@ Thumbs.db
 # Config
 *.env
 !.env.example
+log_config.json
+!log_config.example.json
 
 # Logs
 *.log

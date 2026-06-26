@@ -1,20 +1,26 @@
-from pydub import AudioSegment, silence
-import pyloudnorm as loudnorm
-import numpy as np
 import warnings
+from pathlib import Path
+
+import numpy as np
+import pyloudnorm as loudnorm
+from pydub import AudioSegment, silence
 from scripts.load_metadata import DeleteID3Tags
-import acoustid
-from os import PathLike
 
 TARGET_LUFS = -16
-MIN_DBFS = -55 #trim audio lower then this
+MIN_DBFS = -55  # trim audio lower then this
 
-def correct_and_covert_mp3(inputFile: PathLike, output: PathLike):
+
+def correct_and_convert_mp3(inputFile: Path, output: Path):
+    """Normalizes and converts an MP3 file to OGG Vorbis format."""
+    if output.exists() or not inputFile.exists():
+        return
     DeleteID3Tags(inputFile)
-    
+
     song = AudioSegment.from_file(inputFile, format="mp3")
 
-    silences = silence.detect_silence(song, min_silence_len=300, silence_thresh=MIN_DBFS)
+    silences = silence.detect_silence(
+        song, min_silence_len=300, silence_thresh=MIN_DBFS
+    )
     start = 0
     end = len(song)
 
@@ -33,10 +39,8 @@ def correct_and_covert_mp3(inputFile: PathLike, output: PathLike):
         warnings.simplefilter("ignore")
         samples = loudnorm.normalize.loudness(samples, loudness, TARGET_LUFS)
 
-    samples = np.clip(samples, -1.0, 0.9995) #prevents clipping
+    samples = np.clip(samples, -1.0, 0.9995)  # prevents clipping
 
     song = song._spawn((samples * (1 << 15)).astype(np.int16).tobytes())
 
-    song.export(output, format="ogg", codec="vorbis", bitrate="128k")
-
-    return acoustid.fingerprint_file(str(output))
+    song.export(output, format="ogg", codec="libvorbis", bitrate="128k")

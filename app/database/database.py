@@ -1,7 +1,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
-from core.paths import DATA
 
+from core.paths import DATA
 
 DATABASE_URL = "sqlite:///" + str(DATA / "database.db")
 
@@ -16,15 +16,18 @@ SessionLocal = sessionmaker(
     autocommit=False,
 )
 
+
 class Base(DeclarativeBase):
     pass
 
+
 def create():
-    import features.song.song
-    import features.artist.artist
-    import features.album.album
-    import features.playlist.playlist
-    import features.user.user
-    import features.session.token
-    import features.identity.identity
+    import features.album
+    import features.artist
+    import features.identity
+    import features.playlist
+    import features.session
+    import features.song
+    import features.user
+
     Base.metadata.create_all(bind=engine)

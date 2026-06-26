@@ -1,10 +1,13 @@
-from typing import TypeVar, Generic
-from sqlalchemy.orm import Session
-from abstract.id_object import IDObject
-from uuid import UUID
 from datetime import datetime, timezone
+from typing import Generic, TypeVar
+from uuid import UUID
+
+from sqlalchemy.orm import Session
+
+from abstract.id_object import IDObject
 
 T = TypeVar("T", bound=IDObject)
+
 
 class Service(Generic[T]):
     def __init__(self, db: Session, model: type[T]):
@@ -23,12 +26,11 @@ class Service(Generic[T]):
     def add(self, item: T) -> T:
         self._db.add(item)
         self._db.flush()
-        self._db.refresh(item)
         return item
 
     def get(self, id: UUID) -> T | None:
         return self.query().filter(self._model.id == id).first()
-    
+
     def get_many(self, ids: list[UUID]) -> list[T]:
         return self.query().filter(self._model.id.in_(ids)).all()
 

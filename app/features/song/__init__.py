@@ -1,15 +1,21 @@
-from .song import Song, SongType
-from .convert import to_network_v1, to_network_v2
-from core.service import Service
 from sqlalchemy.orm import Session
 
+from .audio_refrence import AudioReferenceType, SongAudioReference
+from .convert import to_network_v1, to_network_v2
+from .service import SongService
+from .song import Song, SongType
+
+
 def create_song_service(db: Session):
-    return Service(db, Song)
+    return SongService(db)
+
 
 __all__ = [
     "Song",
     "SongType",
     "to_network_v1",
     "to_network_v2",
-    "create_song_service"
+    "create_song_service",
+    "SongAudioReference",
+    "AudioReferenceType",
 ]
