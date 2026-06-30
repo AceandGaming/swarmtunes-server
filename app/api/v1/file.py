@@ -10,7 +10,7 @@ from features.song import create_song_service
 
 log = logging.getLogger()
 
-file_router = APIRouter(prefix="/files")
+file_router = APIRouter()
 
 
 @file_router.get("/album/{id}")

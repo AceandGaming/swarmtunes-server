@@ -21,9 +21,9 @@ def convert_name(name: str) -> MetaArtist:
         og_name = None
 
     if og_name is None:
-        if name == "neuro":
+        if name.lower() == "neuro":
             name = "Neuro-sama"
-        elif name == "evil":
+        elif name.lower() == "evil":
             name = "Evil Neuro"
 
     return MetaArtist(name=name, name_og=og_name)

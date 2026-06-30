@@ -39,8 +39,8 @@ class Song(IDObject):
 
     @property
     def singers_short(self):
-        neuro = "Neuro-sama" in self.singers
-        evil = "Evil Neuro" in self.singers
+        neuro = any(["Neuro-sama" == singer.name for singer in self.singers])
+        evil = any(["Evil Neuro" == singer.name for singer in self.singers])
         if neuro and evil:
             return "duet"
         if neuro:

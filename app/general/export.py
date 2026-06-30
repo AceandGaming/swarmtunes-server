@@ -1,13 +1,14 @@
-from PIL import Image
-from core.paths import ART_CACHE, TEMP
-from zlib import adler32
-from features.artwork.artwork import Artwork
 import os
 import tempfile
+from pathlib import Path
+from zlib import adler32
+
+from PIL import Image
+
+from core.paths import ART_CACHE, TEMP
 
 
-def export_artwork(artwork: Artwork, scale: int = 512):
-    path = artwork.get_path()
+def export_artwork(path: Path, scale: int = 512):
     if not path.exists():
         return None
 

@@ -1,9 +1,10 @@
-from .song import Song
-from .api import NetworkSongV1, NetworkSongV2
-from features.artwork.song import get_song_artwork
-from features.song.song import Song
-from features.artist.convert import to_network_v2 as to_network_v2_artist
 from typing import Literal, cast
+
+from features.artist.convert import to_network_v2 as to_network_v2_artist
+from features.artwork.song import get_song_artwork
+
+from .api import NetworkSongV1, NetworkSongV2
+from .song import Song
 
 
 def to_network_v1(song: Song) -> NetworkSongV1:
@@ -12,8 +13,16 @@ def to_network_v1(song: Song) -> NetworkSongV1:
         if audio.type == "youtube":
             ytId = audio.id
 
-    artworks = {artwork.type: f"{artwork.type}/{artwork.name}" for artwork in get_song_artwork(song)}
-    art = artworks.get("custom") or artworks.get("default") or artworks.get("plush")
+    artworks = {
+        artwork.type: f"{artwork.type}/{artwork.name}"
+        for artwork in get_song_artwork(song)
+    }
+    art = (
+        artworks.get("custom")
+        or artworks.get("disc")
+        or artworks.get("default")
+        or artworks.get("plush")
+    )
 
     return {
         "id": str(song.id),
@@ -25,8 +34,9 @@ def to_network_v1(song: Song) -> NetworkSongV1:
         "singers": song.singer_names,
         "date": song.date_released.strftime("%Y-%m-%d"),
         "isOriginal": song.type == "original",
-        "youtubeId": ytId
+        "youtubeId": ytId,
     }
+
 
 def to_network_v2(song: Song) -> NetworkSongV2:
     audio_id = None
@@ -52,5 +62,5 @@ def to_network_v2(song: Song) -> NetworkSongV2:
         "artworks": {artwork.type: artwork.name for artwork in get_song_artwork(song)},
         "audioType": audio_type,
         "audioId": audio_id,
-        "drmProtected": song.is_copyrighted
+        "drmProtected": song.is_copyrighted,
     }
