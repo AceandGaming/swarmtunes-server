@@ -2,7 +2,6 @@ from enum import Enum
 from typing import TYPE_CHECKING, Optional
 
 from sqlalchemy import Enum as SQLAlchemyEnum
-from sqlalchemy import String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from abstract.id_object import IDObject

@@ -13,6 +13,7 @@
 - Update dockerfile
 - Update docs + README
 - Auto fetch from YT
+- Check artist metadata parser (think it broken or something idk)
 
 # Goals
 - Make better use of cache

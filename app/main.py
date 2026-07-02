@@ -1,13 +1,10 @@
-import asyncio
-
-from api.v1.server import v1_router
-from automated.background import sync_task
-from automated.cleanup import clear_temp
-from core.log import setup_logging
-from database.database import create
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
+
+from api.v1.server import v1_router
+from core.log import setup_logging
+from database.database import create
 
 app = FastAPI(
     title="SwarmTunes API",

@@ -6,7 +6,6 @@ import os
 import tempfile
 from dataclasses import dataclass
 
-import httplib2
 from googleapiclient.discovery import build
 from rclone_python import rclone
 

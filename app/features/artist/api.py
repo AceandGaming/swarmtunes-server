@@ -1,4 +1,4 @@
-from typing import TypedDict, Optional, Literal
+from typing import TypedDict, Optional
 
 class NetworkArtistV2(TypedDict):
     name: str

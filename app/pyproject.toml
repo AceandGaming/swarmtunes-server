@@ -27,3 +27,9 @@ dependencies = [
 
 [tool.setuptools.packages.find]
 include = ["scripts"]
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.format]
+quote-style = "double"

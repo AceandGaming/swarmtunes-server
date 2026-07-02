@@ -1,4 +1,4 @@
-from typing import TypedDict, Optional, Literal
+from typing import TypedDict, Literal
 
 class UserData(TypedDict):
     playlists: list[str]

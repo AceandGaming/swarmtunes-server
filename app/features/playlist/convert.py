@@ -1,5 +1,4 @@
 from features.artwork import get_collection_artwork
-from features.playlist.playlist import Playlist
 
 from .api import NetworkPlaylistV1, NetworkPlaylistV2
 from .playlist import Playlist

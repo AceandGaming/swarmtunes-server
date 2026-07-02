@@ -2,12 +2,11 @@ import logging
 import multiprocessing
 from multiprocessing import Pool, cpu_count
 
-from sqlalchemy.orm import Session
-
 from core.paths import AUDIO, CORRECT, DOWNLOADS
 from database.dependencies import db_session
 from external.rclone_api import DriveFile, download_files, get_all_files
 from features.song import AudioReferenceType, SongAudioReference, create_song_service
+from sqlalchemy.orm import Session
 
 from .downloader.correct import correct_and_convert_mp3
 from .downloader.metadata import load_file_metadata
@@ -122,12 +121,12 @@ def _sync(db: Session):
     def handle_error(e):
         log.exception("Error occurred while correcting MP3", exc_info=e)
 
-    # with ctx.Pool(max(1, cpu_count() - 1)) as pool:
-    #     pool.map_async(
-    #         correct_mp3, [file for _, file in to_create], error_callback=handle_error
-    #     )
-    #     pool.close()
-    #     pool.join()
+    with ctx.Pool(max(1, cpu_count() - 1)) as pool:
+        pool.map_async(
+            correct_mp3, [file for _, file in to_create], error_callback=handle_error
+        )
+        pool.close()
+        pool.join()
 
     failed = []
     for metadata, file in to_create:

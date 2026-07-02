@@ -2,7 +2,7 @@ from uuid import UUID
 
 from database.dependencies import get_db
 from fastapi import APIRouter, Depends, HTTPException, Query
-from features.album import Album, create_album_service, to_network_v1
+from features.album import create_album_service, to_network_v1
 
 album_router = APIRouter()
 

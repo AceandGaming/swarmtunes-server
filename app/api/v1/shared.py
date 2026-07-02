@@ -1,4 +1,4 @@
-from fastapi import Depends, HTTPException, Response, Cookie
+from fastapi import Depends, HTTPException, Cookie
 from database.dependencies import get_db
 from general.auth import AuthManager
 from uuid import UUID
