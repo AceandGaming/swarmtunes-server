@@ -9,6 +9,7 @@ from core.config import get_config
 from database.dependencies import get_db
 from features.playlist import Playlist, create_playlist_service, to_network_v1
 from features.session import Token
+from features.share import ShareManager
 from features.song import create_song_service
 
 from .shared import auth_required
@@ -77,9 +78,7 @@ def new_playlist(
 
 
 @playlist_router.delete("/{id}")
-def delete_playlist(
-    id: UUID, token: Token = Depends(auth_required), db=Depends(get_db)
-):
+def delete_playlist(id: UUID, token: Token = Depends(auth_required), db=Depends(get_db)):
     service = create_playlist_service(db)
     playlist = service.get_in_user(token.user, id)
     if not playlist:
@@ -160,11 +159,17 @@ def patch_playlist(
 
 @playlist_router.get("/{id}/share")
 def share_playlist(id: UUID, token: Token = Depends(auth_required), db=Depends(get_db)):
-    pass
+    service = create_playlist_service(db)
+    playlist = service.get_in_user(token.user, id)
+    if not playlist:
+        raise HTTPException(404, detail="Playlist not found")
+
+    manager = ShareManager(db)
+
+    link = manager.share(playlist)
+    return {"link": link.link}
 
 
 @playlist_router.post("/shared")
-def add_shared_playlist(
-    id: UUID, token: Token = Depends(auth_required), db=Depends(get_db)
-):
+def add_shared_playlist(id: UUID, token: Token = Depends(auth_required), db=Depends(get_db)):
     pass

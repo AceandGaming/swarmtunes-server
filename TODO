@@ -1,19 +1,21 @@
 # In progress
-- Rewrite Maitnence (again)
 
 
 # Todo
-- Sharing
 - Make artwork automatic
-- Use OAuth (Google, Discord) for user logins and depricate username+password
+- OAuth (Google, Discord)
 - Automatic backups
 - HLS
 - Create new v2 endpoint with new api stuff
 - Update pyproject.toml
 - Update dockerfile
 - Update docs + README
-- Auto fetch from YT
+- Auto fetch from YT (somehow)
 - Check artist metadata parser (think it broken or something idk)
+- Run long term test of sync tool
+- Auto handle orphins
+- autogenerate albums
+- make proper duet cover
 
 # Goals
 - Make better use of cache

@@ -1,4 +1,6 @@
+from features.artwork import create_path, get_song_artwork
 from features.song import Song
+
 
 def _create_embed(title: str, description: str, image: str, redirect: str):
     return f"""
@@ -28,17 +30,20 @@ def _create_embed(title: str, description: str, image: str, redirect: str):
     </html>
     """
 
+
 def create_song_embed(song: Song):
+    artworks = get_song_artwork(song)
+
     redirect_url = f"https://swarmtunes.com?song={song.id}"
-    image_url = f"https://api.swarmtunes.com/covers/{song.coverArt}"
-    
+    image_url = f"https://api.swarmtunes.com/covers/{create_path(artworks)}"
+
     return _create_embed(
-        title = song.title,
-        description = f"""
-        Artists: {', '.join([artist.name for artist in song.artists])}
-        Covered by: {', '.join([artist.name for artist in song.singers])}
+        title=song.title,
+        description=f"""
+        Artists: {", ".join([artist.name for artist in song.artists])}
+        Covered by: {", ".join([artist.name for artist in song.singers])}
         {song.date_released.strftime("%d/%m/%Y")}
         """,
-        image = image_url,
-        redirect = redirect_url
+        image=image_url,
+        redirect=redirect_url,
     )

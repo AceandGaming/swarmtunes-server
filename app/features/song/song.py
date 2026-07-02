@@ -42,7 +42,8 @@ class Song(IDObject):
         neuro = any(["Neuro-sama" == singer.name for singer in self.singers])
         evil = any(["Evil Neuro" == singer.name for singer in self.singers])
         if neuro and evil:
-            return "duet"
+            # return "duet"
+            return None
         if neuro:
             return "neuro"
         if evil:
@@ -78,24 +79,15 @@ class Song(IDObject):
         back_populates="song",
         cascade="all, delete-orphan",
     )
-    metadata_source: Mapped[MetadataSource] = mapped_column(
-        SQLAlchemyEnum(MetadataSource)
-    )
+    metadata_source: Mapped[MetadataSource] = mapped_column(SQLAlchemyEnum(MetadataSource))
 
     playlists: Mapped[list["Playlist"]] = relationship(
         secondary=playlist_songs, back_populates="songs"
     )
-    albums: Mapped[list["Album"]] = relationship(
-        secondary=album_songs, back_populates="songs"
-    )
+    albums: Mapped[list["Album"]] = relationship(secondary=album_songs, back_populates="songs")
 
     def __repr__(self):
-        artists = (
-            " & ".join([a.name for a in self.artists]) if self.artists else "unknown"
-        )
+        artists = " & ".join([a.name for a in self.artists]) if self.artists else "unknown"
         singers = "".join(s[0] for s in self.singer_names if s) or "?"
 
         return f"'{self.title}' by '{artists}' ({singers}) [{str(self.id)[:5]}]"
-
-    def get_audio(self, type: str) -> "list[SongAudioReference] | None":
-        return [a for a in self.audio_references if a.type == type]

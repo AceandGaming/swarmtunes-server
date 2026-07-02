@@ -1,9 +1,15 @@
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, HTTPException, Query
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, HTMLResponse
 
 import core.paths as paths
 from database.dependencies import get_db
-from features.song import create_song_service, to_network_v1
+from features.playlist import create_playlist_service
+from features.share import ShareLinkType, ShareManager
+from features.song import create_song_service
+from features.song import to_network_v1 as song_to_network
+from general.embed import create_song_embed
 from general.export import export_artwork
 from general.search import search_songs
 
@@ -12,6 +18,9 @@ from .auth import auth_router
 from .file import file_router
 from .playlist import playlist_router
 from .song import song_router
+
+share = APIRouter()
+
 
 v1_router = APIRouter()
 v1_router.include_router(song_router, prefix="/songs")
@@ -23,11 +32,47 @@ v1_router.include_router(playlist_router, prefix="/playlists")
 
 @v1_router.get("/")
 @v1_router.head("/")
-async def root():
+async def root(
+    song: UUID | None = Query(None),
+    s: str | None = Query(None),
+    p: str | None = Query(None),
+    db=Depends(get_db),
+):
+    if song:
+        service = create_song_service(db)
+        link_song = service.get(song)
+        if link_song is None:
+            raise HTTPException(404, detail="Song not found")
+        return HTMLResponse(create_song_embed(link_song))
+
+    code = s or p
+    if code:
+        manager = ShareManager(db)
+        link = manager.get(code)
+
+        if link is None:
+            raise HTTPException(404, detail="Link not found")
+
+        # if link.type == ShareLinkType.PLAYLIST:
+        #     service = create_playlist_service(db)
+        #     playlist = service.get(link.external_id)
+        #     if playlist is None:
+        #         raise HTTPException(404, detail="Playlist not found")
+        #     return playlist_to_network(playlist)
+
+        if link.type == ShareLinkType.SONG:
+            service = create_song_service(db)
+            link_song = service.get(link.external_id)
+            if link_song is None:
+                raise HTTPException(404, detail="Song not found")
+            return HTMLResponse(create_song_embed(link_song))
+
+        raise HTTPException(500, detail="Unsupported link type")
+
     return {
         "message": "Welcome to the SwarmTunes API!",
         "status": "ok",
-        "current-path": "/api/v1",
+        "current-path": "SQLite :)",
     }
 
 
@@ -35,7 +80,7 @@ async def root():
 async def search(query=Query(""), db=Depends(get_db)):
     service = create_song_service(db)
     songs = service.get_all()
-    return [to_network_v1(song) for song in search_songs(songs, query)]
+    return [song_to_network(song) for song in search_songs(songs, query)]
 
 
 @v1_router.get("/covers/{name:path}")

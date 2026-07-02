@@ -2,11 +2,11 @@ import logging
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, RedirectResponse
 
 import core.paths as paths
 from database.dependencies import get_db
-from features.song import create_song_service
+from features.song import AudioReferenceType, create_song_service
 
 log = logging.getLogger()
 
@@ -30,12 +30,14 @@ def get_file(id: UUID, export: bool = Query(False), db=Depends(get_db)):
     song = service.get(id)
     if song is None:
         raise HTTPException(404, detail="Song not found")
-    audios = song.get_audio("gdrive")
-    if audios is None:
-        raise HTTPException(404, detail="Song not found")
+    audios = [ref for ref in song.audio_references if ref.type == AudioReferenceType.GOOGLE_DRIVE]
+    if not audios:
+        raise HTTPException(406, detail="Audio file not available")
 
     if export:
-        pass  # TODO
+        return RedirectResponse(
+            "https://drive.google.com/uc?export=download&id=" + audios[0].external_id
+        )
 
     path = paths.AUDIO / str(song.id)
     if not path.exists():
@@ -43,6 +45,4 @@ def get_file(id: UUID, export: bool = Query(False), db=Depends(get_db)):
         raise HTTPException(500, detail="Failed to retreve audio file")
 
     # New server uses ogg. Old clients may not expect ogg
-    return FileResponse(
-        path, media_type="audio/ogg", headers={"Accept-Ranges": "bytes"}
-    )
+    return FileResponse(path, media_type="audio/ogg", headers={"Accept-Ranges": "bytes"})

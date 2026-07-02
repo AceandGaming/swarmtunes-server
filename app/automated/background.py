@@ -8,4 +8,4 @@ def sync_task():
     except:
         raise
     finally:
-        pass  # sync_cleanup()
+        sync_cleanup()

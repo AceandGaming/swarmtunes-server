@@ -1,7 +1,7 @@
 from typing import Literal, cast
 
 from features.artist.convert import to_network_v2 as to_network_v2_artist
-from features.artwork.song import get_song_artwork
+from features.artwork import create_path, get_song_artwork
 
 from .api import NetworkSongV1, NetworkSongV2
 from .song import Song
@@ -11,18 +11,10 @@ def to_network_v1(song: Song) -> NetworkSongV1:
     ytId = None
     for audio in song.audio_references:
         if audio.type == "youtube":
-            ytId = audio.id
+            ytId = audio.external_id
+            break
 
-    artworks = {
-        artwork.type: f"{artwork.type}/{artwork.name}"
-        for artwork in get_song_artwork(song)
-    }
-    art = (
-        artworks.get("custom")
-        or artworks.get("disc")
-        or artworks.get("default")
-        or artworks.get("plush")
-    )
+    art = create_path(get_song_artwork(song))
 
     return {
         "id": str(song.id),
@@ -43,7 +35,7 @@ def to_network_v2(song: Song) -> NetworkSongV2:
     audio_type: Literal["audio", "youtube"] | None = None
     for refrence in song.audio_references:
         if refrence.type in ["audio", "youtube"]:
-            audio_id = refrence.id
+            audio_id = refrence.external_id
             audio_type = cast(Literal["audio", "youtube"], refrence.type)
             break
 

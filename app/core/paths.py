@@ -8,9 +8,7 @@ def _create(path: Path) -> Path:
 
 BASE = Path(__file__).resolve().parents[2]  # project root
 if not (BASE / "app").is_dir():
-    raise Exception(
-        f"Base path doesn't point to project root! Path {BASE} is missing 'app' folder"
-    )
+    raise Exception(f"Base path doesn't point to project root! Path {BASE} is missing 'app' folder")
 
 # Folders
 DATA = _create(BASE / "data")
@@ -26,7 +24,6 @@ CORRECT = _create(TEMP / "correct")
 
 CACHE = _create(DATA / "cache")
 HLS_CACHE = _create(CACHE / "hls")
-EXPORT_CACHE = _create(CACHE / "export")
 ART_CACHE = _create(CACHE / "artwork")
 
 BACKUPS = _create(BASE / "backups")

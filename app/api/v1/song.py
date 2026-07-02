@@ -1,12 +1,21 @@
-from fastapi import APIRouter, Depends, Query, HTTPException
-from database.dependencies import get_db
-from features.song import create_song_service, Song, SongType, to_network_v1
 from uuid import UUID
+
+from fastapi import APIRouter, Depends, HTTPException, Query
+
+from database.dependencies import get_db
+from features.share import ShareManager
+from features.song import Song, SongType, create_song_service, to_network_v1
 
 song_router = APIRouter()
 
+
 @song_router.get("/")
-def get_songs(ids: list[UUID] = Query(None), filters: str = Query(None), maxResults: int = Query(100), db = Depends(get_db)):
+def get_songs(
+    ids: list[UUID] = Query(None),
+    filters: str = Query(None),
+    maxResults: int = Query(100),
+    db=Depends(get_db),
+):
     service = create_song_service(db)
 
     songs = []
@@ -25,7 +34,15 @@ def get_songs(ids: list[UUID] = Query(None), filters: str = Query(None), maxResu
 
     return [to_network_v1(song) for song in songs]
 
+
 @song_router.get("/{id}/share")
-def share_song():
-    # TODO
-    pass
+def share_song(id: UUID, db=Depends(get_db)):
+    service = create_song_service(db)
+    song = service.get(id)
+    if song is None:
+        raise HTTPException(404, detail="Song not found")
+
+    manager = ShareManager(db)
+
+    link = manager.share(song)
+    return {"link": link.link}

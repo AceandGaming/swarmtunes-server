@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 
 from api.v1.server import v1_router
+from automated.cleanup import clear_temp
 from core.log import setup_logging
 from database.database import create
 
@@ -26,10 +27,10 @@ app.include_router(v1_router, prefix="/v1")
 
 @app.on_event("startup")
 async def startup():
-    # clear_temp()
+    clear_temp()
     setup_logging()
     create()
-    # asyncio.create_task(asyncio.to_thread(sync_task))  # temp
+    # syncio.create_task(asyncio.to_thread(sync_task))  # temp
 
 
 @app.get("/")

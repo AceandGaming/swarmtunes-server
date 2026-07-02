@@ -13,7 +13,7 @@ from .song import Song
 log = logging.getLogger()
 
 
-class SongService(Service):
+class SongService(Service[Song]):
     def __init__(self, db: Session):
         super().__init__(db, Song)
 
@@ -26,16 +26,12 @@ class SongService(Service):
         song = Song(
             title=metadata.title,
             title_original=metadata.title_og,
-            type=(
-                "mashup" in metadata.title.lower() and SongType.MASHUP or SongType.COVER
-            ),
+            type=("mashup" in metadata.title.lower() and SongType.MASHUP or SongType.COVER),
             date_released=metadata.date,
             disc=metadata.disc,
             artists=artists,
             singers=singers,
-            is_copyrighted=any(
-                a.type == AudioReferenceType.YOUTUBE for a in audio_references
-            ),
+            is_copyrighted=any(a.type == AudioReferenceType.YOUTUBE for a in audio_references),
             seconds=metadata.seconds,
             metadata_source=metadata.source,
         )
@@ -51,13 +47,9 @@ class SongService(Service):
         song.date_released = metadata.date
         song.disc = metadata.disc
         song.artists.clear()
-        song.artists.extend(
-            [create_or_get(self._db, a.name, a.name_og) for a in metadata.artists]
-        )
+        song.artists.extend([create_or_get(self._db, a.name, a.name_og) for a in metadata.artists])
         song.singers.clear()
-        song.singers.extend(
-            [create_or_get(self._db, a.name, a.name_og) for a in metadata.singers]
-        )
+        song.singers.extend([create_or_get(self._db, a.name, a.name_og) for a in metadata.singers])
 
         self._db.flush()
         return song

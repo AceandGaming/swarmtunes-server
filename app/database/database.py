@@ -22,5 +22,12 @@ class Base(DeclarativeBase):
 
 
 def create():
+    import features.album
+    import features.artist
+    import features.identity
+    import features.playlist
+    import features.session
+    import features.song
+    import features.user
 
     Base.metadata.create_all(bind=engine)
