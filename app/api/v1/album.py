@@ -1,8 +1,9 @@
 from uuid import UUID
 
-from database.dependencies import get_db
 from fastapi import APIRouter, Depends, HTTPException, Query
-from features.album import create_album_service, to_network_v1
+
+from database.dependencies import get_db
+from features.album import Album, AlbumType, create_album_service, to_network_v1
 
 album_router = APIRouter()
 
@@ -16,6 +17,6 @@ def get_albums(ids: list[UUID] = Query(None), db=Depends(get_db)):
         if len(albums) != len(ids):
             raise HTTPException(404, detail="Album not found")
     else:
-        albums = service.get_all()
+        albums = service.query().filter(Album.type == AlbumType.DATE_SETLIST).all()
 
     return [to_network_v1(album) for album in albums]

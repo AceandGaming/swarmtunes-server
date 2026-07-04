@@ -1,8 +1,7 @@
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import TYPE_CHECKING, Optional
 
-from sqlalchemy import Enum as SQLAlchemyEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from abstract.id_object import IDObject
@@ -12,7 +11,7 @@ from database.relationships import (
     song_artists,
     song_singers,
 )
-from database.types import UTCDateTime
+from database.types import StringValueEnum, UTCDateTime
 from features.metadata.metadata import MetadataSource
 
 if TYPE_CHECKING:
@@ -23,7 +22,7 @@ if TYPE_CHECKING:
     from .audio_refrence import SongAudioReference
 
 
-class SongType(Enum):
+class SongType(StrEnum):
     ORIGINAL = "original"
     COLLAB = "collab"
     COVER = "cover"
@@ -42,8 +41,7 @@ class Song(IDObject):
         neuro = any(["Neuro-sama" == singer.name for singer in self.singers])
         evil = any(["Evil Neuro" == singer.name for singer in self.singers])
         if neuro and evil:
-            # return "duet"
-            return None
+            return "duet"
         if neuro:
             return "neuro"
         if evil:
@@ -67,7 +65,10 @@ class Song(IDObject):
     singers: Mapped[list["Artist"]] = relationship(
         secondary=song_singers, back_populates="songs_singer"
     )
-    type: Mapped[SongType] = mapped_column(SQLAlchemyEnum(SongType), index=True)
+    type: Mapped[SongType] = mapped_column(
+        StringValueEnum(SongType),
+        index=True,
+    )
 
     date_released: Mapped[datetime] = mapped_column(UTCDateTime())
     disc: Mapped[Optional[int]]
@@ -79,7 +80,7 @@ class Song(IDObject):
         back_populates="song",
         cascade="all, delete-orphan",
     )
-    metadata_source: Mapped[MetadataSource] = mapped_column(SQLAlchemyEnum(MetadataSource))
+    metadata_source: Mapped[MetadataSource] = mapped_column(StringValueEnum(MetadataSource))
 
     playlists: Mapped[list["Playlist"]] = relationship(
         secondary=playlist_songs, back_populates="songs"

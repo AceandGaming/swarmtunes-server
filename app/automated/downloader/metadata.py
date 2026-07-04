@@ -11,6 +11,15 @@ from features.metadata import MetaArtist, Metadata, MetadataSource
 log = logging.getLogger()
 
 
+def change_name(name: str):
+    name = name.strip()
+    if name.lower() == "neuro":
+        name = "Neuro-sama"
+    elif name.lower() == "evil":
+        name = "Evil Neuro"
+    return name
+
+
 def convert_name(name: str) -> MetaArtist:
     match = re.match(r"(.*) \((.*?)\)", name)
     if match is not None:
@@ -20,11 +29,7 @@ def convert_name(name: str) -> MetaArtist:
         name = name
         og_name = None
 
-    if og_name is None:
-        if name.lower() == "neuro":
-            name = "Neuro-sama"
-        elif name.lower() == "evil":
-            name = "Evil Neuro"
+    name = change_name(name)
 
     return MetaArtist(name=name, name_og=og_name)
 
@@ -85,13 +90,19 @@ def create_from_id3(file):
 
 def create_from_json(file: dict):
     artists = file["Artist"].split(",")
-    artists = [convert_name(a.strip()) for a in artists]
+    artists_og = (
+        file["ArtistOG"].split(",") if (file.get("ArtistOG", "none").lower() != "none") else []
+    )
+    artists = [
+        MetaArtist(name=change_name(a), name_og=change_name(aog))
+        for a, aog in zip(artists, artists_og)
+    ]
     singers = convert_to_singers(file["CoverArtist"])
 
     data = Metadata(
         source=MetadataSource.JSON,
         title=file["Title"],
-        title_og=file["TitleOG"],
+        title_og=file["TitleOG"] if file.get("TitleOG", "none").lower() != "none" else None,
         artists=artists,
         singers=singers,
         date=datetime.fromisoformat(file["Date"]),
@@ -111,10 +122,10 @@ def load_file_metadata(path: Path) -> Metadata | None:
             meta.seconds = file.info.length
             return meta
         except Exception as e:
-            log.error(f"Error parsing json metadata: {e}")
-            pass
+            log.exception("Error parsing json metadata", exc_info=e)
     try:
+        log.debug(f"No JSON metadata found for {path}. Reverting to ID3")
         return create_from_id3(file)
     except Exception as e:
-        log.error(f"Error parsing id3 metadata: {e}")
+        log.exception("Error parsing id3 metadata", exc_info=e)
         return None

@@ -1,18 +1,18 @@
-from enum import Enum
+from enum import StrEnum
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Enum as SQLAlchemyEnum
 from sqlalchemy import ForeignKey, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from abstract.id_object import IDObject
+from database.types import StringValueEnum
 
 if TYPE_CHECKING:
     from features.identity.legacy_creds import LegacyCredentials
     from features.user.user import User
 
 
-class AuthProvider(Enum):
+class AuthProvider(StrEnum):
     GOOGLE = "google"
     DISCORD = "discord"
     LEGACY = "legacy"
@@ -23,7 +23,7 @@ class Identity(IDObject):
 
     user_id = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
     user: Mapped["User"] = relationship("User", back_populates="identities")
-    provider: Mapped[AuthProvider] = mapped_column(SQLAlchemyEnum(AuthProvider))
+    provider: Mapped[AuthProvider] = mapped_column(StringValueEnum(AuthProvider))
     provider_id: Mapped[str]
 
     legacy_creds: Mapped["LegacyCredentials"] = relationship(

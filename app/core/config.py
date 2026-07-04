@@ -37,9 +37,7 @@ class Backups(BaseSettings):
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(
-        env_file=CONFIG / ".env", env_nested_delimiter="__"
-    )
+    model_config = SettingsConfigDict(env_file=CONFIG / ".env", env_nested_delimiter="__")
 
     fastapi: FastAPI = FastAPI()
     sync: Sync = Sync()
@@ -52,6 +50,8 @@ class Settings(BaseSettings):
     user_max_playlists: int = 30
 
     log_level: str = "DEBUG"
+
+    album_min_songs: int = 4
 
 
 @lru_cache

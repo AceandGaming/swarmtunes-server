@@ -1,5 +1,8 @@
-from sqlalchemy.types import TypeDecorator, String
 from datetime import datetime, timezone
+
+from sqlalchemy import Enum as SAEnum
+from sqlalchemy.types import String, TypeDecorator
+
 
 class UTCDateTime(TypeDecorator):
     impl = String
@@ -19,3 +22,11 @@ class UTCDateTime(TypeDecorator):
         if value is None:
             return None
         return datetime.fromisoformat(value)
+
+
+def StringValueEnum(enum_cls):
+    return SAEnum(
+        enum_cls,
+        native_enum=False,
+        values_callable=lambda e: [x.value for x in e],
+    )

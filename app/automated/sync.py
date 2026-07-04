@@ -2,11 +2,12 @@ import logging
 import multiprocessing
 from multiprocessing import Pool, cpu_count
 
+from sqlalchemy.orm import Session
+
 from core.paths import AUDIO, CORRECT, DOWNLOADS
 from database.dependencies import db_session
 from external.rclone_api import DriveFile, download_files, get_all_files
 from features.song import AudioReferenceType, SongAudioReference, create_song_service
-from sqlalchemy.orm import Session
 
 from .downloader.correct import correct_and_convert_mp3
 from .downloader.metadata import load_file_metadata
@@ -41,8 +42,17 @@ def load_metadata(file):
 
 
 def load_all_metadata(files):
+    # Known issue: The below code sometimes looses logs from load_metadata
     with Pool(max(1, cpu_count() - 1)) as pool:
         return pool.map(load_metadata, files)
+
+
+def load_all_metadata_sync(files):
+    """Debugging"""
+    data = []
+    for file in files:
+        data.append(load_metadata(file))
+    return data
 
 
 def check_downloads(files):
@@ -95,17 +105,13 @@ def _sync(db: Session):
     to_create = []
 
     for metadata, file in metadatas:
-        reference = (
-            db.query(SongAudioReference).filter_by(audio_hash=metadata.hash).first()
-        )
+        reference = db.query(SongAudioReference).filter_by(audio_hash=metadata.hash).first()
         if reference:
             songs_to_update.append((reference.song, metadata))
         else:
             to_create.append((metadata, file))
 
-    log.info(
-        f"Found {len(songs_to_update)} songs to update and {len(to_create)} to create."
-    )
+    log.info(f"Found {len(songs_to_update)} songs to update and {len(to_create)} to create.")
     if len(songs_to_update) == 0 and len(to_create) == 0:
         log.info("No songs to update or create. Exiting sync.")
         return
@@ -122,9 +128,7 @@ def _sync(db: Session):
         log.exception("Error occurred while correcting MP3", exc_info=e)
 
     with ctx.Pool(max(1, cpu_count() - 1)) as pool:
-        pool.map_async(
-            correct_mp3, [file for _, file in to_create], error_callback=handle_error
-        )
+        pool.map_async(correct_mp3, [file for _, file in to_create], error_callback=handle_error)
         pool.close()
         pool.join()
 

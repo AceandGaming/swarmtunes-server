@@ -1,23 +1,28 @@
 # In progress
 
 
+# Todo (important)
+- ~~Check artist metadata parser (think it broken or something idk)~~
+    - fixed? (needs testing)
+- Automatic backups
+
 # Todo
 - Make artwork automatic
+- Auto handle orphins
+
+# Features (may or may not be implented)
 - OAuth (Google, Discord)
-- Automatic backups
 - HLS
 - Create new v2 endpoint with new api stuff
-- Update pyproject.toml
-- Update dockerfile
-- Update docs + README
 - Auto fetch from YT (somehow)
-- Check artist metadata parser (think it broken or something idk)
+
+# Before push to prod
 - Run long term test of sync tool
-- Auto handle orphins
-- autogenerate albums
-- make proper duet cover
+- Update dockerfile, pyproject.toml, etc
+- Update docs + README
 
 # Goals
 - Make better use of cache
-- Switch DB to SQLite
-- Change all type objects and add MUCH more info + inhertince
+- ~~Switch DB to SQLite~~
+- ~~Change all type objects and add MUCH more info + inhertince~~ 
+    - inhertince wasn't needed

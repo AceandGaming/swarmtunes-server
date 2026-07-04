@@ -15,12 +15,12 @@ file_router = APIRouter()
 
 @file_router.get("/album/{id}")
 def get_album_file(id: UUID, export: bool = Query(False), db=Depends(get_db)):
-    pass
+    raise HTTPException(501, detail="Not implemented")
 
 
 @file_router.get("/playlist/{id}")
 def get_playlist_file(id: UUID, export: bool = Query(False), db=Depends(get_db)):
-    pass
+    raise HTTPException(501, detail="Not implemented")
 
 
 @file_router.get("/{id}")
