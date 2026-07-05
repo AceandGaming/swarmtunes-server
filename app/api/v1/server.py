@@ -1,10 +1,11 @@
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 
 import core.paths as paths
 from database.dependencies import get_db
+from external.emotes import get_emote as emote_get_emote
 from features.playlist import create_playlist_service
 from features.share import ShareLinkType, ShareManager
 from features.song import create_song_service
@@ -96,5 +97,8 @@ async def get_cover(name: str):
 
 
 @v1_router.get("/emotes/{name}")
-async def get_emote(name: str):
-    pass
+async def get_emote(name: str, scale: int = Query(1)):
+    emote = emote_get_emote(name)
+    if not emote:
+        raise HTTPException(404, detail="Emote not found")
+    return RedirectResponse(emote + "/" + str(scale) + "x.webp")

@@ -1,5 +1,5 @@
 # In progress
-
+- Playlist sharing
 
 # Todo (important)
 - ~~Check artist metadata parser (think it broken or something idk)~~
@@ -7,14 +7,17 @@
 - Automatic backups
 
 # Todo
-- Make artwork automatic
 - Auto handle orphins
+- Migration tool (pain)
+
 
 # Features (may or may not be implented)
 - OAuth (Google, Discord)
 - HLS
 - Create new v2 endpoint with new api stuff
 - Auto fetch from YT (somehow)
+- Make artwork automatic
+- Search for artists/albums (V2 api)
 
 # Before push to prod
 - Run long term test of sync tool
@@ -25,4 +28,3 @@
 - Make better use of cache
 - ~~Switch DB to SQLite~~
 - ~~Change all type objects and add MUCH more info + inhertince~~ 
-    - inhertince wasn't needed

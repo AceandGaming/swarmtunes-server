@@ -5,24 +5,11 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from core.paths import CONFIG
 
 
-class FastAPI(BaseSettings):
-    enable_v1: bool = True
-    enable_v2: bool = True
-
-    allow_hls: bool = True
-    allow_ogg: bool = True
-
-
-class Sync(BaseSettings):
+class Automated(BaseSettings):
     enabled: bool = False
     frequency_hours: int = 24
 
-    max_update_percent: float = 0.3
-    max_create_percent: float = 0.1
-
-
-class Cache(BaseSettings):
-    pre_generate_hls: bool = True
+    album_min_songs: int = 4
 
 
 class Backups(BaseSettings):
@@ -39,9 +26,7 @@ class Backups(BaseSettings):
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=CONFIG / ".env", env_nested_delimiter="__")
 
-    fastapi: FastAPI = FastAPI()
-    sync: Sync = Sync()
-    cache: Cache = Cache()
+    automated: Automated = Automated()
     backups: Backups = Backups()
 
     token_expiry_hours: int = 24
@@ -50,8 +35,6 @@ class Settings(BaseSettings):
     user_max_playlists: int = 30
 
     log_level: str = "DEBUG"
-
-    album_min_songs: int = 4
 
 
 @lru_cache

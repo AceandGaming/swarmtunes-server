@@ -83,6 +83,9 @@ def delete_playlist(id: UUID, token: Token = Depends(auth_required), db=Depends(
     playlist = service.get_in_user(token.user, id)
     if not playlist:
         raise HTTPException(404, detail="Playlist not found")
+    if playlist.protected:
+        raise HTTPException(403, detail="Playlist is protected")
+
     service.delete(playlist)
 
 

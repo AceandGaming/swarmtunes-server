@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Response
 from pydantic import BaseModel
 
 from database.dependencies import get_db
+from features.playlist import create_playlist_service
 from features.user import UserRoles, to_network_v1
 from general.auth import AuthManager
 
@@ -46,6 +47,7 @@ class LoginRequest(BaseModel):
 @auth_router.post("/users/login")
 def login(req: LoginRequest, response: Response, db=Depends(get_db)):
     auth = AuthManager(db)
+    playlist_service = create_playlist_service(db)
 
     username = req.username
     password = req.password
@@ -64,6 +66,8 @@ def login(req: LoginRequest, response: Response, db=Depends(get_db)):
         identity = auth.login_legacy(username, password)
         if not identity:
             raise HTTPException(401, detail="Invalid username or password")
+
+    playlist_service.ensure_liked_songs_playlist(identity.user)
 
     secret, token = auth.create_token(identity)
     db.flush()
