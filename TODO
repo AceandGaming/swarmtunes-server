@@ -1,5 +1,4 @@
 # In progress
-- Playlist sharing
 
 # Todo (important)
 - ~~Check artist metadata parser (think it broken or something idk)~~
@@ -18,6 +17,7 @@
 - Auto fetch from YT (somehow)
 - Make artwork automatic
 - Search for artists/albums (V2 api)
+- Proper playlist sharing (user permisson list + read-only acess. V2 Api)
 
 # Before push to prod
 - Run long term test of sync tool

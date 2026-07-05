@@ -173,6 +173,32 @@ def share_playlist(id: UUID, token: Token = Depends(auth_required), db=Depends(g
     return {"link": link.link}
 
 
+class AddSharedPlaylistRequest(BaseModel):
+    code: str
+
+
 @playlist_router.post("/shared")
-def add_shared_playlist(id: UUID, token: Token = Depends(auth_required), db=Depends(get_db)):
-    pass
+def add_shared_playlist(
+    req: AddSharedPlaylistRequest, token: Token = Depends(auth_required), db=Depends(get_db)
+):
+    service = create_playlist_service(db)
+    manager = ShareManager(db)
+
+    link = manager.get(req.code)
+    if link is None:
+        raise HTTPException(404, detail="Invalid link")
+
+    playlist = service.get(link.external_id)
+    if playlist is None:
+        raise HTTPException(404, detail="Playlist not found")
+
+    new_playlist = Playlist(
+        title=playlist.title,
+    )
+    new_playlist.user = token.user
+    new_playlist.songs = playlist.songs
+
+    db.add(new_playlist)
+    db.flush()
+    db.refresh(new_playlist)
+    return to_network_v1(new_playlist)
