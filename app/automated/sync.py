@@ -5,7 +5,6 @@ from multiprocessing import Pool, cpu_count
 from sqlalchemy.orm import Session
 
 from core.paths import AUDIO, CORRECT, DOWNLOADS
-from database.dependencies import db_session
 from external.rclone_api import DriveFile, download_files, get_all_files
 from features.song import AudioReferenceType, SongAudioReference, create_song_service
 
@@ -75,7 +74,7 @@ def correct_mp3(file: DriveFile):
     log.debug(f"Corrected and converted {file.filename}.")
 
 
-def _sync(db: Session):
+def sync(db: Session):
     new = get_new_drive_files(db)
     if len(new) == 0:
         log.info("No new files to sync.")
@@ -154,8 +153,3 @@ def _sync(db: Session):
     log.info(
         f"Created {len(to_create)} new songs and updated {len(songs_to_update)} existing ones."
     )
-
-
-def sync():
-    with db_session() as db:
-        _sync(db)

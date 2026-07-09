@@ -40,10 +40,12 @@ def update_albums(db: Session):
         by_date[song.date_released].append(song)
 
     for date in list(by_date.keys()):
-        if len(by_date[date]) < config.album_min_songs:
+        if len(by_date[date]) < config.automated.album_min_songs:
             del by_date[date]
 
-    log.info(f"Grouped {len(by_date)} songs by date and {len(by_disc)} by disc.")
+    log.info(
+        f"Grouped {len(by_date)} songs by date and {len(by_disc)} by disc."
+    )
 
     album_service = create_album_service(db)
 
@@ -60,7 +62,9 @@ def update_albums(db: Session):
 
             album.title = create_setlist_title(date)
             album.songs = songs
-            log.debug(f"Updating album {album.title} with {len(album.songs)} songs.")
+            log.debug(
+                f"Updating album {album.title} with {len(album.songs)} songs."
+            )
         else:
             album = Album(
                 type=AlbumType.DATE_SETLIST,
@@ -69,7 +73,9 @@ def update_albums(db: Session):
                 songs=songs,
             )
             db.add(album)
-            log.debug(f"Creating album {album.title} with {len(album.songs)} songs.")
+            log.debug(
+                f"Creating album {album.title} with {len(album.songs)} songs."
+            )
 
         album.last_updated = datetime.now(timezone.utc)
 
@@ -86,7 +92,9 @@ def update_albums(db: Session):
 
             album.title = create_collection_title(disc)
             album.songs = songs
-            log.debug(f"Updating album {album.title} with {len(album.songs)} songs.")
+            log.debug(
+                f"Updating album {album.title} with {len(album.songs)} songs."
+            )
         else:
             album = Album(
                 type=AlbumType.DISC_COLLECTION,
@@ -95,7 +103,9 @@ def update_albums(db: Session):
                 songs=songs,
             )
             db.add(album)
-            log.debug(f"Creating album {album.title} with {len(album.songs)} songs.")
+            log.debug(
+                f"Creating album {album.title} with {len(album.songs)} songs."
+            )
 
         album.last_updated = datetime.now(timezone.utc)
 

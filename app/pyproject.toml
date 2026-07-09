@@ -29,7 +29,7 @@ dependencies = [
 include = ["scripts"]
 
 [tool.ruff]
-line-length = 100
+line-length = 80
 
 [tool.ruff.format]
 quote-style = "double"
