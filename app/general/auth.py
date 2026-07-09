@@ -23,13 +23,13 @@ class AuthManager:
         self._hasher = PasswordHasher()
 
     def safe_query_identity(self):
-        return self._db.query(Identity).filter(Identity.disabled_at.is_(None))
+        return self._db.query(Identity).filter(Identity.deleted_at.is_(None))
 
     def safe_query_user(self):
-        return self._db.query(User).filter(User.disabled_at.is_(None))
+        return self._db.query(User).filter(User.deleted_at.is_(None))
 
     def safe_query_token(self):
-        return self._db.query(Token).filter(Token.disabled_at.is_(None))
+        return self._db.query(Token).filter(Token.deleted_at.is_(None))
 
     def signup_legacy(self, username: str, password: str):
         """Returns None if the username already exists."""
@@ -37,13 +37,17 @@ class AuthManager:
         try:
             user = User(username=username)
 
-            identity = Identity(provider=AuthProvider.LEGACY, provider_id=username)
+            identity = Identity(
+                provider=AuthProvider.LEGACY, provider_id=username
+            )
             user.identities.append(identity)
             self._db.add(user)
 
             self._db.flush()
 
-            legacy = LegacyCredentials(identity_id=identity.id, password_hash=hash)
+            legacy = LegacyCredentials(
+                identity_id=identity.id, password_hash=hash
+            )
             self._db.add(legacy)
         except IntegrityError:
             # log.exception("Failed to create user")
@@ -54,13 +58,18 @@ class AuthManager:
     def login_legacy(self, username: str, password: str):
         identity = (
             self.safe_query_identity()
-            .filter(Identity.provider == AuthProvider.LEGACY, Identity.provider_id == username)
+            .filter(
+                Identity.provider == AuthProvider.LEGACY,
+                Identity.provider_id == username,
+            )
             .first()
         )
         if not identity:
             return None
         if not identity.legacy_creds:
-            log.error(f"Identity type is legacy but no legacy credentials was found. {identity}")
+            log.error(
+                f"Identity type is legacy but no legacy credentials was found. {identity}"
+            )
             return None
 
         try:
@@ -75,7 +84,8 @@ class AuthManager:
         secret = secrets.token_urlsafe(32)
         token = Token(
             secret_hash=sha256(secret.encode("utf-8")).hexdigest(),
-            expires_at=datetime.now(timezone.utc) + timedelta(hours=config.token_expiry_hours),
+            expires_at=datetime.now(timezone.utc)
+            + timedelta(hours=config.token_expiry_hours),
             identity_id=identity.id,
             user_id=identity.user_id,
         )
@@ -89,7 +99,9 @@ class AuthManager:
             return None
         if token.expired:
             return None
-        if not hmac.compare_digest(token.secret_hash, sha256(secret.encode("utf-8")).hexdigest()):
+        if not hmac.compare_digest(
+            token.secret_hash, sha256(secret.encode("utf-8")).hexdigest()
+        ):
             return None
 
         return token

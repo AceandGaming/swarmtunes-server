@@ -1,6 +1,7 @@
 from database.dependencies import db_session
 
 from .albums import update_albums
+from .backup import create_backup
 from .cleanup import sync_cleanup
 from .delete import (
     delete_empty_albums,
@@ -34,3 +35,11 @@ def delete_orphaned_task():
     with db_session() as db:
         delete_empty_albums(db)
         delete_songless_artists(db)
+
+
+def lite_backup_task():
+    create_backup(False)
+
+
+def full_backup_task():
+    create_backup(True)

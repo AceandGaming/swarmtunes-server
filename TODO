@@ -1,15 +1,23 @@
 # In progress
 
-# Todo (important)
-- ~~Check artist metadata parser (think it broken or something idk)~~
-    - fixed? (needs testing)
-- Automatic backups
 
 # Todo
-
 - Migration tool (pain)
+- Download missing audio files
+- Automatic backup trimming
 
-# Features (may or may not be implented)
+
+# Testing
+- Run long term test with all features active
+- Test metadata parser
+- Check Sqlite DB for weird values
+
+# Before push to prod
+- Make tool to add songs
+- Update dockerfile, pyproject.toml, etc
+- Update docs + README
+
+# Post Release
 - OAuth (Google, Discord)
 - HLS
 - Create new v2 endpoint with new api stuff
@@ -17,13 +25,3 @@
 - Make artwork automatic
 - Search for artists/albums (V2 api)
 - Proper playlist sharing (user permisson list + read-only acess. V2 Api)
-
-# Before push to prod
-- Run long term test of sync tool
-- Update dockerfile, pyproject.toml, etc
-- Update docs + README
-
-# Goals
-- Make better use of cache
-- ~~Switch DB to SQLite~~
-- ~~Change all type objects and add MUCH more info + inhertince~~ 

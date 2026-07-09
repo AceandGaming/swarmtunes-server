@@ -21,13 +21,9 @@ class Automated(BaseSettings):
 
 class Backups(BaseSettings):
     enabled: bool
-    use_compression: bool
 
-    light_daily_count: int
-    light_weekly_count: int
-
-    full_daily_count: int
-    full_weekly_count: int
+    lite_frequency_days: int
+    full_frequency_days: int
 
 
 class Settings(BaseSettings):
@@ -42,6 +38,7 @@ class Settings(BaseSettings):
 
     playlist_max_name_length: int
     user_max_playlists: int
+    daily_max_signups_per_ip: int
 
     log_level: str
 

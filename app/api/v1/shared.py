@@ -1,16 +1,20 @@
-from fastapi import Depends, HTTPException, Cookie
+import logging
+from uuid import UUID
+
+from fastapi import Cookie, Depends, HTTPException, Request
+
 from database.dependencies import get_db
 from general.auth import AuthManager
-from uuid import UUID
-import logging
+
 log = logging.getLogger()
 
-def auth_required(sessionToken: str = Cookie(None), db = Depends(get_db)):
+
+def auth_required(sessionToken: str = Cookie(None), db=Depends(get_db)):
     auth = AuthManager(db)
     if not sessionToken:
         log.info("User failed to authenticate: Missing session token")
         raise HTTPException(401, detail="Unauthorized")
-    
+
     try:
         id, secret = sessionToken.split(":")
         id = UUID(id)
@@ -24,3 +28,10 @@ def auth_required(sessionToken: str = Cookie(None), db = Depends(get_db)):
         raise HTTPException(401, detail="Unauthorized")
 
     return token
+
+
+def get_ip(request: Request):
+    if request.client is None:
+        raise RuntimeError("No client address available")
+
+    return request.client.host

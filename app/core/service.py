@@ -18,7 +18,9 @@ class Service(Generic[T]):
         if include_disabled:
             return self._db.query(self._model)
 
-        return self._db.query(self._model).filter(self._model.disabled_at.is_(None))
+        return self._db.query(self._model).filter(
+            self._model.deleted_at.is_(None)
+        )
 
     def get_all(self) -> list[T]:
         return self.query().all()
