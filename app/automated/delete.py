@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 
 from abstract.id_object import IDObject
 from core.config import get_config
+from database.database import Base
 from features.album import Album
 from features.artist import Artist
 from features.session import Token
@@ -29,14 +30,21 @@ def delete_old_id_objects(db: Session):
         days=config.max_deleted_days
     )
 
-    query = db.query(IDObject).filter(IDObject.deleted_at < cutoff)
-    all = db.query(IDObject)
+    old = []
+    all_count = 0
 
-    if query.count() == 0:
+    for mapper in Base.registry.mappers:
+        cls = mapper.class_
+        if isinstance(cls, type) and issubclass(cls, IDObject):
+            old.extend(db.query(cls).filter(cls.deleted_at < cutoff).all())
+            all_count += db.query(cls).count()
+
+    if len(old) == 0:
         return
-    _delete_check(query.count(), all.count())
+    _delete_check(len(old), all_count)
 
-    query.delete()
+    for obj in old:
+        db.delete(obj)
 
 
 def delete_old_tokens(db: Session):

@@ -28,11 +28,11 @@ def get_without_audio(db: Session):
 
 
 def download_missing(db: Session):
-    log.info("Checking for missing audio files.")
+    log.info("Checking for missing audio files...")
 
     refrences_without_audio = get_without_audio(db)
 
-    log.info(f"Found {len(refrences_without_audio)} missing audio files.")
+    log.info(f"Found {len(refrences_without_audio)} missing audio files...")
     if len(refrences_without_audio) == 0:
         log.info("No missing audio files to download.")
         return
@@ -53,7 +53,7 @@ def download_missing(db: Session):
             f"Failed to find {len(refrences_without_audio) - len(files_to_download)} audio files."
         )
 
-    log.info(f"Downloading {len(files_to_download)} audio files.")
+    log.info(f"Downloading {len(files_to_download)} audio files...")
     download_files(files_to_download, str(AUDIO))
 
     failed = check_downloads(files_to_download)

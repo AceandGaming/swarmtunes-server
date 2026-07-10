@@ -5,7 +5,7 @@ from datetime import datetime, timedelta, timezone
 from hashlib import sha256
 from uuid import UUID
 
-from argon2 import PasswordHasher
+from passlib.context import CryptContext
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -20,7 +20,10 @@ log = logging.getLogger()
 class AuthManager:
     def __init__(self, db: Session):
         self._db = db
-        self._hasher = PasswordHasher()
+        self._hasher = CryptContext(
+            schemes=["argon2", "bcrypt"],
+            deprecated=["bcrypt"],
+        )
 
     def safe_query_identity(self):
         return self._db.query(Identity).filter(Identity.deleted_at.is_(None))
@@ -72,10 +75,13 @@ class AuthManager:
             )
             return None
 
-        try:
-            self._hasher.verify(identity.legacy_creds.password_hash, password)
-        except Exception:
+        password_hash = identity.legacy_creds.password_hash
+
+        if not self._hasher.verify(password, password_hash):
             return None
+
+        if self._hasher.needs_update(password_hash):
+            identity.legacy_creds.password_hash = self._hasher.hash(password)
 
         return identity
 

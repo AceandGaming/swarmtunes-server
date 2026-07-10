@@ -3,18 +3,24 @@ from pathlib import Path
 
 import numpy as np
 import pyloudnorm as loudnorm
+from mutagen.mp3 import MP3
 from pydub import AudioSegment, silence
-from scripts.load_metadata import DeleteID3Tags
 
 TARGET_LUFS = -16
 MIN_DBFS = -55  # trim audio lower then this
+
+
+def delete_id3_tags(file: Path):
+    audio = MP3(file)
+    audio.delete()
+    audio.save()
 
 
 def correct_and_convert_mp3(inputFile: Path, output: Path):
     """Normalizes and converts an MP3 file to OGG Vorbis format."""
     if output.exists() or not inputFile.exists():
         return
-    DeleteID3Tags(inputFile)
+    delete_id3_tags(inputFile)
 
     song = AudioSegment.from_file(inputFile, format="mp3")
 

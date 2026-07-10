@@ -20,6 +20,7 @@ log = logging.getLogger("automated")
 
 def get_new_drive_files(db: Session) -> list[DriveFile]:
     files = get_all_files()
+
     log.info(f"Checking {len(files)} files on Drive.")
 
     new = []
@@ -107,7 +108,7 @@ def sync(db: Session):
         log.info("No new files to sync.")
         return
 
-    log.info(f"Downloading {len(new)} new files from Drive.")
+    log.info(f"Downloading {len(new)} new files from Drive...")
     download_files(new, str(DOWNLOADS))
 
     failed = check_downloads(new)
@@ -121,7 +122,10 @@ def sync(db: Session):
     metadatas = [
         (metadata, file)
         for metadata, file in metadatas
-        if metadata is not None and metadata.hash is not None
+        if metadata is not None
+        and metadata.hash is not None
+        and len(metadata.artists) > 0
+        and len(metadata.singers) > 0
     ]
 
     if len(metadatas) != len(new):
@@ -154,18 +158,18 @@ def sync(db: Session):
         log.info("No songs to update or create. Exiting sync.")
         return
 
-    log.info("Updating songs.")
+    log.info("Updating songs...")
     service = create_song_service(db)
     for ref, metadata, file in songs_to_update:
         service.update_with_metadata(ref.song, metadata)
         ref.external_id = file.id
 
-    log.info("Correcting MP3s.")
+    log.info("Correcting MP3s...")
     failed = correct_many([file for _, file in to_create])
 
     if failed:
         raise Exception(
-            f"Failed to convert {len(failed)} files. Aborting sync."
+            f"Failed to convert {len(failed)} files. Aborting sync!"
         )
 
     for metadata, file in to_create:

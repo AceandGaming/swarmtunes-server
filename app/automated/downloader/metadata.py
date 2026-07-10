@@ -2,6 +2,7 @@ import json
 import logging
 import re
 from datetime import datetime
+from itertools import zip_longest
 from pathlib import Path
 
 from mutagen.mp3 import MP3
@@ -91,18 +92,22 @@ def create_from_id3(file):
 def create_from_json(file: dict):
     artists = file["Artist"].split(",")
     artists_og = (
-        file["ArtistOG"].split(",") if (file.get("ArtistOG", "none").lower() != "none") else []
+        file["ArtistOG"].split(",")
+        if (file.get("ArtistOG", "none").lower() != "none")
+        else []
     )
     artists = [
-        MetaArtist(name=change_name(a), name_og=change_name(aog))
-        for a, aog in zip(artists, artists_og)
+        MetaArtist(name=change_name(a), name_og=aog and change_name(aog))
+        for a, aog in zip_longest(artists, artists_og)
     ]
     singers = convert_to_singers(file["CoverArtist"])
 
     data = Metadata(
         source=MetadataSource.JSON,
         title=file["Title"],
-        title_og=file["TitleOG"] if file.get("TitleOG", "none").lower() != "none" else None,
+        title_og=file["TitleOG"]
+        if file.get("TitleOG", "none").lower() != "none"
+        else None,
         artists=artists,
         singers=singers,
         date=datetime.fromisoformat(file["Date"]),

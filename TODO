@@ -2,12 +2,10 @@
 - Migration tool (pain)
 
 # Todo
- 
 
 # Testing
 - Run long term test with all features active
 - Test metadata parser
-- Check Sqlite DB for weird values
 
 # Before push to prod
 - Make tool to add songs
