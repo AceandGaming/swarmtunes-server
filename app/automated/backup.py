@@ -1,5 +1,6 @@
 import json
 import logging
+import shutil
 import sqlite3
 import stat
 import tarfile
@@ -10,6 +11,7 @@ from pathlib import Path
 from uuid import UUID, uuid4
 
 import core.paths as paths
+from core.config import get_config
 
 log = logging.getLogger("backups")
 
@@ -117,3 +119,34 @@ def create_backup(is_full):
         file.chmod(mode & ~stat.S_IWUSR & ~stat.S_IWGRP & ~stat.S_IWOTH)
 
     log.info("Backup complete!")
+
+
+def get_backups() -> list[tuple[Path, BackupMetadata]]:
+    backups = []
+    for file in paths.BACKUPS.iterdir():
+        if not file.is_dir():
+            continue
+
+        with open(file / "metadata.json", "r") as f:
+            data = json.load(f)
+            backups.append((file, BackupMetadata(**data)))
+
+    return backups
+
+
+def get_size_of_backups():
+    return sum(
+        f.stat().st_size for f in paths.BACKUPS.glob("**/*") if f.is_file()
+    )
+
+
+def trim_backups():
+    log.info("Trimming backups...")
+    config = get_config().backups
+
+    backups = get_backups()
+
+    while get_size_of_backups() > config.max_backup_size_gb * 1024 * 1024:
+        oldest = min(backups, key=lambda x: x[1].created_at)
+        log.debug(f"Deleting backup {oldest}")
+        shutil.rmtree(oldest[0])

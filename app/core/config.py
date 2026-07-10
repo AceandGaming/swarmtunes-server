@@ -11,6 +11,7 @@ class Automated(BaseSettings):
     sync_frequency_hours: int
     delete_old_frequency_hours: int
     delete_orphaned_frequency_hours: int
+    download_missing_audio_frequency_hours: int
 
     album_min_songs: int
 
@@ -24,6 +25,9 @@ class Backups(BaseSettings):
 
     lite_frequency_days: int
     full_frequency_days: int
+
+    trim_frequency_days: int
+    max_backup_size_gb: float
 
 
 class Settings(BaseSettings):

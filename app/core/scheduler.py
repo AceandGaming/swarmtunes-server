@@ -7,9 +7,11 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from automated.tasks import (
     delete_old_task,
     delete_orphaned_task,
+    download_missing_task,
     full_backup_task,
     lite_backup_task,
     song_sync_task,
+    trim_backups_task,
 )
 from core.config import get_config
 from core.paths import DATA
@@ -42,6 +44,14 @@ def add_automated_tasks(scheduler: AsyncIOScheduler):
             id="delete_orphaned",
             next_run_time=datetime.now(tz=timezone.utc),
         )
+    if config.download_missing_audio_frequency_hours > 0:
+        scheduler.add_job(
+            download_missing_task,
+            "interval",
+            hours=config.download_missing_audio_frequency_hours,
+            id="download_missing",
+            next_run_time=datetime.now(tz=timezone.utc),
+        )
 
 
 def add_backup_tasks(scheduler: AsyncIOScheduler):
@@ -61,6 +71,14 @@ def add_backup_tasks(scheduler: AsyncIOScheduler):
             "interval",
             days=config.full_frequency_days,
             id="full_backup",
+        )
+
+    if config.trim_frequency_days > 0:
+        scheduler.add_job(
+            trim_backups_task,
+            "interval",
+            days=config.trim_frequency_days,
+            id="trim_backups",
         )
 
 

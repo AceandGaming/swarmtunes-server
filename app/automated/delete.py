@@ -12,7 +12,11 @@ from features.session import Token
 def _delete_check(query_count: int, all_count: int):
     max_delete = get_config().automated.max_delete_percent
 
-    if max_delete > 0 and query_count / all_count > max_delete:
+    if (
+        max_delete > 0
+        and all_count > 0
+        and query_count / all_count > max_delete
+    ):
         raise Exception(
             f"Too many objects to delete! About to delete {query_count}/{all_count} objects"
         )
@@ -54,7 +58,8 @@ def delete_empty_albums(db: Session):
         return
     _delete_check(query.count(), all.count())
 
-    query.delete()
+    for album in query.all():
+        album.mark_deleted()
 
 
 def delete_songless_artists(db: Session):
@@ -67,4 +72,4 @@ def delete_songless_artists(db: Session):
         return
     _delete_check(query.count(), all.count())
 
-    query.delete()
+    query.delete()  # Artists can't be soft deleted

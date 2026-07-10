@@ -6,10 +6,14 @@ from sqlalchemy.orm import Session
 
 from core.paths import AUDIO, CORRECT, DOWNLOADS
 from external.rclone_api import DriveFile, download_files, get_all_files
-from features.song import AudioReferenceType, SongAudioReference, create_song_service
+from features.song import (
+    AudioReferenceType,
+    SongAudioReference,
+    create_song_service,
+)
 
 from .downloader.correct import correct_and_convert_mp3
-from .downloader.metadata import load_file_metadata
+from .downloader.metadata import Metadata, load_file_metadata
 
 log = logging.getLogger("automated")
 
@@ -54,7 +58,7 @@ def load_all_metadata_sync(files):
     return data
 
 
-def check_downloads(files):
+def check_downloads(files: list[DriveFile]):
     failed = []
     for file in files:
         path = DOWNLOADS / file.path
@@ -74,6 +78,29 @@ def correct_mp3(file: DriveFile):
     log.debug(f"Corrected and converted {file.filename}.")
 
 
+def correct_many(files: list[DriveFile]):
+    ctx = multiprocessing.get_context("spawn")
+
+    def handle_error(e):
+        log.exception("Error occurred while correcting MP3", exc_info=e)
+
+    with ctx.Pool(max(1, cpu_count() - 1)) as pool:
+        pool.map_async(
+            correct_mp3,
+            [file for file in files],
+            error_callback=handle_error,
+        )
+        pool.close()
+        pool.join()
+
+    failed = []
+    for file in files:
+        if not (CORRECT / file.id).exists():
+            failed.append(file)
+
+    return failed
+
+
 def sync(db: Session):
     new = get_new_drive_files(db)
     if len(new) == 0:
@@ -85,9 +112,11 @@ def sync(db: Session):
 
     failed = check_downloads(new)
     if failed:
-        raise Exception(f"Failed to download {len(failed)} files. Aborting sync!")
+        raise Exception(
+            f"Failed to download {len(failed)} files. Aborting sync!"
+        )
 
-    log.info("Download complete! Loading metadata...")
+    log.info("Download complete! Loading metadata.")
     metadatas = load_all_metadata(new)
     metadatas = [
         (metadata, file)
@@ -96,48 +125,48 @@ def sync(db: Session):
     ]
 
     if len(metadatas) != len(new):
-        log.warning(f"Metadata loading failed for {len(new) - len(metadatas)} files.")
+        log.warning(
+            f"Metadata loading failed for {len(new) - len(metadatas)} files."
+        )
     if not metadatas:
         raise Exception("No metadata loaded. Aborting sync!")
 
-    songs_to_update = []
-    to_create = []
+    songs_to_update: list[tuple[SongAudioReference, Metadata, DriveFile]] = []
+    to_create: list[tuple[Metadata, DriveFile]] = []
 
     for metadata, file in metadatas:
-        reference = db.query(SongAudioReference).filter_by(audio_hash=metadata.hash).first()
+        reference = (
+            db.query(SongAudioReference)
+            .filter_by(
+                type=AudioReferenceType.GOOGLE_DRIVE, audio_hash=metadata.hash
+            )
+            .first()
+        )
         if reference:
-            songs_to_update.append((reference.song, metadata))
+            songs_to_update.append((reference, metadata, file))
         else:
             to_create.append((metadata, file))
 
-    log.info(f"Found {len(songs_to_update)} songs to update and {len(to_create)} to create.")
+    log.info(
+        f"Found {len(songs_to_update)} songs to update and {len(to_create)} to create."
+    )
     if len(songs_to_update) == 0 and len(to_create) == 0:
         log.info("No songs to update or create. Exiting sync.")
         return
 
-    log.info("Updating songs...")
+    log.info("Updating songs.")
     service = create_song_service(db)
-    for song, metadata in songs_to_update:
-        service.update_with_metadata(song, metadata)
+    for ref, metadata, file in songs_to_update:
+        service.update_with_metadata(ref.song, metadata)
+        ref.external_id = file.id
 
-    log.info("Correcting MP3s...")
-    ctx = multiprocessing.get_context("spawn")
-
-    def handle_error(e):
-        log.exception("Error occurred while correcting MP3", exc_info=e)
-
-    with ctx.Pool(max(1, cpu_count() - 1)) as pool:
-        pool.map_async(correct_mp3, [file for _, file in to_create], error_callback=handle_error)
-        pool.close()
-        pool.join()
-
-    failed = []
-    for metadata, file in to_create:
-        if not (CORRECT / file.id).exists():
-            failed.append((metadata, file))
+    log.info("Correcting MP3s.")
+    failed = correct_many([file for _, file in to_create])
 
     if failed:
-        raise Exception(f"Failed to convert {len(failed)} files. Aborting sync.")
+        raise Exception(
+            f"Failed to convert {len(failed)} files. Aborting sync."
+        )
 
     for metadata, file in to_create:
         ref = SongAudioReference(
@@ -145,9 +174,16 @@ def sync(db: Session):
             audio_hash=metadata.hash,
             type=AudioReferenceType.GOOGLE_DRIVE,
         )
-        song = service.create_from_metadata(metadata, [ref])
+        service.create_from_metadata(metadata, [ref])
+
         path = CORRECT / file.id
-        path.rename(AUDIO / str(song.id))
+        try:
+            path.rename(AUDIO / str(ref.id))
+        except Exception:
+            log.error(
+                f"Failed to move audio file {path} -> {AUDIO / str(ref.id)}",
+                exc_info=True,
+            )
 
     log.info("Sync completed successfully!")
     log.info(

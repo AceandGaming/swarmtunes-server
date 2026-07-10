@@ -1,7 +1,7 @@
 from database.dependencies import db_session
 
 from .albums import update_albums
-from .backup import create_backup
+from .backup import create_backup, trim_backups
 from .cleanup import sync_cleanup
 from .delete import (
     delete_empty_albums,
@@ -9,6 +9,7 @@ from .delete import (
     delete_old_tokens,
     delete_songless_artists,
 )
+from .download_missing import download_missing
 from .sync import sync
 
 
@@ -37,9 +38,18 @@ def delete_orphaned_task():
         delete_songless_artists(db)
 
 
+def download_missing_task():
+    with db_session() as db:
+        download_missing(db)
+
+
 def lite_backup_task():
     create_backup(False)
 
 
 def full_backup_task():
     create_backup(True)
+
+
+def trim_backups_task():
+    trim_backups()
