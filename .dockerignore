@@ -27,6 +27,7 @@ Thumbs.db
 !.env.example
 log_config.json
 !log_config.example.json
+/test.py
 
 # Logs
 *.log

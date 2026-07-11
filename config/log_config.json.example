@@ -1,0 +1,88 @@
+{
+  "version": 1,
+  "disable_existing_loggers": false,
+  "formatters": {
+    "standard": {
+      "format": "%(asctime)s | %(name)s %(levelname)s: %(message)s",
+      "datefmt": "%Y-%m-%d %H:%M:%S"
+    }
+  },
+  "handlers": {
+    "main_file": {
+      "class": "logging.FileHandler",
+      "filename": "log.log",
+      "formatter": "standard",
+      "level": "DEBUG"
+    },
+    "auto_file": {
+      "class": "logging.FileHandler",
+      "filename": "sync.log",
+      "formatter": "standard"
+    },
+    "backup_file": {
+      "class": "logging.FileHandler",
+      "filename": "backup.log",
+      "formatter": "standard"
+    },
+    "console": {
+      "class": "logging.StreamHandler",
+      "formatter": "standard",
+      "level": "DEBUG"
+    }
+  },
+  "loggers": {
+    "automated": {
+      "handlers": [
+        "auto_file",
+        "main_file",
+        "console"
+      ],
+      "level": "DEBUG",
+      "propagate": false
+    },
+    "backups": {
+      "handlers": [
+        "backup_file",
+        "main_file",
+        "console"
+      ],
+      "level": "DEBUG",
+      "propagate": false
+    },
+    "rclone_python.logs": {
+      "handlers": [
+        "console"
+      ],
+      "level": "ERROR",
+      "propagate": false
+    },
+    "googleapiclient": {
+      "handlers": [
+        "console"
+      ],
+      "level": "ERROR",
+      "propagate": false
+    },
+    "PIL.Image": {
+      "handlers": [
+        "console"
+      ],
+      "level": "ERROR",
+      "propagate": false
+    },
+    "PIL.PngImagePlugin": {
+      "handlers": [
+        "console"
+      ],
+      "level": "ERROR",
+      "propagate": false
+    }
+  },
+  "root": {
+    "handlers": [
+      "main_file",
+      "console"
+    ],
+    "level": "DEBUG"
+  }
+}

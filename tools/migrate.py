@@ -1,6 +1,7 @@
 """A tool to migrate from the old server to the new one"""
 
 import json
+import re
 import sys
 from collections import defaultdict
 from dataclasses import dataclass
@@ -13,10 +14,9 @@ import questionary
 project_dir = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(project_dir / "app"))
 
-import re
 
 from database.database import create as create_db  # noqa: E402
-from database.dependencies import db_session  # noqa: E402
+from database.dependencies import db_session_no_commit as db_session  # noqa: E402
 from features.identity import AuthProvider, Identity, LegacyCredentials  # noqa: E402
 from features.playlist import Playlist  # noqa: E402
 from features.song import Song  # noqa: E402
@@ -120,10 +120,26 @@ def normlize_title(title: str):
     return title.strip()
 
 
+def save_lookup(lookup: dict[OldSong, Song]):
+    id_lookup = {}
+    for old_song, new_song in lookup.items():
+        id_lookup[old_song.id] = new_song.id
+
+    with open(Path("lookup.json"), "w") as f:
+        json.dump(lookup, f, indent=4)
+
+
+def load_lookup():
+    if not Path("lookup.json").exists():
+        return {}
+    with open(Path("lookup.json"), "r") as f:
+        return json.load(f)
+
+
 def create_song_lookup(
     old_songs: list[OldSong], new_songs: list[Song]
 ) -> dict[OldSong, Song]:
-    lookup: dict[OldSong, Song] = {}
+    lookup: dict[OldSong, Song] = load_lookup()
     potental_matches: dict[OldSong, list[Song]] = defaultdict(list)
 
     for old_song in old_songs:
@@ -157,24 +173,26 @@ def create_song_lookup(
     }
 
     print(f"{len(missing)} songs could not be found.")
-    # for old_song, matches in missing.items():
-    #     choices = [
-    #         questionary.Choice(
-    #             f"{song.title} - {song.artist_names and song.artist_names[0]} ({song.singer_names and song.singer_names[0]})",
-    #             song,
-    #             description=f"{song.date_released} - {song.artist_names} | {song.singer_names}",
-    #         )
-    #         for song in sorted(matches or new_songs, key=lambda s: s.title)
-    #     ]
-    #     song = questionary.select(
-    #         f"Song: {old_song.title} could not be found.\nArtists: {old_song.artists}\nSingers: {old_song.singers}\nDate: {old_song.date}",
-    #         choices=choices,
-    #         show_description=True,
-    #         use_search_filter=True,
-    #         use_jk_keys=False,
-    #     ).ask()
+    for old_song, matches in missing.items():
+        choices = [
+            questionary.Choice(
+                f"{song.title} - {song.artist_names and song.artist_names[0]} ({song.singer_names and song.singer_names[0]})",
+                song,
+                description=f"{song.date_released} - {song.artist_names} | {song.singer_names}",
+            )
+            for song in sorted(matches or new_songs, key=lambda s: s.title)
+        ]
+        song = questionary.select(
+            f"Song: {old_song.title} could not be found.\nArtists: {old_song.artists}\nSingers: {old_song.singers}\nDate: {old_song.date}",
+            choices=choices,
+            show_description=True,
+            use_search_filter=True,
+            use_jk_keys=False,
+        ).ask()
+        if song is None:
+            exit(0)
 
-    #     lookup[old_song] = song
+        lookup[old_song] = song
 
     return lookup
 
@@ -200,6 +218,7 @@ def main():
     with db_session() as db:
         new_songs = db.query(Song).all()
 
+        print("Creating song lookup...")
         lookup = create_song_lookup(old_songs, new_songs)
 
         for user in old_users:
@@ -224,6 +243,11 @@ def main():
                     new_song = lookup.get(song)
                     if new_song:
                         new_songs.add(new_song)
+
+                if len(new_songs) != len(playlist.songIds):
+                    print(
+                        f"Warning: Playlist {playlist.name} missing {len(playlist.songIds) - len(new_songs)} songs."
+                    )
 
                 for song in new_songs:
                     new_playlist.add_song(song)

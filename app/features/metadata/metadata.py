@@ -21,6 +21,6 @@ class Metadata:
     artists: list[MetaArtist]
     singers: list[MetaArtist]
     date: datetime
-    disc: int
+    disc: Optional[int]
     hash: Optional[str]  # audio hash
     seconds: float

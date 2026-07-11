@@ -10,7 +10,7 @@ project_dir = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(project_dir / "app"))
 
 import core.paths as paths  # noqa: E402
-from automated.backup import (  # noqa: E402
+from core.backup import (  # noqa: E402
     BackupMetadata,
     create_backup,
     get_backups,
@@ -26,13 +26,23 @@ if len(backups) == 0:
 
 print(f"Found {len(backups)} backups:")
 
-path, metadata = questionary.select(
+answer = questionary.select(
     "Select backup to load",
     choices=[
-        questionary.Choice(title=file.name, value=(file, metadata))
-        for file, metadata in backups
+        questionary.Choice(
+            title=f"{file.name} - {metadata.name}",
+            value=(file, metadata),
+            description=f"Created at: {metadata.created_at.strftime('%Y-%m-%d %H:%M:%S')}",
+        )
+        for file, metadata in sorted(
+            backups, key=lambda x: x[1].created_at, reverse=True
+        )
     ],
 ).ask()
+if answer is None:
+    exit(0)
+
+path, metadata = answer
 path: Path
 metadata: BackupMetadata
 
@@ -54,10 +64,10 @@ if not questionary.confirm("Continue?").ask():
 
 print("Creating backup of current database...")
 try:
-    create_backup(True)
+    create_backup(True, "Pre-Restore Backup")
 except Exception:
     print("Failed to create backup!")
-    if not questionary.confirm("Continue Anyway?").ask():
+    if not questionary.confirm("Continue Anyway?", default=False).ask():
         exit(0)
 
 print("Are you sure? This will override the curent database!")
@@ -94,6 +104,7 @@ if metadata.type == "full":
             PERSISTENT_OLD.rename(PERSISTENT)
         raise
 
+print("Cleaning up...")
 shutil.rmtree(PERSISTENT_OLD, ignore_errors=True)
 DATABASE_OLD.unlink(missing_ok=True)
 

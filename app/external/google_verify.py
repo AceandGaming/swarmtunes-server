@@ -8,18 +8,26 @@ from core.paths import SECRETS
 
 log = logging.getLogger()
 
-SCOPES = ["https://www.googleapis.com/auth/drive.readonly"]
+SCOPES = [
+    "https://www.googleapis.com/auth/drive",
+    "https://www.googleapis.com/auth/youtube.readonly",
+]
 
 TOKEN_PATH = SECRETS / "token.json"
 CREDENTIALS_PATH = SECRETS / "credentials.json"
 
 
-def get_drive_service():
+def get_google_credentials():
     creds = None
+
     if os.path.exists(TOKEN_PATH):
         creds = Credentials.from_authorized_user_file(TOKEN_PATH, SCOPES)
+
     if not creds:
-        flow = InstalledAppFlow.from_client_secrets_file(CREDENTIALS_PATH, SCOPES)
+        flow = InstalledAppFlow.from_client_secrets_file(
+            CREDENTIALS_PATH, SCOPES
+        )
+
         creds = flow.run_local_server(
             port=0,
             authorization_prompt_message="Please visit this URL: {url}",
@@ -28,7 +36,9 @@ def get_drive_service():
             prompt="consent",
             access_type="offline",
         )
+
         with open(TOKEN_PATH, "w") as token:
             token.write(creds.to_json())
-    log.info("Drive credentials verified and saved.")
+
+    log.info("Google credentials verified and saved!")
     return creds

@@ -1,5 +1,6 @@
 # In progress
 - Migration tool (pain)
+- Make tool to add yt songs
 
 # Todo
 
@@ -8,7 +9,6 @@
 - Test metadata parser
 
 # Before push to prod
-- Make tool to add songs
 - Update dockerfile, pyproject.toml, etc
 - Update docs + README
 
@@ -16,7 +16,7 @@
 - OAuth (Google, Discord)
 - HLS
 - Create new v2 endpoint with new api stuff
-- Auto fetch from YT (somehow)
 - Make artwork automatic
 - Search for artists/albums (V2 api)
 - Proper playlist sharing (user permisson list + read-only acess. V2 Api)
+- Auto fetch from YT (somehow)

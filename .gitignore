@@ -23,12 +23,11 @@ Thumbs.db
 *.pem
 *.key
 /secrets
+/app/test.py
 
 # Config
-*.env
-!.env.example
-log_config.json
-!log_config.example.json
+/config/*
+!/config/*.example
 
 # Logs
 *.log

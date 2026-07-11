@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from googleapiclient.discovery import build
 from rclone_python import rclone
 
-from .drive_verify import get_drive_service
+from .google_verify import get_google_credentials
 
 DRIVE_FOLDER = "1B1VaWp-mCKk15_7XpFnImsTdBJPOGx7a"
 log = logging.getLogger()
@@ -33,7 +33,7 @@ class DriveFile:
 
 def get_rclone_flags() -> list[str]:
     """Generate rclone flags from local credentials and token files to avoid needing rclone.conf."""
-    creds = get_drive_service()
+    creds = get_google_credentials()
 
     if not (creds and creds.client_id and creds.client_secret and creds.expiry):
         raise Exception("Google Drive credentials not found")

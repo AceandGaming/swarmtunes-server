@@ -1,7 +1,7 @@
+from core.backup import create_backup, trim_backups
 from database.dependencies import db_session
 
 from .albums import update_albums
-from .backup import create_backup, trim_backups
 from .cleanup import sync_cleanup
 from .delete import (
     delete_empty_albums,

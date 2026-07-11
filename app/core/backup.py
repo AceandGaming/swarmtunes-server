@@ -16,15 +16,16 @@ from core.config import get_config
 log = logging.getLogger("backups")
 
 
-@dataclass
+@dataclass(kw_only=True)
 class BackupMetadata:
     id: UUID
+    name: str = "Automatic Backup"
 
     created_at: datetime
     completed_at: datetime
 
     type: str
-    compressed: bool
+    compressed: bool = False
 
     sqlite_integrity_check: str
     post_hash: str
@@ -80,7 +81,7 @@ def get_hash(backup_dir: Path):
     return hasher.hexdigest()
 
 
-def create_backup(is_full):
+def create_backup(is_full, name: str | None = None):
     start_time = datetime.now(timezone.utc)
 
     backup_dir = get_backup_folder(is_full)
@@ -97,6 +98,7 @@ def create_backup(is_full):
 
     metadata = BackupMetadata(
         id=uuid4(),
+        name=name or "Automatic Backup",
         created_at=start_time,
         completed_at=completed,
         type="full" if is_full else "lite",
@@ -129,6 +131,8 @@ def get_backups() -> list[tuple[Path, BackupMetadata]]:
 
         with open(file / "metadata.json", "r") as f:
             data = json.load(f)
+            data["created_at"] = datetime.fromisoformat(data["created_at"])
+            data["completed_at"] = datetime.fromisoformat(data["completed_at"])
             backups.append((file, BackupMetadata(**data)))
 
     return backups
