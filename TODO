@@ -1,14 +1,6 @@
 # In progress
-
-# Todo
-
-# Testing
 - Run long term test with all features active
 - Test metadata parser
-
-# Before push to prod
-- Update dockerfile, pyproject.toml, etc
-- Update docs + README
 
 # Post Release
 - OAuth (Google, Discord)

@@ -1,12 +1,10 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query
-from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
-
 import core.paths as paths
 from database.dependencies import get_db
 from external.emotes import get_emote as emote_get_emote
-from features.playlist import create_playlist_service
+from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 from features.share import ShareLinkType, ShareManager
 from features.song import create_song_service
 from features.song import to_network_v1 as song_to_network

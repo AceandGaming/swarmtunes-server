@@ -4,13 +4,13 @@ Swarmtunes is open to contributions! The following guide will help you set up an
 
 ## Requirements
 
-1. Google Drive API is required to automatically download songs. Here is one way to get a key:
+1. Google API is required to automatically download songs. Here is one way to get a key:
 
     1. Go to console.cloud.google.com and create a new project
 
     2. Go to APIs & Services
 
-    3. Enable -> Google Drive API
+    3. Enable -> Google Drive API and Youtube
 
     4. OAuth Client Services
 
@@ -35,19 +35,26 @@ Swarmtunes is open to contributions! The following guide will help you set up an
     openssl req -new -newkey rsa:4096 -x509 -sha256 -days 365 -nodes -out cert.pem -keyout key.pem
     ```
 
+3. You will need to download your own artwork for the songs. These images can be found from varius locations
+    - [Neuro and Evil Covers](https://images.swarmtunes.com)
+    - [Disc Covers](https://drive.google.com/drive/folders/1Pr53j8IHp_hJTLafCellHFz4kUiTzuUy)
+    
+    **Note**: *The above links and assets are the property of their respective copyright holders (`All rights reserved`)*
+
 ## Setup
 
-For most users, **Docker is the recommended way** to run the server, which ensures consistent dependencies and environment setup. However running manually is supported.
+For *most users*, **Docker is the recommended way** to run the server, which ensures consistent dependencies and environment setup. However running manually is supported for development.
 
 ### Option 1: Docker
 
 1. Pull the image
-```Bash
-docker pull aceandgaming/swarmtunesserver:latest
-```
+
+    ```bash
+    docker pull aceandgaming/swarmtunesserver:latest
+    ```
 
 2. Create certs folder\
-You will need to create a folder for `.pem` files and `credentials.json`
+You will need to create a folder for `.pem` files and `credentials.json`. Add this to the docker container as a folder called `secrets`
 
 ### Option 2: Copy from source
 
@@ -63,65 +70,51 @@ You will need to create a folder for `.pem` files and `credentials.json`
 3. Install the project from `pyproject.toml`
 
     ```bash
+    cd app
     pip install -e .
     ```
 
 4. Copy `credentials.json` and your **ssl keys** into `/secrets` 
+
+5. Copy or rename the *example configs* in `/config`
+
+    `.env.example` -> `.env`
+
 
 ## Running
 
 ### Docker
 
 ```bash
-docker run -it --rm -p 8000:8000 \
+docker run -it -p 8000:8000 \
   -v /path/to/secrets:/secrets \
-  -e MAINTENANCE=false \
-  aceandgaming/swarmtunesserver:latest
+  aceandgaming/swarmtunesserver:2.0
 ```
 - Make sure to replace `path/to/secrets`
 - Environment variables can be passed with -e or via an .env file
 - The server will start automatically on port 8000
 
-### Manually
+### Shell
 
 This project uses [`uvicorn`](https://uvicorn.dev/) to run the server.
 
 The basic command to run the server is:
 ```bash
-bash dev.sh #runs the server under http
+bash tools/http.sh
 ```
 or
-
 ```bash
-export CORS=false
-uvicorn server:app --host 0.0.0.0 --port 8000 --reload --ssl-certfile="./secrets/cert.pem" --ssl-keyfile="./secrets/key.pem"
+bash tools/https.sh
 ```
 
-## Environment Variables
+You may also run the server manually
+```bash
+cd app
+uvicorn main:app --host 0.0.0.0 --port 8000 --reload --ssl-certfile="../secrets/cert.pem" --ssl-keyfile="../secrets/key.pem"
+```
+## Config
 
-The server can be configured using environment variables. Below is a full list with descriptions and default values:
-
-| Variable | Description | Default |
-|---|---|---|
-| `MAINTENANCE`                         | Enables automatic maintenance tasks (downloads, cleanup, album regeneration). First run may take 20–60 minutes to download initial data. | `false` |
-| `CORS`                                | Enables CORS domain checks. Changing the allowed domain requires rebuilding. | `true` |
-| `LOG_LEVEL`                           | Sets the log level of the server | `INFO` |
-|---|---|---|
-| `DATA_PATH`                           | Directory where the server stores data (songs, albums, playlists, etc.). | `data` |
-| `SECRETS_PATH`                        | Directory for Google Drive API credentials and SSL keys. | `secrets` |
-|---|---|---|
-| `USER_MAX_PLAYLISTS`                  | Maximum number of playlists a user can create. | `30` |
-| `USER_MIN_PASSWORD_LENGTH`            | Minimum required length for user passwords. | `8` |
-| `USER_MAX_PASSWORD_LENGTH`            | Maximum allowed length for user passwords. | `128` |
-| `TOKEN_EXPIRATION_DAYS`               | Validity of renewable login tokens in days. | `30` |
-| `SESSION_EXPIRATION_HOU`              | Validity of non-renewable login sessions in hours. | `12` |
-|---|---|---|
-| `MAX_DELETED_FILES_SIZE`              | Maximum total size (bytes) of deleted files the server retains. | `2e8` |
-|---|---|---|
-| `MAX_MAINTENANCE_DOWNLOAD_PERCENT`    | Max percent of files maintenance can download relative to song count. | `1.0` |
-| `MAX_MAINTENANCE_DELETE_PERCENT`      | Max percent of files maintenance can delete relative to song count. | `0.1` |
-| `MAX_MAINTENANCE_REPLACE_PERCENT`     | Max percent of files maintenance can replace relative to song count. | `0.2` |
-| `MAX_MAINTENANCE_REDOWNLOAD_PERCENT`  | Max percent of files maintenance can redownload relative to song count. | `0.4` |
+There are many configs you can change in the server. The main one is `.env` for which the options are documented in the file.
 
 ## Pull Requests
 

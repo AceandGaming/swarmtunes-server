@@ -14,24 +14,26 @@ Thumbs.db
 
 # Data
 /data
+/backups
 
 *.mp3
 *.ogg
 
+
 # Credentials
 *.pem
+*.key
 /secrets
+/app/test.py
 
 # Config
-*.env
-!.env.example
-log_config.json
-!log_config.example.json
-/test.py
+/config/*
+!/config/*.example
 
 # Logs
 *.log
 /logs
 
 # Editors
-*.vscode
+.vscode
+.ruff_cache

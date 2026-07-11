@@ -1,9 +1,6 @@
 from datetime import datetime, timezone
 
-from apscheduler.jobstores.base import ConflictingIdError
-from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-
 from automated.tasks import (
     delete_old_task,
     delete_orphaned_task,
@@ -14,7 +11,6 @@ from automated.tasks import (
     trim_backups_task,
 )
 from core.config import get_config
-from core.paths import DATA
 
 
 def add_automated_tasks(scheduler: AsyncIOScheduler):

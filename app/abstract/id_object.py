@@ -26,7 +26,7 @@ class IDObject(Base):
     date_created: Mapped[datetime] = mapped_column(
         UTCDateTime, default=lambda: datetime.now(timezone.utc)
     )
-    deleted_at: Mapped[Optional[datetime]] = mapped_column()
+    deleted_at: Mapped[Optional[datetime]] = mapped_column(UTCDateTime)
 
     def __hash__(self):
         return hash(self.id)
