@@ -8,19 +8,25 @@ RUN apt-get update && apt-get install -y \
     git curl rclone ffmpeg libchromaprint1 && \
     rm -rf /var/lib/apt/lists/*
 
-# Copy dependency files first for caching
-COPY pyproject.toml ./
-COPY .python-version ./
+# Copy files
+COPY config/.env.example ./config/.env
+COPY config/log_config.json.example ./config/log_config.json
+COPY app ./app
+COPY tools ./tools
 
 # Install Python dependencies
-RUN pip install --upgrade pip && pip install . --root-user-action=ignore
+RUN pip install --upgrade pip && pip install app/. --no-warn-script-location
 
-# Copy the rest of the code
-COPY covers ./covers
-COPY scripts ./scripts
-COPY *.py ./
+# Add user and give them permissons
+RUN groupadd --system swarmtunes && \
+    useradd --system --gid swarmtunes --create-home swarmtunes && \
+    chown -R swarmtunes:swarmtunes /app
+
+USER swarmtunes
+
 
 EXPOSE 8000
+ENV PYTHONPATH=/app/app
 
 # Run Command
-CMD ["uvicorn", "server:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

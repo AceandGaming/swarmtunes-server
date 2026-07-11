@@ -1,0 +1,296 @@
+"""A tool to migrate from the old server to the new one"""
+
+import json
+import re
+import sys
+from collections import defaultdict
+from dataclasses import dataclass
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+from typing import Optional, TypedDict
+
+import questionary
+
+project_dir = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(project_dir / "app"))
+
+
+from database.database import create as create_db  # noqa: E402
+from database.dependencies import db_session  # noqa: E402
+from database.relationships import PlaylistSong  # noqa: E402
+from features.identity import AuthProvider, Identity, LegacyCredentials  # noqa: E402
+from features.playlist import Playlist  # noqa: E402
+from features.song import Song  # noqa: E402
+from features.user import User, UserRoles  # noqa: E402
+
+
+class UserData(TypedDict):
+    playlistIds: Optional[list[str]]
+
+
+@dataclass(eq=False)
+class OldUser:
+    id: str
+    username: str
+    password: str
+    date: datetime
+    userData: UserData
+
+
+@dataclass(eq=False)
+class OldPlaylist:
+    id: str
+    name: str
+    userId: str
+    date: datetime
+    songIds: list[str]
+
+
+class SongExternalStorage(TypedDict):
+    googleDriveId: Optional[str]
+    youtubeId: Optional[str]
+
+
+@dataclass(kw_only=True, eq=False)
+class OldSong:
+    id: str
+    title: str
+    artists: list[str]
+    singers: list[str]
+    date: datetime
+    duration: Optional[float] = None
+    coverArt: Optional[str] = None
+    subtitle: Optional[str] = None
+    isOriginal: bool = False
+    storage: SongExternalStorage
+    isCopywrited: bool = False
+    fingerprint: Optional[str] = None
+
+
+def load_user(path: Path):
+    data = json.loads(path.read_text())
+
+    if "date" in data:
+        data["date"] = datetime.fromisoformat(data["date"]).replace(tzinfo=timezone.utc)
+    else:
+        data["date"] = datetime.now()
+    if "userData" in data:
+        data["userData"] = UserData(**data["userData"])
+
+    return OldUser(**data)
+
+
+def load_playlist(path: Path):
+    data = json.loads(path.read_text())
+
+    data["date"] = datetime.fromisoformat(data["date"]).replace(tzinfo=timezone.utc)
+    return OldPlaylist(**data)
+
+
+def load_song(path: Path):
+    data = json.loads(path.read_text())
+
+    data["date"] = datetime.fromisoformat(data["date"]).replace(tzinfo=timezone.utc)
+
+    if "storage" in data:
+        data["storage"] = SongExternalStorage(**data["storage"])
+
+    if data.get("artist") is not None:
+        data["artists"] = data["artist"].split(", ")
+        del data["artist"]
+    return OldSong(**data)
+
+
+def load_old_data(path: Path):
+    songs_path = path / "songs"
+    users_path = path / "users"
+    playlists_path = path / "playlists"
+
+    return (
+        [load_song(s) for s in songs_path.iterdir()],
+        [load_user(u) for u in users_path.iterdir()],
+        [load_playlist(p) for p in playlists_path.iterdir()],
+    )
+
+
+def normlize_title(title: str):
+    title = title.lower()
+    title = re.sub(r"\s+", " ", title)
+    if len(re.sub(r"[a-z]", "", title)) > 3:
+        mat = re.match(r"(\(.*\))", title)
+        if mat is not None:
+            title = mat.group(1)
+    else:
+        title = re.sub(r"\(.*\)", "", title)
+    title = re.sub(r"\[^a-z]", "", title)
+    return title.strip()
+
+
+def save_lookup(lookup: dict[OldSong, Song]):
+    id_lookup = {}
+    for old_song, new_song in lookup.items():
+        id_lookup[str(old_song.id)] = str(new_song.id)
+
+    with open(Path("lookup.json"), "w") as f:
+        json.dump(id_lookup, f, indent=4)
+
+
+def load_lookup(new: list[Song], old: list[OldSong]):
+    if not Path("lookup.json").exists():
+        return {}
+    with open(Path("lookup.json"), "r") as f:
+        id_lookup = json.load(f)
+
+    new_lookup = {str(song.id): song for song in new}
+    old_lookup = {str(song.id): song for song in old}
+
+    return {old_lookup[k]: new_lookup[v] for k, v in id_lookup.items()}
+
+
+def create_song_lookup(
+    old_songs: list[OldSong], new_songs: list[Song]
+) -> dict[OldSong, Song]:
+
+    lookup: dict[OldSong, Song] = load_lookup(new_songs, old_songs)
+    potental_matches: dict[OldSong, list[tuple[Song, float]]] = defaultdict(list)
+
+    if len(lookup) >= len(old_songs):
+        return lookup
+
+    for old_song in [s for s in old_songs if s not in lookup]:
+        title_a = normlize_title(old_song.title)
+        for new_song in new_songs:
+            title_b = normlize_title(new_song.title)
+            confidence = 0
+
+            if (
+                old_song.date - new_song.date_released
+            ).total_seconds() < 60 * 60 * 24 * 10:
+                confidence += 0.12
+                if (
+                    old_song.date - new_song.date_released
+                ).total_seconds() <= 60 * 60 * 24:
+                    confidence += 0.25
+
+            confidence += 0.1 / (abs(len(title_a) - len(title_b)) + 1)
+            if title_a == title_b:
+                confidence += 0.3
+                if old_song.title.lower() == new_song.title.lower():
+                    confidence += 1
+
+            confidence += len(
+                {normlize_title(a) for a in old_song.artists}
+                & {normlize_title(a) for a in new_song.artist_names}
+            ) / (len(new_song.artist_names) or 1)
+            confidence += (
+                len(
+                    {normlize_title(a) for a in old_song.singers}
+                    & {normlize_title(a) for a in new_song.singer_names}
+                )
+                / (len(new_song.singer_names) or 1)
+                / 3
+            )
+
+            potental_matches[old_song].append((new_song, confidence))
+
+    for old_song, matches in potental_matches.items():
+        ordered = sorted(matches, key=lambda x: x[1], reverse=True)
+        if ordered[0][1] > 1.8:
+            lookup[old_song] = ordered[0][0]
+        else:
+            choices = [
+                questionary.Choice(
+                    f"{confidence:.2} {song.title} - {song.artist_names and song.artist_names[0]} ({song.singer_names and song.singer_names[0]})",
+                    song,
+                    description=f"{song.date_released} - {song.artist_names} | {song.singer_names}",
+                )
+                for song, confidence in ordered
+            ]
+            song = questionary.select(
+                f"Song: {old_song.title} could not be found.\nArtists: {old_song.artists}\nSingers: {old_song.singers}\nDate: {old_song.date}",
+                choices=choices,
+                show_description=True,
+                use_search_filter=True,
+                use_jk_keys=False,
+            ).ask()
+            if song is None:
+                save_lookup(lookup)
+                exit(0)
+
+            lookup[old_song] = song
+
+    save_lookup(lookup)
+    return lookup
+
+
+def main():
+    while True:
+        data_path = Path(input("Please enter the path to the old data: ")).resolve()
+        if data_path.is_dir():
+            break
+        print("Invalid path. Please try again.")
+
+    old_songs, old_users, old_playlists = load_old_data(data_path)
+    print("Loaded old data.")
+    print(
+        f"Found {len(old_songs)} songs, {len(old_users)} users and {len(old_playlists)} playlists."
+    )
+
+    playlist_lookup = {playlist.id: playlist for playlist in old_playlists}
+    song_lookup = {song.id: song for song in old_songs}
+
+    create_db()
+    with db_session() as db:
+        new_songs = db.query(Song).all()
+
+        print("Creating song lookup...")
+        lookup = create_song_lookup(old_songs, new_songs)
+
+        for user in old_users:
+            new_user = User(
+                username=user.username,
+                role=UserRoles.USER,
+            )
+            identity = Identity(
+                provider=AuthProvider.LEGACY,
+                provider_id=user.username,
+                legacy_creds=LegacyCredentials(password_hash=user.password),
+            )
+            new_user.identities.append(identity)
+
+            for playlist_id in set(user.userData.get("playlistIds") or []):
+                playlist = playlist_lookup[playlist_id]
+                new_playlist = Playlist(title=playlist.name)
+                new_songs = []
+
+                for song_id in playlist.songIds:
+                    song = song_lookup[song_id]
+                    new_song = lookup[song]
+                    if new_song not in new_songs:
+                        new_songs.append(new_song)
+
+                if len(new_songs) != len(playlist.songIds):
+                    print(
+                        f"Warning: Playlist '{playlist.name}' missing {len(playlist.songIds) - len(new_songs)} songs."
+                    )
+                    print(
+                        {lookup[song_lookup[song_id]] for song_id in playlist.songIds}
+                        - set(new_songs)
+                    )
+
+                now = datetime.now(timezone.utc)
+                for i, song in enumerate(new_songs):
+                    ps = PlaylistSong(
+                        song=song,
+                        date_added=now + timedelta(minutes=i),
+                    )
+                    new_playlist.songs.append(ps)
+
+                db.add(new_playlist)
+                new_user.playlists.append(new_playlist)
+
+            db.add(new_user)
+
+
+if __name__ == "__main__":
+    main()
