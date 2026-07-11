@@ -98,8 +98,7 @@ def get_all_videos(config: ConfigValue) -> list[dict]:
 
 
 def filter_title(title: str) -> str:
-    title = re.sub(r"[({[【].*?[)}\]】]\)", "", title)
-    print(title)
+    title = re.sub(r"[\(\{\[\【].*?[\)\}\]\】]", "", title)
 
     parts = re.split(r"( - | \| )", title)
 
@@ -122,13 +121,22 @@ def filter_title(title: str) -> str:
     return "".join(parts)
 
 
-def create_metadata(item: dict, config: ConfigValue) -> tuple[str, Metadata]:
+def get_video(id: str):
+    return (
+        youtube.videos()
+        .list(part="contentDetails,snippet", id=id)
+        .execute()["items"][0]
+    )
+
+
+def create_metadata(
+    item: dict, clean_title: bool = True, artist_name: str | None = None
+) -> tuple[str, Metadata]:
     data = item["snippet"]
-    print(json.dumps(item, indent=4))
 
-    artist = MetaArtist(name=config.artistName or data["channelTitle"].strip())
+    artist = MetaArtist(name=artist_name or data["channelTitle"].strip())
 
-    if config.formatTitle:
+    if clean_title:
         title = filter_title(data["title"])
     else:
         title = data["title"]

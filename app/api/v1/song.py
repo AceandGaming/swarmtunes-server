@@ -20,7 +20,7 @@ def get_songs(
 
     songs = []
     if ids:
-        songs = service.get_many(ids)
+        songs = service.get_many(ids, preserve_order=True)
         if len(songs) != len(ids):
             raise HTTPException(404, detail="Song not found")
     elif filters:

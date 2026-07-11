@@ -6,8 +6,8 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from abstract.id_object import IDObject
 from database.relationships import (
+    PlaylistSong,
     album_songs,
-    playlist_songs,
     song_artists,
     song_singers,
 )
@@ -80,15 +80,23 @@ class Song(IDObject):
         back_populates="song",
         cascade="all, delete-orphan",
     )
-    metadata_source: Mapped[MetadataSource] = mapped_column(StringValueEnum(MetadataSource))
+    metadata_source: Mapped[MetadataSource] = mapped_column(
+        StringValueEnum(MetadataSource)
+    )
 
     playlists: Mapped[list["Playlist"]] = relationship(
-        secondary=playlist_songs, back_populates="songs"
+        PlaylistSong, back_populates="song"
     )
-    albums: Mapped[list["Album"]] = relationship(secondary=album_songs, back_populates="songs")
+    albums: Mapped[list["Album"]] = relationship(
+        secondary=album_songs, back_populates="songs"
+    )
 
     def __repr__(self):
-        artists = " & ".join([a.name for a in self.artists]) if self.artists else "unknown"
+        artists = (
+            " & ".join([a.name for a in self.artists])
+            if self.artists
+            else "unknown"
+        )
         singers = "".join(s[0] for s in self.singer_names if s) or "?"
 
         return f"'{self.title}' by '{artists}' ({singers}) [{str(self.id)[:5]}]"

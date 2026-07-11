@@ -114,7 +114,10 @@ def get_all_files() -> list[DriveFile]:
     log.info("Scanning Drive. This may take a while...")
 
     service = build(
-        "drive", "v3", credentials=get_drive_service(), cache_discovery=False
+        "drive",
+        "v3",
+        credentials=get_google_credentials(),
+        cache_discovery=False,
     )
 
     folders = []

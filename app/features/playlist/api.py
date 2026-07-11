@@ -1,4 +1,7 @@
-from typing import TypedDict, Optional
+from typing import Optional, TypedDict
+
+from features.song.api import NetworkSongV2
+
 
 class NetworkPlaylistV1(TypedDict):
     id: str
@@ -8,9 +11,13 @@ class NetworkPlaylistV1(TypedDict):
     cover: Optional[str]
     songIds: list[str]
 
+
 class NetworkPlaylistV2(TypedDict):
     id: str
     title: str
+
     artworks: dict[str, str]
-    songIds: list[str]
     dateCreated: str
+
+    songs: list[str] | list[NetworkSongV2]
+    seconds: int

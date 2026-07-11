@@ -26,17 +26,21 @@ class SongAudioReference(Base):
     date_created: Mapped[UTCDateTime] = mapped_column(
         UTCDateTime, default=datetime.now(timezone.utc)
     )
+
     song_id: Mapped[UUID] = mapped_column(
         SqlAlchemyUuid, ForeignKey("songs.id", ondelete="CASCADE")
     )
-
-    type: Mapped[AudioReferenceType] = mapped_column(StringValueEnum(AudioReferenceType))
-    external_id: Mapped[str] = mapped_column(index=True)
-    audio_hash: Mapped[str | None] = mapped_column(index=True)
-
     song: Mapped["Song"] = relationship(back_populates="audio_references")
+
+    type: Mapped[AudioReferenceType] = mapped_column(
+        StringValueEnum(AudioReferenceType)
+    )
+    external_id: Mapped[str] = mapped_column(index=True)
+    audio_hash: Mapped[str | None] = mapped_column(index=True, default=None)
 
     __table_args__ = (
         Index("ix_audio_type_external_id", "type", "external_id"),
-        UniqueConstraint("type", "external_id", name="uq_audio_type_external_id"),
+        UniqueConstraint(
+            "type", "external_id", name="uq_audio_type_external_id"
+        ),
     )

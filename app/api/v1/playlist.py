@@ -21,7 +21,9 @@ def validate_playlist_name(name: str):
     config = get_config()
 
     name = unicodedata.normalize("NFKC", name)
-    name = "".join(c for c in name if not unicodedata.category(c).startswith("C"))
+    name = "".join(
+        c for c in name if not unicodedata.category(c).startswith("C")
+    )
     name = name.strip()
 
     if len(name) > config.playlist_max_name_length or len(name) <= 0:
@@ -54,7 +56,9 @@ class NewPlaylistRequest(BaseModel):
 
 @playlist_router.post("/")
 def new_playlist(
-    req: NewPlaylistRequest, token: Token = Depends(auth_required), db=Depends(get_db)
+    req: NewPlaylistRequest,
+    token: Token = Depends(auth_required),
+    db=Depends(get_db),
 ):
     song_service = create_song_service(db)
     config = get_config()
@@ -67,9 +71,10 @@ def new_playlist(
 
     playlist = Playlist(
         title=name,
+        user=token.user,
     )
-    playlist.user = token.user
-    playlist.songs = songs
+    for song in songs:
+        playlist.add_song(song)
 
     db.add(playlist)
     db.flush()
@@ -78,7 +83,9 @@ def new_playlist(
 
 
 @playlist_router.delete("/{id}")
-def delete_playlist(id: UUID, token: Token = Depends(auth_required), db=Depends(get_db)):
+def delete_playlist(
+    id: UUID, token: Token = Depends(auth_required), db=Depends(get_db)
+):
     service = create_playlist_service(db)
     playlist = service.get_in_user(token.user, id)
     if not playlist:
@@ -161,7 +168,9 @@ def patch_playlist(
 
 
 @playlist_router.get("/{id}/share")
-def share_playlist(id: UUID, token: Token = Depends(auth_required), db=Depends(get_db)):
+def share_playlist(
+    id: UUID, token: Token = Depends(auth_required), db=Depends(get_db)
+):
     service = create_playlist_service(db)
     playlist = service.get_in_user(token.user, id)
     if not playlist:
@@ -179,7 +188,9 @@ class AddSharedPlaylistRequest(BaseModel):
 
 @playlist_router.post("/shared")
 def add_shared_playlist(
-    req: AddSharedPlaylistRequest, token: Token = Depends(auth_required), db=Depends(get_db)
+    req: AddSharedPlaylistRequest,
+    token: Token = Depends(auth_required),
+    db=Depends(get_db),
 ):
     service = create_playlist_service(db)
     manager = ShareManager(db)

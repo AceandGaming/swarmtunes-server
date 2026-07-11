@@ -6,15 +6,13 @@ from .song import get_song_artwork
 if TYPE_CHECKING:
     from features.album.album import Album
     from features.playlist.playlist import Playlist
+    from features.song.song import Song
 
 
-def get_collection_artwork(collection: "Album | Playlist") -> list[Artwork]:
-    if collection is None:
-        return []
-
+def get_artwork_from_songs(songs: list["Song"]) -> list[Artwork]:
     art_count: dict[str, dict[str, int]] = {}
 
-    for song in collection.songs:
+    for song in songs:
         artworks = get_song_artwork(song)
         for artwork in artworks:
             if artwork.type in art_count:
@@ -30,7 +28,12 @@ def get_collection_artwork(collection: "Album | Playlist") -> list[Artwork]:
         name = max(art_group, key=lambda art: art_group[art])
         arts.add(Artwork(type, name))
 
-    if collection.custom_artwork is not None:
-        arts.add(Artwork("custom", collection.custom_artwork))
-
     return list(arts)
+
+
+def get_album_artwork(album: "Album") -> list[Artwork]:
+    return get_artwork_from_songs(album.songs)
+
+
+def get_playlist_artwork(playlist: "Playlist") -> list[Artwork]:
+    return get_artwork_from_songs([song.song for song in playlist.songs])

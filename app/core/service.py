@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 from typing import Generic, TypeVar
 from uuid import UUID
 
+from sqlalchemy import case
 from sqlalchemy.orm import Session
 
 from abstract.id_object import IDObject
@@ -33,8 +34,21 @@ class Service(Generic[T]):
     def get(self, id: UUID) -> T | None:
         return self.query().filter(self._model.id == id).first()
 
-    def get_many(self, ids: list[UUID]) -> list[T]:
+    def get_many(self, ids: list[UUID], preserve_order=False) -> list[T]:
+        if preserve_order:
+            ordering = case(
+                {id_: index for index, id_ in enumerate(ids)},
+                value=self._model.id,
+            )
+
+            return (
+                self.query()
+                .filter(self._model.id.in_(ids))
+                .order_by(ordering)
+                .all()
+            )
+
         return self.query().filter(self._model.id.in_(ids)).all()
 
     def delete(self, item: T) -> None:
-        item.disabled_at = datetime.now(timezone.utc)
+        item.deleted_at = datetime.now(timezone.utc)

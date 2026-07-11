@@ -5,7 +5,7 @@ import re
 import sys
 from collections import defaultdict
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Optional, TypedDict
 
@@ -16,7 +16,8 @@ sys.path.insert(0, str(project_dir / "app"))
 
 
 from database.database import create as create_db  # noqa: E402
-from database.dependencies import db_session_no_commit as db_session  # noqa: E402
+from database.dependencies import db_session  # noqa: E402
+from database.relationships import PlaylistSong  # noqa: E402
 from features.identity import AuthProvider, Identity, LegacyCredentials  # noqa: E402
 from features.playlist import Playlist  # noqa: E402
 from features.song import Song  # noqa: E402
@@ -115,7 +116,12 @@ def load_old_data(path: Path):
 def normlize_title(title: str):
     title = title.lower()
     title = re.sub(r"\s+", " ", title)
-    title = re.sub(r"\(.*\)", "", title)
+    if len(re.sub(r"[a-z]", "", title)) > 3:
+        mat = re.match(r"(\(.*\))", title)
+        if mat is not None:
+            title = mat.group(1)
+    else:
+        title = re.sub(r"\(.*\)", "", title)
     title = re.sub(r"\[^a-z]", "", title)
     return title.strip()
 
@@ -123,77 +129,92 @@ def normlize_title(title: str):
 def save_lookup(lookup: dict[OldSong, Song]):
     id_lookup = {}
     for old_song, new_song in lookup.items():
-        id_lookup[old_song.id] = new_song.id
+        id_lookup[str(old_song.id)] = str(new_song.id)
 
     with open(Path("lookup.json"), "w") as f:
-        json.dump(lookup, f, indent=4)
+        json.dump(id_lookup, f, indent=4)
 
 
-def load_lookup():
+def load_lookup(new: list[Song], old: list[OldSong]):
     if not Path("lookup.json").exists():
         return {}
     with open(Path("lookup.json"), "r") as f:
-        return json.load(f)
+        id_lookup = json.load(f)
+
+    new_lookup = {str(song.id): song for song in new}
+    old_lookup = {str(song.id): song for song in old}
+
+    return {old_lookup[k]: new_lookup[v] for k, v in id_lookup.items()}
 
 
 def create_song_lookup(
     old_songs: list[OldSong], new_songs: list[Song]
 ) -> dict[OldSong, Song]:
-    lookup: dict[OldSong, Song] = load_lookup()
-    potental_matches: dict[OldSong, list[Song]] = defaultdict(list)
 
-    for old_song in old_songs:
+    lookup: dict[OldSong, Song] = load_lookup(new_songs, old_songs)
+    potental_matches: dict[OldSong, list[tuple[Song, float]]] = defaultdict(list)
+
+    if len(lookup) >= len(old_songs):
+        return lookup
+
+    for old_song in [s for s in old_songs if s not in lookup]:
         title_a = normlize_title(old_song.title)
         for new_song in new_songs:
             title_b = normlize_title(new_song.title)
+            confidence = 0
 
-            if title_a != title_b:
-                continue
-            if (old_song.date - new_song.date_released).days > 1:
-                continue
+            if (old_song.date - new_song.date_released).days < 10:
+                confidence += 0.1
+                if (old_song.date - new_song.date_released).days < 1:
+                    confidence += 0.2
 
-            if (
-                old_song.title.lower() == new_song.title.lower()
-                and len(
-                    {normlize_title(a) for a in old_song.artists}
-                    & {normlize_title(a) for a in new_song.artist_names}
+            confidence += 0.1 / (abs(len(title_a) - len(title_b)) + 1)
+            if title_a == title_b:
+                confidence += 0.3
+                if old_song.title.lower() == new_song.title.lower():
+                    confidence += 1
+
+            confidence += len(
+                {normlize_title(a) for a in old_song.artists}
+                & {normlize_title(a) for a in new_song.artist_names}
+            ) / len(new_song.artist_names)
+            confidence += (
+                len(
+                    {normlize_title(a) for a in old_song.singers}
+                    & {normlize_title(a) for a in new_song.singer_names}
                 )
-                > 0
-            ):
-                lookup[old_song] = new_song
-            else:
-                potental_matches[old_song].append(new_song)
-
-    missing: dict[OldSong, list[Song] | None]
-    missing = {old_song: None for old_song in old_songs if old_song not in lookup}
-    missing |= {
-        old_song: matches
-        for old_song, matches in potental_matches.items()
-        if old_song not in lookup
-    }
-
-    print(f"{len(missing)} songs could not be found.")
-    for old_song, matches in missing.items():
-        choices = [
-            questionary.Choice(
-                f"{song.title} - {song.artist_names and song.artist_names[0]} ({song.singer_names and song.singer_names[0]})",
-                song,
-                description=f"{song.date_released} - {song.artist_names} | {song.singer_names}",
+                / len(new_song.singer_names)
+                / 3
             )
-            for song in sorted(matches or new_songs, key=lambda s: s.title)
-        ]
-        song = questionary.select(
-            f"Song: {old_song.title} could not be found.\nArtists: {old_song.artists}\nSingers: {old_song.singers}\nDate: {old_song.date}",
-            choices=choices,
-            show_description=True,
-            use_search_filter=True,
-            use_jk_keys=False,
-        ).ask()
-        if song is None:
-            exit(0)
 
-        lookup[old_song] = song
+            potental_matches[old_song].append((new_song, confidence))
 
+    for old_song, matches in potental_matches.items():
+        ordered = sorted(matches, key=lambda x: x[1], reverse=True)
+        if ordered[0][1] > 1.8:
+            lookup[old_song] = ordered[0][0]
+        else:
+            choices = [
+                questionary.Choice(
+                    f"{confidence:.2} {song.title} - {song.artist_names and song.artist_names[0]} ({song.singer_names and song.singer_names[0]})",
+                    song,
+                    description=f"{song.date_released} - {song.artist_names} | {song.singer_names}",
+                )
+                for song, confidence in ordered
+            ]
+            song = questionary.select(
+                f"Song: {old_song.title} could not be found.\nArtists: {old_song.artists}\nSingers: {old_song.singers}\nDate: {old_song.date}",
+                choices=choices,
+                show_description=True,
+                use_search_filter=True,
+                use_jk_keys=False,
+            ).ask()
+            if song is None:
+                exit(0)
+
+            lookup[old_song] = song
+
+    save_lookup(lookup)
     return lookup
 
 
@@ -236,21 +257,30 @@ def main():
             for playlist_id in set(user.userData.get("playlistIds") or []):
                 playlist = playlist_lookup[playlist_id]
                 new_playlist = Playlist(title=playlist.name)
-                new_songs = set()
+                new_songs = []
 
                 for song_id in playlist.songIds:
                     song = song_lookup[song_id]
-                    new_song = lookup.get(song)
-                    if new_song:
-                        new_songs.add(new_song)
+                    new_song = lookup[song]
+                    if new_song not in new_songs:
+                        new_songs.append(new_song)
 
                 if len(new_songs) != len(playlist.songIds):
                     print(
-                        f"Warning: Playlist {playlist.name} missing {len(playlist.songIds) - len(new_songs)} songs."
+                        f"Warning: Playlist '{playlist.name}' missing {len(playlist.songIds) - len(new_songs)} songs."
+                    )
+                    print(
+                        {lookup[song_lookup[song_id]] for song_id in playlist.songIds}
+                        - set(new_songs)
                     )
 
-                for song in new_songs:
-                    new_playlist.add_song(song)
+                now = datetime.now(timezone.utc)
+                for i, song in enumerate(new_songs):
+                    ps = PlaylistSong(
+                        song=song,
+                        date_added=now + timedelta(minutes=i),
+                    )
+                    new_playlist.songs.append(ps)
 
                 db.add(new_playlist)
                 new_user.playlists.append(new_playlist)

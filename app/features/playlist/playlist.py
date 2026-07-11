@@ -5,7 +5,7 @@ from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from abstract.id_object import IDObject
-from database.relationships import playlist_songs
+from database.relationships import PlaylistSong
 from database.types import StringValueEnum
 
 if TYPE_CHECKING:
@@ -28,18 +28,27 @@ class Playlist(IDObject):
     title: Mapped[str]
     custom_artwork: Mapped[Optional[str]]
 
-    songs: Mapped[list["Song"]] = relationship(
-        "Song", secondary=playlist_songs, back_populates="playlists"
+    songs: Mapped[list[PlaylistSong]] = relationship(
+        "PlaylistSong",
+        order_by=PlaylistSong.date_added,
+        cascade="all, delete-orphan",
     )
     type: Mapped[PlaylistType] = mapped_column(
         StringValueEnum(PlaylistType), default=PlaylistType.USER
     )
 
-    user_id = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), index=True)
-    user: Mapped[Optional["User"]] = relationship("User", back_populates="playlists")
+    user_id = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL"), index=True
+    )
+    user: Mapped[Optional["User"]] = relationship(
+        "User", back_populates="playlists"
+    )
 
     def add_song(self, song: "Song"):
-        self.songs.append(song)
+        self.songs.append(PlaylistSong(song=song))
 
     def remove_song(self, song: "Song"):
-        self.songs.remove(song)
+        for s in self.songs:
+            if s.song == song:
+                self.songs.remove(s)
+                break
