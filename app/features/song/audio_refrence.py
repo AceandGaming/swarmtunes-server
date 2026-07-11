@@ -17,6 +17,7 @@ if TYPE_CHECKING:
 class AudioReferenceType(StrEnum):
     GOOGLE_DRIVE = "gdrive"
     YOUTUBE = "youtube"
+    MANUAL = "manual"
 
 
 class SongAudioReference(Base):

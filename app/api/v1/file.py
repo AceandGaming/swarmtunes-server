@@ -37,6 +37,7 @@ def get_file(id: UUID, export: bool = Query(False), db=Depends(get_db)):
         ref
         for ref in song.audio_references
         if ref.type == AudioReferenceType.GOOGLE_DRIVE
+        or ref.type == AudioReferenceType.MANUAL
     ]
     if not audios:
         raise HTTPException(406, detail="Audio file not available")

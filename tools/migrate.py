@@ -163,10 +163,14 @@ def create_song_lookup(
             title_b = normlize_title(new_song.title)
             confidence = 0
 
-            if (old_song.date - new_song.date_released).days < 10:
-                confidence += 0.1
-                if (old_song.date - new_song.date_released).days < 1:
-                    confidence += 0.2
+            if (
+                old_song.date - new_song.date_released
+            ).total_seconds() < 60 * 60 * 24 * 10:
+                confidence += 0.12
+                if (
+                    old_song.date - new_song.date_released
+                ).total_seconds() <= 60 * 60 * 24:
+                    confidence += 0.25
 
             confidence += 0.1 / (abs(len(title_a) - len(title_b)) + 1)
             if title_a == title_b:
@@ -177,13 +181,13 @@ def create_song_lookup(
             confidence += len(
                 {normlize_title(a) for a in old_song.artists}
                 & {normlize_title(a) for a in new_song.artist_names}
-            ) / len(new_song.artist_names)
+            ) / (len(new_song.artist_names) or 1)
             confidence += (
                 len(
                     {normlize_title(a) for a in old_song.singers}
                     & {normlize_title(a) for a in new_song.singer_names}
                 )
-                / len(new_song.singer_names)
+                / (len(new_song.singer_names) or 1)
                 / 3
             )
 
@@ -210,6 +214,7 @@ def create_song_lookup(
                 use_jk_keys=False,
             ).ask()
             if song is None:
+                save_lookup(lookup)
                 exit(0)
 
             lookup[old_song] = song
@@ -219,12 +224,11 @@ def create_song_lookup(
 
 
 def main():
-    # while True:
-    #     data_path = Path(input("Please enter the path to the old data: ")).resolve()
-    #     if data_path.is_dir():
-    #         break
-    #     print("Invalid path. Please try again.")
-    data_path = Path("/home/ace/Downloads/old_data/")
+    while True:
+        data_path = Path(input("Please enter the path to the old data: ")).resolve()
+        if data_path.is_dir():
+            break
+        print("Invalid path. Please try again.")
 
     old_songs, old_users, old_playlists = load_old_data(data_path)
     print("Loaded old data.")

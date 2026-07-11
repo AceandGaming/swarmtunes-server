@@ -54,8 +54,10 @@ print("Metadata:")
 for key, value in asdict(metadata).items():
     print(f"  {key}: {value}")
 
-if questionary.confirm("Would you like to edit the above data?", default=False).ask():
+if questionary.confirm("Would you like to edit the above data?", default=True).ask():
     metadata.title = questionary.text("Title (English):", default=metadata.title).ask()
+    if metadata.title is None:
+        exit(0)
     metadata.title_og = (
         questionary.text("Original title:", default=metadata.title_og or "").ask()
         or None
@@ -78,6 +80,8 @@ if questionary.confirm("Would you like to edit the above data?", default=False).
         ).ask()
         if name is None:
             exit(0)
+        if not name:
+            break
         og_name = questionary.text(
             f"Original Artist Name {i + 1}:",
         ).ask()
@@ -102,6 +106,8 @@ if questionary.confirm("Would you like to edit the above data?", default=False).
         ).ask()
         if name is None:
             exit(0)
+        if not name:
+            break
         og_name = questionary.text(
             f"Original Singer Name {i + 1}:",
         ).ask()
