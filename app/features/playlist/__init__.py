@@ -13,6 +13,12 @@ if TYPE_CHECKING:
 
 
 class PlaylistService(Service[Playlist]):
+    def __init__(self, db: Session):
+        super().__init__(db, Playlist)
+
+    def get_of_user(self, user: "User"):
+        return self.query().filter(self._model.user_id == user.id).all()
+
     def get_in_user(self, user: "User", id: UUID) -> Playlist | None:
         return (
             self.query()
@@ -50,7 +56,7 @@ class PlaylistService(Service[Playlist]):
 
 
 def create_playlist_service(db: Session):
-    return PlaylistService(db, Playlist)
+    return PlaylistService(db)
 
 
 __all__ = [

@@ -4,6 +4,8 @@ from uuid import UUID
 from fastapi import Cookie, Depends, HTTPException, Request
 
 from database.dependencies import get_db
+from features.session import Token
+from features.user import UserRoles
 from general.auth import AuthManager
 
 log = logging.getLogger()
@@ -35,3 +37,9 @@ def get_ip(request: Request):
         raise RuntimeError("No client address available")
 
     return request.client.host
+
+
+def admin_required(token: Token = Depends(auth_required)):
+    if token.user.role != UserRoles.ADMIN:
+        raise HTTPException(403, detail="Forbidden")
+    return token

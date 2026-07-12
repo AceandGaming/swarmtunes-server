@@ -28,7 +28,9 @@ class User(IDObject):
         default=UserRoles.USER,
     )
 
-    playlists: Mapped[list["Playlist"]] = relationship("Playlist", back_populates="user")
+    playlists: Mapped[list["Playlist"]] = relationship(
+        "Playlist", back_populates="user"
+    )
     tokens: Mapped[list["Token"]] = relationship(
         "Token", back_populates="user", cascade="all, delete-orphan"
     )

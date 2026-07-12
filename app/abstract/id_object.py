@@ -13,7 +13,7 @@ class IDObject(Base):
     __abstract__ = True
 
     @property
-    def enabled(self):
+    def deleted(self):
         return self.deleted_at is not None
 
     @property

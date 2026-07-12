@@ -32,8 +32,14 @@ def get_artwork_from_songs(songs: list["Song"]) -> list[Artwork]:
 
 
 def get_album_artwork(album: "Album") -> list[Artwork]:
-    return get_artwork_from_songs(album.songs)
+    arts = get_artwork_from_songs(album.songs)
+    if album.custom_artwork is not None:
+        arts.append(Artwork("custom", album.custom_artwork))
+    return arts
 
 
 def get_playlist_artwork(playlist: "Playlist") -> list[Artwork]:
-    return get_artwork_from_songs([song.song for song in playlist.songs])
+    arts = get_artwork_from_songs([song.song for song in playlist.songs])
+    if playlist.custom_artwork is not None:
+        arts.append(Artwork("custom", playlist.custom_artwork))
+    return arts

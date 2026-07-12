@@ -44,7 +44,7 @@ def get_playlists(
         if len(playlists) != len(ids):
             raise HTTPException(404, detail="Playlist not found")
     else:
-        playlists = token.user.playlists
+        playlists = service.get_of_user(token.user)
 
     return [to_network_v1(playlist) for playlist in playlists]
 
