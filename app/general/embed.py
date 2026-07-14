@@ -35,7 +35,7 @@ def create_song_embed(song: Song):
     artworks = get_song_artwork(song)
 
     redirect_url = f"https://swarmtunes.com?song={song.id}"
-    image_url = f"https://api.swarmtunes.com/covers/{create_path(artworks)}"
+    image_url = f"https://api.swarmtunes.com/v1/covers/{create_path(artworks)}"
 
     return _create_embed(
         title=song.title,

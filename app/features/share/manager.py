@@ -1,8 +1,10 @@
 from datetime import datetime, timedelta, timezone
 
+from sqlalchemy import or_
+from sqlalchemy.orm import Session
+
 from features.playlist import Playlist
 from features.song import Song
-from sqlalchemy.orm import Session
 
 from .link import ShareLink, ShareLinkType
 
@@ -20,8 +22,10 @@ class ShareManager:
 
     def query(self):
         return self._db.query(ShareLink).filter(
-            ShareLink.expires_at.is_(None) | ShareLink.expires_at
-            > datetime.now(timezone.utc)
+            or_(
+                ShareLink.expires_at.is_(None),
+                ShareLink.expires_at > datetime.now(timezone.utc),
+            )
         )
 
     def add(self, link: ShareLink):
