@@ -17,14 +17,6 @@ COPY tools ./tools
 # Install Python dependencies
 RUN pip install --upgrade pip && pip install app/. --no-warn-script-location
 
-# Add user and give them permissons
-RUN groupadd --system swarmtunes && \
-    useradd --system --gid swarmtunes --create-home swarmtunes && \
-    chown -R swarmtunes:swarmtunes /app
-
-USER swarmtunes
-
-
 EXPOSE 8000
 ENV PYTHONPATH=/app/app
 

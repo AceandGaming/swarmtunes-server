@@ -1,6 +1,6 @@
 [project]
 name = "swarmtunes-server"
-version = "0.2.0"
+version = "2.0.2"
 description = "Swarmtunes Server."
 readme = "README"
 requires-python = ">=3.12, <3.13"
@@ -23,7 +23,9 @@ dependencies = [
     "apscheduler==3.11.2",
     "sqlalchemy==2.0.50",
     "questionary==2.1.1",
-    "pydantic-settings==2.14.1"
+    "pydantic-settings==2.14.1",
+    "argon2-cffi==25.1.0",
+    "argon2-cffi-bindings==25.1.0"
 ]
 
 [tool.setuptools.packages.find]

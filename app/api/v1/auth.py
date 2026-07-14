@@ -17,7 +17,7 @@ signup_limit = SignupLimit()
 
 
 def validate_username(username: str):
-    username = username.strip()
+    username = username.strip().lower()
     username = re.sub(r"\s+", " ", username)
 
     if len(username) > 32 or len(username) < 3:
