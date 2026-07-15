@@ -55,5 +55,10 @@ def get_file(id: UUID, export: bool = Query(False), db=Depends(get_db)):
         raise HTTPException(500, detail="Failed to retreve audio file")
 
     return FileResponse(
-        path, media_type="audio/ogg", headers={"Accept-Ranges": "bytes"}
+        path,
+        media_type="audio/ogg",
+        headers={
+            "Accept-Ranges": "bytes",
+            "Cache-Control": "public, max-age=86400",
+        },
     )

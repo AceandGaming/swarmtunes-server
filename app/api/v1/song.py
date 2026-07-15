@@ -3,6 +3,7 @@ from typing import Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from database.dependencies import get_db
@@ -38,7 +39,10 @@ def get_songs(
     else:
         songs = service.get_all()[:maxResults]
 
-    return [to_network_v1(song) for song in songs]
+    return JSONResponse(
+        [to_network_v1(song) for song in songs],
+        headers={"Cache-Control": "public, max-age=3600"},
+    )
 
 
 @song_router.get("/{id}/share")

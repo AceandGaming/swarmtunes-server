@@ -1,10 +1,11 @@
 from uuid import UUID
 
+from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
+
 import core.paths as paths
 from database.dependencies import get_db
 from external.emotes import get_emote as emote_get_emote
-from fastapi import APIRouter, Depends, HTTPException, Query
-from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 from features.share import ShareLinkType, ShareManager
 from features.song import create_song_service
 from features.song import to_network_v1 as song_to_network
@@ -91,7 +92,11 @@ async def get_cover(name: str):
     exported = export_artwork(path)
     if exported is None:
         raise HTTPException(status_code=404, detail="cover not found")
-    return FileResponse(exported, media_type="image/webp")
+    return FileResponse(
+        exported,
+        media_type="image/webp",
+        headers={"Cache-Control": "public, max-age=86400"},
+    )
 
 
 @v1_router.get("/emotes/{name}")
