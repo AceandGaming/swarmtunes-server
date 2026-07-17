@@ -1,8 +1,3 @@
-# In progress
-- Run long term test with all features active
-- Test metadata parser
-
-# Post Release
 - OAuth (Google, Discord)
 - HLS
 - Create new v2 endpoint with new api stuff

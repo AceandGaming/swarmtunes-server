@@ -77,10 +77,15 @@ async def root(
 
 
 @v1_router.get("/search")
-async def search(query=Query(""), db=Depends(get_db)):
+async def search(
+    query=Query(""), maxResults: int = Query(10), db=Depends(get_db)
+):
     service = create_song_service(db)
     songs = service.get_all()
-    return [song_to_network(song) for song in search_songs(songs, query)]
+    return [
+        song_to_network(song)
+        for song in search_songs(songs, query)[:maxResults]
+    ]
 
 
 @v1_router.get("/covers/{name:path}")
@@ -95,7 +100,7 @@ async def get_cover(name: str):
     return FileResponse(
         exported,
         media_type="image/webp",
-        headers={"Cache-Control": "public, max-age=86400"},
+        headers={"Cache-Control": "public, max-age=604800"},
     )
 
 
