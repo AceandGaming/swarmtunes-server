@@ -40,6 +40,11 @@ def get_album_artwork(album: "Album") -> list[Artwork]:
 
 def get_playlist_artwork(playlist: "Playlist") -> list[Artwork]:
     arts = get_artwork_from_songs([song.song for song in playlist.songs])
+    for art in arts.copy():
+        if art.type == "custom":
+            arts.remove(art)
+
     if playlist.custom_artwork is not None:
         arts.append(Artwork("custom", playlist.custom_artwork))
+
     return arts
