@@ -70,6 +70,8 @@ class Song(IDObject):
         index=True,
     )
 
+    enabled: Mapped[bool] = mapped_column(default=True)
+
     date_released: Mapped[datetime] = mapped_column(UTCDateTime())
     disc: Mapped[Optional[int]]
     is_copyrighted: Mapped[bool]

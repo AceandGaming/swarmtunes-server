@@ -40,7 +40,7 @@ def get_songs(
         songs = service.get_all()[:maxResults]
 
     return JSONResponse(
-        [to_network_v1(song) for song in songs],
+        [to_network_v1(song) for song in songs if song.enabled],
         headers={"Cache-Control": "public, max-age=3600"},
     )
 
@@ -113,6 +113,7 @@ class SongPatchRequest(BaseModel):
     dateReleased: Optional[str] = None
     disc: Optional[int] = None
     customArtwork: Optional[str] = None
+    enabled: Optional[bool] = None
 
 
 @song_router.patch("/{id}")
@@ -148,5 +149,7 @@ def patch_song(
         song.disc = req.disc
     if req.customArtwork is not None:
         song.custom_artwork = req.customArtwork or None
+    if req.enabled is not None:
+        song.enabled = req.enabled
 
     return to_network_v1(song)

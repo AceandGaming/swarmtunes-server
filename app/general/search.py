@@ -1,11 +1,14 @@
 from dataclasses import dataclass
-from features.song import Song
 from typing import Any
+
+from features.song import Song
+
 
 @dataclass
 class SearchObject:
     id: Any
     value: str
+
 
 def normalise(text: str):
     text = text.lower()
@@ -13,6 +16,7 @@ def normalise(text: str):
         text = text.replace(c, "")
 
     return text.replace("_", " ")
+
 
 def get_distance(value: str, query: str):
     m = len(query)
@@ -28,13 +32,14 @@ def get_distance(value: str, query: str):
             cost = 0 if query[i - 1] == value[j - 1] else 1
 
             table[i][j] = min(
-                table[i - 1][j] + 1,        # delete
-                table[i][j - 1] + 1,        # insert
-                table[i - 1][j - 1] + cost  # match/substitute
+                table[i - 1][j] + 1,  # delete
+                table[i][j - 1] + 1,  # insert
+                table[i - 1][j - 1] + cost,  # match/substitute
             )
 
     return min(table[m])
-            
+
+
 def search(objects: list[SearchObject], query: str) -> list[SearchObject]:
     query = normalise(query)
     if len(query) == 0:
@@ -52,7 +57,8 @@ def search(objects: list[SearchObject], query: str) -> list[SearchObject]:
 
     return [result[1] for result in results]
 
-def search_songs(songs: list[Song], query: str):
+
+def search_songs(songs: list[Song], query: str) -> list[Song]:
     objects = []
     lookup = {}
     for song in songs:

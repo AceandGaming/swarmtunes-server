@@ -85,6 +85,7 @@ async def search(
     return [
         song_to_network(song)
         for song in search_songs(songs, query)[:maxResults]
+        if song.enabled
     ]
 
 
