@@ -25,7 +25,8 @@ dependencies = [
     "questionary==2.1.1",
     "pydantic-settings==2.14.1",
     "argon2-cffi==25.1.0",
-    "argon2-cffi-bindings==25.1.0"
+    "argon2-cffi-bindings==25.1.0",
+    "alembic==1.18.5"
 ]
 
 [tool.setuptools.packages.find]
