@@ -9,7 +9,13 @@ from pydantic import BaseModel
 from database.dependencies import get_db
 from features.artist import create_or_get
 from features.share import ShareManager
-from features.song import Song, SongType, create_song_service, to_network_v1
+from features.song import (
+    Song,
+    SongCopyrightStatus,
+    SongType,
+    create_song_service,
+    to_network_v1,
+)
 
 from .shared import admin_required
 
@@ -40,7 +46,11 @@ def get_songs(
         songs = service.get_all()[:maxResults]
 
     return JSONResponse(
-        [to_network_v1(song) for song in songs],
+        [
+            to_network_v1(song)
+            for song in songs
+            if song.copyright_status == SongCopyrightStatus.ACTIVE
+        ],
         headers={"Cache-Control": "public, max-age=3600"},
     )
 
@@ -50,6 +60,8 @@ def share_song(id: UUID, db=Depends(get_db)):
     service = create_song_service(db)
     song = service.get(id)
     if song is None:
+        raise HTTPException(404, detail="Song not found")
+    if song.copyright_status != SongCopyrightStatus.ACTIVE:
         raise HTTPException(404, detail="Song not found")
 
     manager = ShareManager(db)

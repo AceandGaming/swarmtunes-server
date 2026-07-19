@@ -6,7 +6,11 @@ from fastapi.responses import FileResponse, RedirectResponse
 
 import core.paths as paths
 from database.dependencies import get_db
-from features.song import AudioReferenceType, create_song_service
+from features.song import (
+    AudioReferenceType,
+    SongCopyrightStatus,
+    create_song_service,
+)
 
 log = logging.getLogger()
 
@@ -31,6 +35,8 @@ def get_file(id: UUID, export: bool = Query(False), db=Depends(get_db)):
 
     song = service.get(id)
     if song is None:
+        raise HTTPException(404, detail="Song not found")
+    if song.copyright_status != SongCopyrightStatus.ACTIVE:
         raise HTTPException(404, detail="Song not found")
 
     audios = [

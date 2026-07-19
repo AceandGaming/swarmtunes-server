@@ -29,6 +29,11 @@ class SongType(StrEnum):
     MASHUP = "mashup"
 
 
+class SongCopyrightStatus(StrEnum):
+    ACTIVE = "active"
+    COPYRIGHT_CLAIMED = "copyright_claimed"
+
+
 class Song(IDObject):
     __tablename__ = "songs"
 
@@ -72,8 +77,12 @@ class Song(IDObject):
 
     date_released: Mapped[datetime] = mapped_column(UTCDateTime())
     disc: Mapped[Optional[int]]
-    is_copyrighted: Mapped[bool]
     custom_artwork: Mapped[Optional[str]]
+
+    is_copyrighted: Mapped[bool]
+    copyright_status: Mapped[SongCopyrightStatus] = mapped_column(
+        StringValueEnum(SongCopyrightStatus), default=SongCopyrightStatus.ACTIVE
+    )
 
     seconds: Mapped[float]
     audio_references: Mapped[list["SongAudioReference"]] = relationship(

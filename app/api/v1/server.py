@@ -7,7 +7,7 @@ import core.paths as paths
 from database.dependencies import get_db
 from external.emotes import get_emote as emote_get_emote
 from features.share import ShareLinkType, ShareManager
-from features.song import create_song_service
+from features.song import SongCopyrightStatus, create_song_service
 from features.song import to_network_v1 as song_to_network
 from general.embed import create_song_embed
 from general.export import export_artwork
@@ -85,6 +85,7 @@ async def search(
     return [
         song_to_network(song)
         for song in search_songs(songs, query)[:maxResults]
+        if song.copyright_status == SongCopyrightStatus.ACTIVE
     ]
 
 
