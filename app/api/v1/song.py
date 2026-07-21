@@ -125,6 +125,7 @@ class SongPatchRequest(BaseModel):
     dateReleased: Optional[str] = None
     disc: Optional[int] = None
     customArtwork: Optional[str] = None
+    copyrightStatus: Optional[str] = None
 
 
 @song_router.patch("/{id}")
@@ -149,7 +150,10 @@ def patch_song(
     if req.singers is not None:
         song.singers = [create_or_get(db, a, a) for a in req.singers]
     if req.type is not None:
-        song.type = getattr(SongType, req.type.upper())
+        try:
+            song.type = getattr(SongType, req.type.upper())
+        except AttributeError:
+            raise HTTPException(400, detail="Invalid type")
     if req.dateReleased is not None:
         try:
             date = datetime.fromisoformat(req.dateReleased)
@@ -160,5 +164,12 @@ def patch_song(
         song.disc = req.disc
     if req.customArtwork is not None:
         song.custom_artwork = req.customArtwork or None
+    if req.copyrightStatus is not None:
+        try:
+            song.copyright_status = getattr(
+                SongCopyrightStatus, req.copyrightStatus.upper()
+            )
+        except AttributeError:
+            raise HTTPException(400, detail="Invalid status")
 
     return to_network_v1(song)
