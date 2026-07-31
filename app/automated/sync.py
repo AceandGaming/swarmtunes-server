@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from core.paths import AUDIO, CORRECT, DOWNLOADS
 from external.rclone_api import DriveFile, download_files, get_all_files
+from features.metadata.metadata import MetadataSource
 from features.song import (
     AudioReferenceType,
     SongAudioReference,
@@ -161,8 +162,12 @@ def sync(db: Session):
     log.info("Updating songs...")
     service = create_song_service(db)
     for ref, metadata, file in songs_to_update:
-        service.update_with_metadata(ref.song, metadata)
-        ref.external_id = file.id
+        if ref.song.metadata_source in [
+            MetadataSource.JSON,
+            MetadataSource.ID3,
+        ]:
+            service.update_with_metadata(ref.song, metadata)
+            ref.external_id = file.id
 
     log.info("Correcting MP3s...")
     failed = correct_many([file for _, file in to_create])

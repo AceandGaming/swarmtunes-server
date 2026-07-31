@@ -101,7 +101,7 @@ async def get_cover(name: str):
     return FileResponse(
         exported,
         media_type="image/webp",
-        headers={"Cache-Control": "public, max-age=604800"},
+        headers={"Cache-Control": "public, max-age=604800, immutable"},
     )
 
 

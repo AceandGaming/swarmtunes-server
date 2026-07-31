@@ -1,8 +1,9 @@
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
+from starlette.middleware.base import BaseHTTPMiddleware
 
 from api.v1.server import v1_router
 from automated.cleanup import clear_temp
@@ -27,14 +28,27 @@ async def lifespan(app: FastAPI):
     scheduler.shutdown()
 
 
+class AddVaryOriginMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+
+        vary = response.headers.get("Vary")
+
+        if not vary:
+            response.headers["Vary"] = "Origin"
+
+        return response
+
+
 app = FastAPI(
     title="SwarmTunes API",
-    version="2.0.0-beta",
+    version="2.0.6",
     openapi_url=None,
     docs_url=None,
     redoc_url=None,
     lifespan=lifespan,
 )
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["https://swarmtunes.com"],
@@ -42,6 +56,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.add_middleware(AddVaryOriginMiddleware)
+
 
 app.include_router(v1_router, prefix="/v1")
 
