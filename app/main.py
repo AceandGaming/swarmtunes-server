@@ -46,7 +46,6 @@ class AddVaryOriginMiddleware(BaseHTTPMiddleware):
 
 app = FastAPI(
     title="SwarmTunes API",
-    version="2.1.0",
     openapi_url=None,
     docs_url=None,
     redoc_url=None,

@@ -54,9 +54,7 @@ def get_songs(
     songs = query.all()
 
     return CachedJSONResponse(
-        [to_network_v2(song) for song in songs],
-        cache_for=timedelta(hours=1),
-        state_for=timedelta(minutes=10),
+        [to_network_v2(song) for song in songs], cache_for=timedelta(hours=1)
     )
 
 
@@ -68,11 +66,7 @@ def get_song(id: UUID, db=Depends(get_db)):
     if not song:
         raise APIException("SONG_NOT_FOUND", "Song not found", status_code=404)
 
-    return CachedJSONResponse(
-        to_network_v2(song),
-        cache_for=timedelta(hours=1),
-        state_for=timedelta(minutes=10),
-    )
+    return CachedJSONResponse(to_network_v2(song), cache_for=timedelta(hours=1))
 
 
 @song_router.get("/{id}/audio")
