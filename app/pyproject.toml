@@ -26,7 +26,8 @@ dependencies = [
     "pydantic-settings==2.14.1",
     "argon2-cffi==25.1.0",
     "argon2-cffi-bindings==25.1.0",
-    "alembic==1.18.5"
+    "alembic==1.18.5",
+    "case-converter==1.2.0"
 ]
 
 [tool.setuptools.packages.find]
