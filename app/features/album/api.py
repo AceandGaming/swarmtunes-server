@@ -19,5 +19,5 @@ class NetworkAlbumV2(TypedDict):
     date: Optional[str]
     disc: Optional[int]
 
-    songs: list[str] | list[NetworkSongV2]
+    songCount: int
     seconds: int

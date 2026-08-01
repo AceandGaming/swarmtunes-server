@@ -1,9 +1,9 @@
-from typing import Literal, cast
+from typing import Literal, cast, overload
 
 from features.artist.convert import to_network_v2 as to_network_v2_artist
 from features.artwork import create_path, get_song_artwork
 
-from .api import NetworkSongV1, NetworkSongV2
+from .api import NetworkSongV1, NetworkSongV2, NetworkSongV2Lite
 from .song import Song
 
 
@@ -30,17 +30,32 @@ def to_network_v1(song: Song) -> NetworkSongV1:
     }
 
 
-def to_network_v2(song: Song) -> NetworkSongV2:
-    audio_id = None
-    audio_type: Literal["audio", "youtube"] | None = None
-    for refrence in song.audio_references:
-        if refrence.type in ["audio", "youtube"]:
-            audio_id = refrence.external_id
-            audio_type = cast(Literal["audio", "youtube"], refrence.type)
-            break
+@overload
+def to_network_v2(
+    song: Song, lite: Literal[False] = False
+) -> NetworkSongV2: ...
 
-    if audio_id is None or audio_type is None:
-        raise Exception("Song has no supported audio")
+
+@overload
+def to_network_v2(song: Song, lite: Literal[True]) -> NetworkSongV2Lite: ...
+
+
+def to_network_v2(
+    song: Song, lite: bool = False
+) -> NetworkSongV2 | NetworkSongV2Lite:
+
+    if lite:
+        return NetworkSongV2Lite(
+            id=song.str_id,
+            title=song.title,
+            artists=[to_network_v2_artist(artist) for artist in song.artists],
+            singers=[to_network_v2_artist(artist) for artist in song.singers],
+            artworks={
+                artwork.type: artwork.name for artwork in get_song_artwork(song)
+            },
+        )
+
+    audio = song.audio_references[0]
 
     return {
         "id": song.str_id,
@@ -51,8 +66,11 @@ def to_network_v2(song: Song) -> NetworkSongV2:
         "type": song.type.value,
         "dateReleased": song.date_released.isoformat(),
         "seconds": int(song.duration),
-        "artworks": {artwork.type: artwork.name for artwork in get_song_artwork(song)},
-        "audioType": audio_type,
-        "audioId": audio_id,
+        "artworks": {
+            artwork.type: artwork.name for artwork in get_song_artwork(song)
+        },
+        "playable": song.playable,
+        "audioType": audio.type.value,
+        "audioId": audio.external_id,
         "drmProtected": song.is_copyrighted,
     }

@@ -21,12 +21,7 @@ def to_network_v1(album: Album) -> NetworkAlbumV1:
     )
 
 
-def to_network_v2(album: Album, include_songs: bool = False) -> NetworkAlbumV2:
-    if include_songs:
-        songs = [to_network_v2_song(song) for song in album.songs]
-    else:
-        songs = [str(song.id) for song in album.songs]
-
+def to_network_v2(album: Album) -> NetworkAlbumV2:
     seconds = 0
     for song in album.songs:
         seconds += song.seconds
@@ -39,6 +34,6 @@ def to_network_v2(album: Album, include_songs: bool = False) -> NetworkAlbumV2:
         },
         date=album.date and album.date.isoformat() or None,
         disc=album.disc,
-        songs=songs,
+        songCount=len(album.songs),
         seconds=int(seconds),
     )

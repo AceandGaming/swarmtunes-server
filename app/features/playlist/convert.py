@@ -1,8 +1,10 @@
+from caseconverter import camelcase
+
 from features.artwork import create_path, get_playlist_artwork
 from features.song.convert import to_network_v2 as to_network_v2_song
 
 from .api import NetworkPlaylistV1, NetworkPlaylistV2
-from .playlist import Playlist
+from .playlist import Playlist, PlaylistType
 
 
 def get_singers(playlist: Playlist) -> list[str]:
@@ -27,14 +29,7 @@ def to_network_v1(
     )
 
 
-def to_network_v2(
-    playlist: Playlist, include_songs: bool = False
-) -> NetworkPlaylistV2:
-    if include_songs:
-        songs = [to_network_v2_song(song.song) for song in playlist.songs]
-    else:
-        songs = [str(song.song.id) for song in playlist.songs]
-
+def to_network_v2(playlist: Playlist) -> NetworkPlaylistV2:
     seconds = 0
     for song in playlist.songs:
         seconds += song.song.seconds
@@ -47,7 +42,8 @@ def to_network_v2(
             artwork.type: artwork.name
             for artwork in get_playlist_artwork(playlist)
         },
-        songs=songs,
+        type=camelcase(playlist.type.value),  # pyright: ignore[reportArgumentType]
+        songCount=len(playlist.songs),
         dateCreated=playlist.date_created.isoformat(),
     )
 

@@ -61,6 +61,13 @@ class Song(IDObject):
     def singer_names(self):
         return [a.name for a in self.singers]
 
+    @property
+    def playable(self):
+        return (
+            self.copyright_status == SongCopyrightStatus.ACTIVE
+            and len(self.audio_references) > 0
+        )
+
     title: Mapped[str]
     title_original: Mapped[Optional[str]]
 

@@ -1,5 +1,7 @@
-from typing import TypedDict, Optional, Literal
+from typing import Literal, Optional, TypedDict
+
 from features.artist.api import NetworkArtistV2
+
 
 class NetworkSongV1(TypedDict):
     id: str
@@ -8,10 +10,20 @@ class NetworkSongV1(TypedDict):
     artists: list[str]
     singers: list[str]
     cover: Optional[str]
-    coverArt: Optional[str] # same as above
+    coverArt: Optional[str]  # same as above
     date: str
     isOriginal: bool
     youtubeId: Optional[str]
+
+
+class NetworkSongV2Lite(TypedDict):
+    id: str
+    title: str
+
+    artists: list[NetworkArtistV2]
+    singers: list[NetworkArtistV2]
+    artworks: dict[str, str]
+
 
 class NetworkSongV2(TypedDict):
     id: str
@@ -24,8 +36,10 @@ class NetworkSongV2(TypedDict):
 
     dateReleased: str
     seconds: int
+
     artworks: dict[str, str]
 
-    audioType: Literal["audio", "youtube"]
+    playable: bool
+    audioType: str
     audioId: str
     drmProtected: bool
