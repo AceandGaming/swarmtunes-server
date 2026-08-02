@@ -31,7 +31,7 @@ async def discover(db=Depends(get_db)):
     )
     mashups = song_service.query().filter(Song.type == SongType.MASHUP).all()
 
-    CachedJSONResponse(
+    return CachedJSONResponse(
         {
             "setlists": [to_network_v2_album(album) for album in setlists],
             "discs": [to_network_v2_album(album) for album in discs],

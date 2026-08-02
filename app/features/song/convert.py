@@ -27,6 +27,7 @@ def to_network_v1(song: Song) -> NetworkSongV1:
         "date": song.date_released.strftime("%Y-%m-%d"),
         "isOriginal": song.type == "original",
         "youtubeId": ytId,
+        "seconds": int(song.seconds),
     }
 
 

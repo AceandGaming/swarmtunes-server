@@ -1,6 +1,6 @@
 [project]
 name = "swarmtunes-server"
-version = "2.1.1"
+version = "2.1.2"
 description = "Swarmtunes Server."
 readme = "README"
 requires-python = ">=3.12, <3.13"

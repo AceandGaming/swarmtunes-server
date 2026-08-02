@@ -14,6 +14,7 @@ class NetworkSongV1(TypedDict):
     date: str
     isOriginal: bool
     youtubeId: Optional[str]
+    seconds: int
 
 
 class NetworkSongV2Lite(TypedDict):
