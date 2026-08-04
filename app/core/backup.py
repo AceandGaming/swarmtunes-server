@@ -129,11 +129,17 @@ def get_backups() -> list[tuple[Path, BackupMetadata]]:
         if not file.is_dir():
             continue
 
-        with open(file / "metadata.json", "r") as f:
-            data = json.load(f)
-            data["created_at"] = datetime.fromisoformat(data["created_at"])
-            data["completed_at"] = datetime.fromisoformat(data["completed_at"])
-            backups.append((file, BackupMetadata(**data)))
+        try:
+            with open(file / "metadata.json", "r") as f:
+                data = json.load(f)
+                data["created_at"] = datetime.fromisoformat(data["created_at"])
+                data["completed_at"] = datetime.fromisoformat(
+                    data["completed_at"]
+                )
+                backups.append((file, BackupMetadata(**data)))
+        except FileNotFoundError:
+            log.error(f"Metadata file not found for {file}")
+            pass
 
     return backups
 

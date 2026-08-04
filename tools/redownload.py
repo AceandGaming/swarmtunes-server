@@ -48,7 +48,7 @@ def download(db: Session):
         log.error(f"Failed to correct {len(failed)} files!")
         exit(1)
 
-    log.info(f"Replacing {len(to_download)} references...")
+    log.info(f"Replacing {len(to_download)} files...")
     for ref, file in to_download:
         path = CORRECT / file.id
         try:
@@ -67,18 +67,18 @@ def main():
     setup_logging()
     create_db()
 
-    # print("Creating backup of current database...")
-    # try:
-    #     create_backup(True, "Pre-Redownload Backup")
-    # except Exception:
-    #     print("Failed to create backup!")
-    #     exit(0)
+    print("Creating backup of current database...")
+    try:
+        create_backup(True, "Pre-Redownload Backup")
+    except Exception:
+        print("Failed to create backup!")
+        exit(0)
 
-    # try:
-    with db_session() as db:
-        download(db)
-    # finally:
-    #     sync_cleanup()
+    try:
+        with db_session() as db:
+            download(db)
+    finally:
+        sync_cleanup()
 
 
 if __name__ == "__main__":
