@@ -70,28 +70,47 @@ except Exception:
     if not questionary.confirm("Continue Anyway?", default=False).ask():
         exit(0)
 
-print("Are you sure? This will override the curent database!")
+if metadata.type == "full":
+    choices = [
+        questionary.Choice(title="All", value=["db", "persistent"]),
+        questionary.Choice(title="Database", value=["db"]),
+        questionary.Choice(title="Persistent Data", value=["persistent"]),
+    ]
+
+else:
+    choices = [
+        questionary.Choice(title="All", value=["db"]),
+    ]
+
+to_copy = questionary.select(
+    "Select files to copy. Note: Selecting anything other then 'All' may cause invaild references.",
+    choices=choices,
+    default="database",
+).ask()
+
+print("Are you sure? This will override the curent data!")
 if questionary.text("Type RESTORE to continue:").ask() != "RESTORE":
     exit(0)
+
+print("Coping files from backup...")
 
 DATABASE = paths.DATA / "database.db"
 DATABASE_OLD = paths.DATA / "database.db.old"
 PERSISTENT = paths.PERSISTENT_DATA
 PERSISTENT_OLD = paths.DATA / "persistent.old"
 
-print("Coping files from backup...")
+if "db" in to_copy:
+    if DATABASE.exists():
+        DATABASE.rename(DATABASE_OLD)
+    try:
+        shutil.copyfile(path / "database.db", DATABASE)
+    except:
+        DATABASE.unlink(missing_ok=True)
+        if DATABASE_OLD.exists():
+            DATABASE_OLD.rename(DATABASE)
+        raise
 
-if DATABASE.exists():
-    DATABASE.rename(DATABASE_OLD)
-try:
-    shutil.copyfile(path / "database.db", DATABASE)
-except:
-    DATABASE.unlink(missing_ok=True)
-    if DATABASE_OLD.exists():
-        DATABASE_OLD.rename(DATABASE)
-    raise
-
-if metadata.type == "full":
+if "persistent" in to_copy:
     if PERSISTENT.exists():
         PERSISTENT.rename(PERSISTENT_OLD)
 

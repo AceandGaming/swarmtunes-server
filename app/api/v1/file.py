@@ -62,7 +62,7 @@ def get_file(id: UUID, export: bool = Query(False), db=Depends(get_db)):
 
     return FileResponse(
         path,
-        media_type="audio/ogg",
+        media_type="audio/mp4",
         headers={
             "Accept-Ranges": "bytes",
             "Cache-Control": "public, max-age=86400",

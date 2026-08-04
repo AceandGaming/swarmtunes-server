@@ -76,8 +76,9 @@ def correct_mp3(file: DriveFile):
     if file_out.exists():
         raise FileExistsError(f"File {file_out} already exists.")
 
-    correct_and_convert_mp3(file_in, file_out)
+    seconds = correct_and_convert_mp3(file_in, file_out)
     log.debug(f"Corrected and converted {file.filename}.")
+    return seconds
 
 
 def correct_many(files: list[DriveFile]):
@@ -87,11 +88,13 @@ def correct_many(files: list[DriveFile]):
         log.exception("Error occurred while correcting MP3", exc_info=e)
 
     with ctx.Pool(max(1, cpu_count() - 1)) as pool:
-        pool.map_async(
+        r = pool.map_async(
             correct_mp3,
             [file for file in files],
             error_callback=handle_error,
         )
+        durations = r.get()
+
         pool.close()
         pool.join()
 
@@ -100,7 +103,7 @@ def correct_many(files: list[DriveFile]):
         if not (CORRECT / file.id).exists():
             failed.append(file)
 
-    return failed
+    return failed, {file.id: durations[i] for i, file in enumerate(files)}
 
 
 def sync(db: Session):
@@ -170,7 +173,7 @@ def sync(db: Session):
             ref.external_id = file.id
 
     log.info("Correcting MP3s...")
-    failed = correct_many([file for _, file in to_create])
+    failed, durations = correct_many([file for _, file in to_create])
 
     if failed:
         raise Exception(
@@ -183,7 +186,7 @@ def sync(db: Session):
             audio_hash=metadata.hash,
             type=AudioReferenceType.GOOGLE_DRIVE,
         )
-        service.create_from_metadata(metadata, [ref])
+        service.create_from_metadata(metadata, [ref], durations[file.id])
 
         path = CORRECT / file.id
         try:

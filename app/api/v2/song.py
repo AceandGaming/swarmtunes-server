@@ -101,7 +101,7 @@ def get_song_audio(id: UUID, db=Depends(get_db)):
 
     return FileResponse(
         path,
-        media_type="audio/ogg",
+        media_type="audio/mp4",
         headers={
             "Accept-Ranges": "bytes",
             "Cache-Control": f"public, max-age={timedelta(weeks=5).total_seconds()}, immutable",

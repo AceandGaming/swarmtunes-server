@@ -23,4 +23,3 @@ class Metadata:
     date: datetime
     disc: Optional[int]
     hash: Optional[str]  # audio hash
-    seconds: float

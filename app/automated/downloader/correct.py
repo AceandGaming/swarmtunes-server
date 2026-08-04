@@ -18,8 +18,11 @@ def delete_id3_tags(file: Path):
 
 def correct_and_convert_mp3(inputFile: Path, output: Path):
     """Normalizes and converts an MP3 file to OGG Vorbis format."""
-    if output.exists() or not inputFile.exists():
-        return
+    if not inputFile.exists():
+        raise FileNotFoundError(f"File {inputFile} does not exist.")
+    if output.exists():
+        raise FileExistsError(f"File {output} already exists.")
+
     delete_id3_tags(inputFile)
 
     song = AudioSegment.from_file(inputFile, format="mp3")
@@ -47,6 +50,18 @@ def correct_and_convert_mp3(inputFile: Path, output: Path):
 
     samples = np.clip(samples, -1.0, 0.9995)  # prevents clipping
 
-    song = song._spawn((samples * (1 << 15)).astype(np.int16).tobytes())
+    song = AudioSegment(
+        (samples * 32767).astype(np.int16).tobytes(),
+        frame_rate=song.frame_rate,
+        sample_width=2,
+        channels=song.channels,
+    )
 
-    song.export(output, format="ogg", codec="libvorbis", bitrate="128k")
+    song.export(
+        output,
+        format="mp4",
+        codec="aac",
+        bitrate="128k",
+        parameters=["-movflags", "+faststart"],
+    )
+    return len(song) / 1000

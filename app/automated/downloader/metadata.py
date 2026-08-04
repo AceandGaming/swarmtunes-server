@@ -83,7 +83,6 @@ def create_from_id3(file):
         date=date,
         disc=int(file["TPOS"].text[0]),
         hash=None,
-        seconds=file.info.length,
     )
     log.debug(f"Created Metadata from ID3: {data}")
     return data
@@ -113,7 +112,6 @@ def create_from_json(file: dict):
         date=datetime.fromisoformat(file["Date"]),
         disc=file["Discnumber"],
         hash=file["xxHash"],
-        seconds=0,
     )
     log.debug(f"Created Metadata from JSON: {data}")
     return data
@@ -124,7 +122,6 @@ def load_file_metadata(path: Path) -> Metadata | None:
     if "COMM::ved" in file:
         try:
             meta = create_from_json(json.loads(file["COMM::ved"].text[0]))
-            meta.seconds = file.info.length
             return meta
         except Exception as e:
             log.exception("Error parsing json metadata", exc_info=e)
