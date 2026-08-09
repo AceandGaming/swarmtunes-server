@@ -1,5 +1,6 @@
-from typing import TypedDict, Optional
+from typing import Optional, TypedDict
+
 
 class NetworkArtistV2(TypedDict):
     name: str
-    originalName: Optional[str]
+    nameOriginal: Optional[str]

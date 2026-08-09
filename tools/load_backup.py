@@ -62,17 +62,6 @@ for key, value in asdict(metadata).items():
 if not questionary.confirm("Continue?").ask():
     exit(0)
 
-if questionary.confirm(
-    "Would you like to create a new backup before restoring?", default=True
-).ask():
-    print("Creating backup of current database...")
-    try:
-        create_backup(True, "Pre-Restore Backup")
-    except Exception:
-        print("Failed to create backup!")
-        if not questionary.confirm("Continue Anyway?", default=False).ask():
-            exit(0)
-
 if metadata.type == "full":
     choices = [
         questionary.Choice(title="All", value=["db", "persistent"]),
@@ -88,6 +77,19 @@ to_copy = questionary.select(
     "Select files to copy. Note: Selecting anything other then 'All' may cause invaild references.",
     choices=choices,
 ).ask()
+
+if questionary.confirm(
+    "Would you like to create a new backup before restoring?",
+    default=True,
+    auto_enter=False,
+).ask():
+    print("Creating backup of current database...")
+    try:
+        create_backup(True, "Pre-Restore Backup")
+    except Exception:
+        print("Failed to create backup!")
+        if not questionary.confirm("Continue Anyway?", default=False).ask():
+            exit(0)
 
 print("Are you sure? This will override the curent data!")
 if questionary.text("Type RESTORE to continue:").ask() != "RESTORE":
