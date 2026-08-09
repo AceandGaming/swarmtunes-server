@@ -25,6 +25,8 @@ class NetworkSongV2Lite(TypedDict):
     singers: list[NetworkArtistV2]
     artworks: dict[str, str]
 
+    dateReleased: str
+
 
 class NetworkSongV2(TypedDict):
     id: str

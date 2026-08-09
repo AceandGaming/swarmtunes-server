@@ -22,7 +22,7 @@ async def search(
     q: str | None = Query(None), limit: int = Query(10), db=Depends(get_db)
 ):
     if not q:
-        return
+        return []
 
     service = create_song_service(db)
     songs = service.get_all()
@@ -49,6 +49,6 @@ async def get_cover(name: str):
         exported,
         media_type="image/webp",
         headers={
-            "Cache-Control": f"public, max-age={timedelta(days=7)}, immutable"
+            "Cache-Control": f"public, max-age={timedelta(days=7).total_seconds()}, immutable"
         },
     )

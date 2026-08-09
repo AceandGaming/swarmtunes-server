@@ -54,6 +54,7 @@ def to_network_v2(
             artworks={
                 artwork.type: artwork.name for artwork in get_song_artwork(song)
             },
+            dateReleased=song.date_released.isoformat(),
         )
 
     audio = song.audio_references[0]

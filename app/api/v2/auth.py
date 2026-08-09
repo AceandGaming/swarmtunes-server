@@ -91,7 +91,7 @@ def login(
     return to_network_v2(identity.user)
 
 
-@auth_router.post("/users")
+@auth_router.post("/signup")
 def signup(
     req: LoginRequest,
     response: Response,

@@ -162,7 +162,7 @@ def add_songs(
         playlist.add_song(song)
 
 
-@playlist_router.delete("/{id}/songs")
+@playlist_router.post("/{id}/songs/remove")
 def remove_songs(
     id: UUID,
     req: PlaylistSongUpdateRequest,
@@ -181,6 +181,28 @@ def remove_songs(
 
     for song in songs:
         playlist.remove_song(song)
+
+
+@playlist_router.delete("/{id}/songs/{song_id}")
+def remove_song(
+    id: UUID,
+    song_id: UUID,
+    token: Token = Depends(auth_required),
+    db=Depends(get_db),
+):
+    service = create_playlist_service(db)
+    playlist = service.get_in_user(token.user, id)
+    if not playlist:
+        raise APIException(
+            "PLAYLIST_NOT_FOUND", "Playlist not found", status_code=404
+        )
+
+    songs_service = create_song_service(db)
+    song = songs_service.get(song_id)
+    if not song:
+        raise APIException("SONG_NOT_FOUND", "Song not found", status_code=404)
+
+    playlist.remove_song(song)
 
 
 class PatchPlaylistRequest(BaseModel):
