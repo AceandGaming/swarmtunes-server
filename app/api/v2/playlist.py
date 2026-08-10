@@ -116,7 +116,6 @@ def delete_playlist(
 @playlist_router.get("/{id}/songs")
 def get_songs(
     id: UUID,
-    lite: bool = False,
     token: Token = Depends(auth_required),
     db=Depends(get_db),
 ):
@@ -130,7 +129,7 @@ def get_songs(
 
     return [
         {
-            "song": to_network_v2_song(item.song, lite=lite),
+            "songId": item.song.id,
             "dateAdded": str(item.date_added),
         }
         for item in playlist.songs

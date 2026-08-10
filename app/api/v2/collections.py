@@ -41,7 +41,7 @@ def get_album(id: UUID, db=Depends(get_db)):
 
 
 @collections_router.get("/{id}/songs")
-def get_songs(id: UUID, lite: bool = False, db=Depends(get_db)):
+def get_songs(id: UUID, db=Depends(get_db)):
     service = create_album_service(db)
 
     album = service.get(id)
@@ -50,4 +50,7 @@ def get_songs(id: UUID, lite: bool = False, db=Depends(get_db)):
             "ALBUM_NOT_FOUND", "Album not found", status_code=404
         )
 
-    return [to_network_v2_song(song, lite) for song in album.songs]
+    return CachedJSONResponse(
+        [song.id for song in album.songs],
+        cache_for=timedelta(days=1),
+    )
