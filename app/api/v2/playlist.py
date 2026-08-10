@@ -129,7 +129,7 @@ def get_songs(
 
     return [
         {
-            "songId": item.song.id,
+            "songId": str(item.song.id),
             "dateAdded": str(item.date_added),
         }
         for item in playlist.songs

@@ -51,6 +51,6 @@ def get_songs(id: UUID, db=Depends(get_db)):
         )
 
     return CachedJSONResponse(
-        [song.id for song in album.songs],
+        [str(song.id) for song in album.songs],
         cache_for=timedelta(days=1),
     )
