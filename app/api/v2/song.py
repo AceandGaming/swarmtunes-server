@@ -34,7 +34,6 @@ def get_songs(
     type: SongType | None = Query(None),
     offset: int = 0,
     limit: int = 50,
-    lite: bool = False,
     db=Depends(get_db),
 ):
     if limit > 100:
@@ -55,7 +54,7 @@ def get_songs(
     songs = query.all()
 
     return CachedJSONResponse(
-        [to_network_v2(song, lite) for song in songs],
+        [to_network_v2(song) for song in songs],
         cache_for=timedelta(hours=1),
     )
 

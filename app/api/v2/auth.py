@@ -138,9 +138,11 @@ def signup(
     return to_network_v2(identity.user)
 
 
-@auth_router.post("/logout")
+@auth_router.post("/logout", status_code=204)
 def logout(
-    response: Response, token=Depends(auth_required), db=Depends(get_db)
+    response: Response,
+    token=Depends(auth_required),
+    db=Depends(get_db),
 ):
     db.delete(token)
 
@@ -150,8 +152,6 @@ def logout(
         secure=True,
         samesite="none",
     )
-
-    return response
 
 
 @auth_router.get("/me")

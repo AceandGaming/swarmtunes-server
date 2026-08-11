@@ -28,9 +28,7 @@ async def search(
     service = create_song_service(db)
     songs = service.get_all()
 
-    return [
-        to_network_v2(song, True) for song in search_songs(songs, q)[:limit]
-    ]
+    return [to_network_v2(song) for song in search_songs(songs, q)[:limit]]
 
 
 @misc_router.get("/covers/{name:path}")

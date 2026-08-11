@@ -17,17 +17,6 @@ class NetworkSongV1(TypedDict):
     seconds: int
 
 
-class NetworkSongV2Lite(TypedDict):
-    id: str
-    title: str
-
-    artists: list[NetworkArtistV2]
-    singers: list[NetworkArtistV2]
-    artworks: dict[str, str]
-
-    dateReleased: str
-
-
 class NetworkSongV2(TypedDict):
     id: str
     title: str
