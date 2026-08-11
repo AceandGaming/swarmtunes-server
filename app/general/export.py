@@ -12,13 +12,15 @@ def export_artwork(path: Path, scale: int = 512):
     if not path.exists():
         return None
 
-    name = f"{adler32(str(path).encode())}.webp"
+    name = f"{adler32(str(path).encode())}-{scale}.webp"
     cache = ART_CACHE / name
 
     if cache.exists():
         return cache
 
-    with tempfile.NamedTemporaryFile(dir=TEMP, suffix=".tmp", delete=False) as tmp_file:
+    with tempfile.NamedTemporaryFile(
+        dir=TEMP, suffix=".tmp", delete=False
+    ) as tmp_file:
         temp_path = tmp_file.name
 
     try:

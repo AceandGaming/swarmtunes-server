@@ -25,7 +25,7 @@ class SongAudioReference(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     date_created: Mapped[UTCDateTime] = mapped_column(
-        UTCDateTime, default=datetime.now(timezone.utc)
+        UTCDateTime, default=lambda: datetime.now(timezone.utc)
     )
 
     song_id: Mapped[UUID] = mapped_column(

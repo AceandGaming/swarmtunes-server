@@ -24,7 +24,7 @@ class Album(IDObject):
     title: Mapped[str]
     custom_artwork: Mapped[Optional[str]]
     last_updated: Mapped[datetime] = mapped_column(
-        UTCDateTime(), default=datetime.now(timezone.utc)
+        UTCDateTime(), default=lambda: datetime.now(timezone.utc)
     )
 
     type: Mapped[AlbumType] = mapped_column(StringValueEnum(AlbumType))

@@ -60,6 +60,18 @@ def get_songs(
     )
 
 
+class SongBatchRequest(BaseModel):
+    ids: list[UUID]
+
+
+@song_router.post("/batch")
+def get_batched_songs(request: SongBatchRequest, db=Depends(get_db)):
+    serivce = create_song_service(db)
+    songs = serivce.get_many(request.ids)
+
+    return [to_network_v2(song) for song in songs]  # No cache because it's POST
+
+
 @song_router.get("/{id}")
 def get_song(id: UUID, db=Depends(get_db)):
     service = create_song_service(db)

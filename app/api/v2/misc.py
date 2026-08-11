@@ -1,4 +1,5 @@
 from datetime import timedelta
+from typing import Literal
 
 from fastapi import APIRouter, Depends, Query
 from fastapi.responses import FileResponse
@@ -33,14 +34,22 @@ async def search(
 
 
 @misc_router.get("/covers/{name:path}")
-async def get_cover(name: str):
+async def get_cover(
+    name: str, size: Literal["small", "medium", "large"] = Query("medium")
+):
+    size_scale = {
+        "small": 64,
+        "medium": 256,
+        "large": 1024,
+    }.get(size, 256)
+
     path = paths.ARTWORK / f"{name}.png"
     if not path.is_relative_to(paths.ARTWORK):
         raise APIException(
             "COVER_NOT_FOUND", "Cover not found", status_code=404
         )
 
-    exported = export_artwork(path)
+    exported = export_artwork(path, size_scale)
     if exported is None:
         raise APIException(
             "COVER_NOT_FOUND", "Cover not found", status_code=404

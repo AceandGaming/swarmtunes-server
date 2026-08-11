@@ -57,7 +57,7 @@ class PlaylistSong(Base):
         primary_key=True,
     )
     date_added = Column(
-        UTCDateTime, nullable=False, default=datetime.now(timezone.utc)
+        UTCDateTime, nullable=False, default=lambda: datetime.now(timezone.utc)
     )
 
     song = relationship("Song", back_populates="playlists")
