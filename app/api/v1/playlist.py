@@ -61,9 +61,13 @@ def new_playlist(
     db=Depends(get_db),
 ):
     song_service = create_song_service(db)
+    playlist_service = create_playlist_service(db)
     config = get_config()
 
-    if len(token.user.playlists) > config.user_max_playlists:
+    if (
+        len(playlist_service.get_of_user(token.user))
+        > config.user_max_playlists
+    ):
         raise HTTPException(400, detail="User has reached playlist limit")
 
     name = validate_playlist_name(req.name)
