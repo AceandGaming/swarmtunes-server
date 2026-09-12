@@ -21,7 +21,7 @@ def validate_username(username: str):
     username = re.sub(r"\s+", " ", username)
 
     if len(username) > 32:
-        raise APIException("USERNAME_TOO_SHORT", "Username is too long")
+        raise APIException("USERNAME_TOO_LONG", "Username is too long")
     elif len(username) < 3:
         raise APIException("USERNAME_TOO_SHORT", "Username is too short")
     if not re.match(r"^[a-z0-9_-]+$", username):
