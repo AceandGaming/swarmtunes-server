@@ -12,7 +12,7 @@ def load_emotes():
     twitchEmotes = []
 
     swarmFMResponse = requests.get(
-        "https://7tv.io/v3/emote-sets/01K1H87ZZVE92Y3Z37H3ES6BK8"
+        "https://7tv.io/v3/channelId/01K1H87ZZVE92Y3Z37H3ES6BK8"
     )  # swarmfm
     if swarmFMResponse.status_code == 200:
         twitchEmotes.extend(swarmFMResponse.json()["emotes"])

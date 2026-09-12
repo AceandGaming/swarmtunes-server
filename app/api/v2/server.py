@@ -4,6 +4,7 @@ from .auth import auth_router
 from .collections import collections_router
 from .misc import misc_router
 from .pages import page_router
+from .player import player_router
 from .playlist import playlist_router
 from .song import song_router
 
@@ -15,3 +16,4 @@ v2_router.include_router(playlist_router, prefix="/playlists")
 v2_router.include_router(auth_router)
 v2_router.include_router(misc_router)
 v2_router.include_router(page_router)
+v2_router.include_router(player_router, prefix="/player")

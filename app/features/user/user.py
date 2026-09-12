@@ -8,6 +8,7 @@ from database.types import StringValueEnum
 
 if TYPE_CHECKING:
     from features.identity.identity import Identity
+    from features.playback_state.state import PlaybackState
     from features.playlist.playlist import Playlist
     from features.session.token import Token
 
@@ -36,4 +37,7 @@ class User(IDObject):
     )
     identities: Mapped[list["Identity"]] = relationship(
         "Identity", back_populates="user", cascade="all, delete-orphan"
+    )
+    playback_state: Mapped["PlaybackState | None"] = relationship(
+        "PlaybackState", back_populates="user"
     )
