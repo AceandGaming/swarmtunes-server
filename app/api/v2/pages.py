@@ -53,7 +53,7 @@ async def discover_ids(db=Depends(get_db)):
         for (album_id,) in (
             album_service.query()
             .filter(Album.type == AlbumType.DATE_SETLIST)
-            .order_by(Album.date)
+            .order_by(Album.date.desc())
             .with_entities(Album.id)
             .all()
         )
@@ -63,7 +63,7 @@ async def discover_ids(db=Depends(get_db)):
         for (album_id,) in (
             album_service.query()
             .filter(Album.type == AlbumType.DISC_COLLECTION)
-            .order_by(Album.disc)
+            .order_by(Album.disc.desc())
             .with_entities(Album.id)
             .all()
         )
@@ -73,7 +73,7 @@ async def discover_ids(db=Depends(get_db)):
         for (song_id,) in (
             song_service.query()
             .filter(Song.type == SongType.ORIGINAL)
-            .order_by(Song.date_released)
+            .order_by(Song.date_released.desc())
             .with_entities(Song.id)
             .all()
         )
@@ -83,7 +83,7 @@ async def discover_ids(db=Depends(get_db)):
         for (song_id,) in (
             song_service.query()
             .filter(Song.type == SongType.MASHUP)
-            .order_by(Song.date_released)
+            .order_by(Song.date_released.desc())
             .with_entities(Song.id)
             .all()
         )
