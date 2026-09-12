@@ -1,4 +1,5 @@
 from datetime import timedelta
+from uuid import UUID
 
 from fastapi import APIRouter, Depends
 
@@ -47,7 +48,7 @@ async def discover_ids(db=Depends(get_db)):
     album_service = create_album_service(db)
     song_service = create_song_service(db)
 
-    setlists: list[str] = [
+    setlists: list[UUID] = [
         album_id
         for (album_id,) in (
             album_service.query()
@@ -57,7 +58,7 @@ async def discover_ids(db=Depends(get_db)):
             .all()
         )
     ]
-    discs: list[str] = [
+    discs: list[UUID] = [
         album_id
         for (album_id,) in (
             album_service.query()
@@ -67,7 +68,7 @@ async def discover_ids(db=Depends(get_db)):
             .all()
         )
     ]
-    originals: list[str] = [
+    originals: list[UUID] = [
         song_id
         for (song_id,) in (
             song_service.query()
@@ -77,7 +78,7 @@ async def discover_ids(db=Depends(get_db)):
             .all()
         )
     ]
-    mashups: list[str] = [
+    mashups: list[UUID] = [
         song_id
         for (song_id,) in (
             song_service.query()
@@ -90,10 +91,10 @@ async def discover_ids(db=Depends(get_db)):
 
     return CachedJSONResponse(
         {
-            "setlists": setlists,
-            "discs": discs,
-            "originals": originals,
-            "mashups": mashups,
+            "setlists": [str(id) for id in setlists],
+            "discs": [str(id) for id in discs],
+            "originals": [str(id) for id in originals],
+            "mashups": [str(id) for id in mashups],
         },
         cache_for=timedelta(minutes=10),
     )
