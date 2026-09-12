@@ -14,7 +14,6 @@ from automated.cleanup import clear_temp
 from core.log import setup_logging
 from core.scheduler import start_automated_tasks
 from database.database import create as create_db
-from external.emotes import load_emotes
 
 
 @asynccontextmanager
@@ -22,7 +21,6 @@ async def lifespan(app: FastAPI):
     clear_temp()
     setup_logging()
     create_db()
-    load_emotes()
 
     scheduler = start_automated_tasks()
     scheduler.start()

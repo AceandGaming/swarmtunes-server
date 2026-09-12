@@ -40,3 +40,60 @@ async def discover(db=Depends(get_db)):
         },
         cache_for=timedelta(days=1),
     )
+
+
+@page_router.get("/discover-ids")
+async def discover_ids(db=Depends(get_db)):
+    album_service = create_album_service(db)
+    song_service = create_song_service(db)
+
+    setlists: list[str] = [
+        album_id
+        for (album_id,) in (
+            album_service.query()
+            .filter(Album.type == AlbumType.DATE_SETLIST)
+            .order_by(Album.date)
+            .with_entities(Album.id)
+            .all()
+        )
+    ]
+    discs: list[str] = [
+        album_id
+        for (album_id,) in (
+            album_service.query()
+            .filter(Album.type == AlbumType.DISC_COLLECTION)
+            .order_by(Album.disc)
+            .with_entities(Album.id)
+            .all()
+        )
+    ]
+    originals: list[str] = [
+        song_id
+        for (song_id,) in (
+            song_service.query()
+            .filter(Song.type == SongType.ORIGINAL)
+            .order_by(Song.date_released)
+            .with_entities(Song.id)
+            .all()
+        )
+    ]
+    mashups: list[str] = [
+        song_id
+        for (song_id,) in (
+            song_service.query()
+            .filter(Song.type == SongType.MASHUP)
+            .order_by(Song.date_released)
+            .with_entities(Song.id)
+            .all()
+        )
+    ]
+
+    return CachedJSONResponse(
+        {
+            "setlists": setlists,
+            "discs": discs,
+            "originals": originals,
+            "mashups": mashups,
+        },
+        cache_for=timedelta(minutes=10),
+    )

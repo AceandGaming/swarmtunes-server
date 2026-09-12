@@ -23,11 +23,11 @@ class CachedJSONResponse(JSONResponse):
     ):
         headers = kwargs.pop("headers", {})
 
-        seconds = int(cache_for.total_seconds())
+        seconds = cache_for.total_seconds()
 
         visibility = "public" if public else "private"
         headers["Cache-Control"] = (
-            f"{visibility}, max-age={seconds}, stale-while-revalidate={seconds / 10}"
+            f"{visibility}, max-age={int(seconds)}, stale-while-revalidate={int(seconds / 10)}"
         )
         if imutable:
             headers["Cache-Control"] += ", immutable"
