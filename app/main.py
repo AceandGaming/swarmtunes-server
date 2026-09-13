@@ -52,7 +52,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://swarmtunes.com"],
+    allow_origins=["https://swarmtunes.com", "tauri://localhost"],
     allow_origin_regex=r"^https://[a-zA-Z0-9-]+\.swarmtunes-client\.pages\.dev$",  # Cloudflare Pages
     allow_credentials=True,
     allow_methods=["*"],
