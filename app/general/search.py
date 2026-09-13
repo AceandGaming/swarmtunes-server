@@ -8,6 +8,7 @@ from features.song import Song
 class SearchObject:
     id: Any
     value: str
+    bias: float = 0
 
 
 def normalise(text: str):
@@ -45,17 +46,25 @@ def search(objects: list[SearchObject], query: str) -> list[SearchObject]:
     if len(query) == 0:
         return objects
 
-    results = []
+    results: list[tuple[float, SearchObject]] = []
     for obj in objects:
         dist = get_distance(obj.value, query)
         sizediff = abs(len(query) - len(obj.value))
 
-        total = dist * 1 + sizediff * 0.1
+        total = dist * 1 + sizediff * 0.1 - obj.bias
         results.append((total, obj))
 
-    results.sort(key=lambda a: a[0])
+    results.sort(key=lambda x: x[0])
 
-    return [result[1] for result in results]
+    seen: set[Any] = set()
+    output: list[SearchObject] = []
+
+    for total, obj in results:
+        if obj.id not in seen:
+            seen.add(obj.id)
+            output.append(obj)
+
+    return output
 
 
 def search_songs(songs: list[Song], query: str) -> list[Song]:
@@ -63,6 +72,11 @@ def search_songs(songs: list[Song], query: str) -> list[Song]:
     lookup = {}
     for song in songs:
         objects.append(SearchObject(song.id, normalise(song.title)))
+        for artist in song.artists:
+            objects.append(
+                SearchObject(song.id, normalise(artist.name), bias=-0.5)
+            )
+
         lookup[song.id] = song
 
     matches = search(objects, query)
