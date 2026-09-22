@@ -152,8 +152,9 @@ def create_metadata(
             date=datetime.fromisoformat(item["snippet"]["publishedAt"]),
             disc=None,
             hash=None,
-            seconds=isodate.parse_duration(
-                item["contentDetails"]["duration"]
-            ).total_seconds(),
         ),
     )
+
+
+def get_duration(item: dict):
+    return isodate.parse_duration(item["contentDetails"]["duration"])

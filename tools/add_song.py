@@ -13,7 +13,7 @@ sys.path.insert(0, str(project_dir / "app"))
 
 from database.database import create as create_db  # noqa: E402
 from database.dependencies import db_session  # noqa: E402
-from external.youtube import create_metadata, get_video  # noqa: E402
+from external.youtube import create_metadata, get_duration, get_video  # noqa: E402
 from features.metadata import MetaArtist, Metadata, MetadataSource  # noqa: E402
 from features.song import (  # noqa: E402
     AudioReferenceType,
@@ -132,6 +132,10 @@ with db_session() as db:
         external_id=yt_id,
     )
 
-    song_service.create_from_metadata(metadata, [ref])
+    song_service.create_from_metadata(
+        metadata,
+        [ref],
+        get_duration(video).total_seconds(),
+    )
 
 print("Done!")
