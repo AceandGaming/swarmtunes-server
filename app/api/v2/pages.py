@@ -55,7 +55,7 @@ async def discover_ids(db=Depends(get_db)):
             .filter(Album.type == AlbumType.DATE_SETLIST)
             .order_by(Album.date.desc())
             .with_entities(Album.id)
-            .all()
+            .limit(10)
         )
     ]
     discs: list[UUID] = [

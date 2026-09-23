@@ -10,7 +10,21 @@ from features.song import Song, create_song_service
 log = logging.getLogger("automated")
 
 
-def create_setlist_title(date: datetime) -> str:
+def create_setlist_title(date: datetime, songs: list[Song]) -> str:
+    singer_count: dict[frozenset[str], int] = {}
+    for song in songs:
+        singers = frozenset(song.singer_names)
+        if singers in singer_count:
+            singer_count[singers] += 1
+        else:
+            singer_count[singers] = 1
+
+    singers = max(singer_count, key=lambda singers: singer_count[singers])
+    if len(singers) == 1:
+        return list(singers)[0]
+    elif {"Neuro-sama", "Evil Neuro"} == singers:
+        return "Neuro and Evil"
+
     return f"{date.strftime('%-d %B %Y')} Setlist"
 
 
@@ -60,7 +74,7 @@ def update_albums(db: Session):
             if {song.id for song in album.songs} == {song.id for song in songs}:
                 continue
 
-            album.title = create_setlist_title(date)
+            album.title = create_setlist_title(date, songs)
             album.songs = songs
             log.debug(
                 f"Updating album {album.title} with {len(album.songs)} songs."
@@ -68,7 +82,7 @@ def update_albums(db: Session):
         else:
             album = Album(
                 type=AlbumType.DATE_SETLIST,
-                title=create_setlist_title(date),
+                title=create_setlist_title(date, songs),
                 date=date,
                 songs=songs,
             )
