@@ -5,7 +5,7 @@ from uuid import UUID
 from fastapi import Cookie, Depends, HTTPException, Request
 from fastapi.responses import JSONResponse
 
-from database.dependencies import get_db
+from database.dependencies import db_session, get_db
 from features.session import Token
 from features.user import UserRoles
 from general.auth import AuthManager
@@ -75,6 +75,12 @@ def auth_required(sessionToken: str = Cookie(None), db=Depends(get_db)):
         raise HTTPException(401, detail="Unauthorized")
 
     return token
+
+
+def auth_required_no_persist(sessionToken: str = Cookie(None)):
+    """Returns a detached token after closing its database session"""
+    with db_session() as db:
+        return auth_required(sessionToken, db)
 
 
 def get_ip(request: Request):

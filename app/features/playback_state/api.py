@@ -1,4 +1,4 @@
-from typing import Literal, Optional, TypedDict
+from typing import TypedDict
 
 
 class NetworkPlaybackStateV2(TypedDict):

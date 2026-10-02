@@ -23,7 +23,7 @@ class WebsocketStore:
         if id in self.clients:
             del self.clients[id]
 
-    async def broadcast(self, message: Any, exclude=None):
+    async def broadcast(self, message: Any, exclude: WebSocket | None = None):
         return await asyncio.gather(
             *[
                 self.send(client, message)

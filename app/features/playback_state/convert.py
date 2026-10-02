@@ -1,5 +1,3 @@
-from datetime import datetime, timezone
-
 from .api import NetworkPlaybackStateV2
 from .state import PlaybackState
 
