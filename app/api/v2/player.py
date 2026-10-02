@@ -53,7 +53,7 @@ async def player_ws(
 
         return data
 
-    def expect_songs(ids):
+    def expect_songs(ids) -> list[str]:
         if not isinstance(ids, list):
             raise APIException(
                 code="INVAILD_PACKET_PROPERTIES",
@@ -63,14 +63,15 @@ async def player_ws(
 
         song_ids = []
         for song_id in ids:
-            if not isinstance(song_id, UUID):
+            try:
+                UUID(song_id)
+                song_ids.append(song_id)
+            except Exception:
                 raise APIException(
                     code="INVAILD_PACKET_PROPERTIES",
-                    message="Expected list of song ids",
+                    message="List must only contain UUIDs",
                     status_code=400,
                 )
-
-            song_ids.append(song_id)
 
         return song_ids
 
@@ -103,12 +104,6 @@ async def player_ws(
 
                         state.position = time
                         state.updated_at = datetime.now(timezone.utc)
-                    case "shuffle":
-                        active = expect_type(packet["data"]["active"], bool)
-                        song_ids = expect_songs(packet["data"]["queue"])
-
-                        state.queue = song_ids
-                        state.shuffle_active = active
                     case "update":
                         queue = expect_songs(packet["data"]["queue"])
                         songs = expect_songs(packet["data"]["loaded"])
@@ -119,7 +114,18 @@ async def player_ws(
                         state.queue.pop(0)
                     case "updateQueue":
                         queue = expect_songs(packet["data"]["queue"])
+                        loaded = expect_songs(packet["data"]["loaded"])
+
+                        state.loaded_songs = loaded
                         state.queue = queue
+
+                        state.position = 0
+                    case "shuffle":
+                        shuffle = expect_type(packet["data"]["active"], bool)
+                        queue = expect_songs(packet["data"]["queue"])
+
+                        state.queue = queue
+                        state.shuffle_active = shuffle
                     case _:
                         raise APIException(
                             code="INVAILD_PACKET",
@@ -131,7 +137,7 @@ async def player_ws(
 
             await socket_store.broadcast(
                 WSPacket(type="newState", data=data),
-                websocket,
+                exclude=socket_id,
             )
     except WebSocketDisconnect:
         pass
@@ -143,7 +149,7 @@ async def player_ws(
                     "code": e.code,
                     "message": e.message,
                     "details": e.details,
-                    "status_code": e.status_code,
+                    "statusCode": e.status_code,
                 },
             )
         )

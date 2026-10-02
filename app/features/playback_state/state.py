@@ -17,14 +17,17 @@ class PlaybackState(Base):
 
     @property
     def current_song(self):
-        return UUID(self.queue[0]) if self.queue else None
+        return self.queue[0] if self.queue else None
 
     @property
     def playing(self):
-        return self.paused_at is None
+        return (self.paused_at is None) and (self.updated_at is not None)
 
     @property
     def current_time(self):
+        if not self.updated_at:
+            return 0
+
         if self.paused_at:
             return (
                 self.paused_at - self.updated_at
@@ -39,7 +42,7 @@ class PlaybackState(Base):
     user: Mapped["User"] = relationship("User", back_populates="playback_state")
 
     position: Mapped[float] = mapped_column(default=0.0)
-    updated_at: Mapped[datetime] = mapped_column(UTCDateTime)
+    updated_at: Mapped[datetime | None] = mapped_column(UTCDateTime)
     paused_at: Mapped[datetime | None] = mapped_column(UTCDateTime)
 
     shuffle_active: Mapped[bool] = mapped_column(default=False)

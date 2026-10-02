@@ -2,11 +2,9 @@ from typing import TypedDict
 
 
 class NetworkPlaybackStateV2(TypedDict):
-    id: str
-
-    current_time: float
+    currentTime: float
     playing: bool
-    shuffle_active: bool
+    shuffleActive: bool
 
     queue: list[str]
-    loaded_songs: list[str]
+    loadedSongs: list[str]
