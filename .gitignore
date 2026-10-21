@@ -1,3 +1,10 @@
+# Data
+/data
+/backups
+
+*.mp3
+*.ogg
+
 # Python
 .venv/
 build/
@@ -19,16 +26,18 @@ Thumbs.db
 *.mp3
 *.ogg
 
-
 # Credentials
 *.pem
 *.key
 /secrets
 /app/test.py
 
+
 # Config
 /config/*
 !/config/*.example
+*.env
+!.env.example
 
 # Logs
 *.log

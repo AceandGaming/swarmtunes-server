@@ -5,17 +5,12 @@ Revises: d967ec0ab7ba
 Create Date: 2026-07-19 14:52:26.550681
 
 """
-
-import sys
-from pathlib import Path
 from typing import Sequence, Union
 
 import sqlalchemy as sa
 
 from alembic import op
 
-project_dir = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(project_dir / "app"))
 
 
 # revision identifiers, used by Alembic.

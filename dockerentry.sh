@@ -6,19 +6,19 @@ set -e
 case "$1" in
   migrate)
     echo "Running db migrations"
-    alembic upgrade head
+    uv run alembic upgrade head
     ;;
   stamp)
-    alembic stamp "$2"
+    uv run alembic stamp "$2"
     ;;
   debug)
     sleep infinity
     ;;
   *)
     echo "Running db migrations"
-    alembic upgrade head
+    uv run alembic upgrade head
 
     echo "Starting server"
-    exec uvicorn app.main:app --host 0.0.0.0 --port 8000
+    exec uv run uvicorn st.main:app --host 0.0.0.0 --port 8000
     ;;
 esac

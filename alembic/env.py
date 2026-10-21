@@ -5,12 +5,8 @@ from pathlib import Path
 from sqlalchemy import engine_from_config, pool
 
 from alembic import context
-
-project_dir = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(project_dir / "app"))
-
-import database.models  # noqa: E402
-from database.database import DATABASE_URL, Base  # noqa: E402
+import st.database.models
+from st.database.database import DATABASE_URL, Base
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

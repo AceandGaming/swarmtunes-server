@@ -5,19 +5,13 @@ Revises:
 Create Date: 2026-07-19 14:51:35.128912
 
 """
-
-import sys
-from pathlib import Path
 from typing import Sequence, Union
 
 import sqlalchemy as sa
 
 from alembic import op
 
-project_dir = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(project_dir / "app"))
-
-import database.types
+import st.database.types
 
 # revision identifiers, used by Alembic.
 revision: str = "d967ec0ab7ba"
@@ -33,17 +27,17 @@ def upgrade() -> None:
         "albums",
         sa.Column("title", sa.String(), nullable=False),
         sa.Column("custom_artwork", sa.String(), nullable=True),
-        sa.Column("last_updated", database.types.UTCDateTime(), nullable=False),
+        sa.Column("last_updated", st.database.types.UTCDateTime(), nullable=False),
         sa.Column(
             "type",
             sa.Enum("setlist", "collection", name="albumtype", native_enum=False),
             nullable=False,
         ),
-        sa.Column("date", database.types.UTCDateTime(), nullable=True),
+        sa.Column("date", st.database.types.UTCDateTime(), nullable=True),
         sa.Column("disc", sa.Integer(), nullable=True),
         sa.Column("id", sa.Uuid(), nullable=False),
-        sa.Column("date_created", database.types.UTCDateTime(), nullable=False),
-        sa.Column("deleted_at", database.types.UTCDateTime(), nullable=True),
+        sa.Column("date_created", st.database.types.UTCDateTime(), nullable=False),
+        sa.Column("deleted_at", st.database.types.UTCDateTime(), nullable=True),
         sa.CheckConstraint(
             "\n                (type = 'collection' AND disc IS NOT NULL) OR\n                (type = 'setlist' AND date IS NOT NULL)\n            ",
             name="ck_albums_vaild_type_data",
@@ -69,7 +63,7 @@ def upgrade() -> None:
             nullable=False,
         ),
         sa.Column("external_id", sa.Uuid(), nullable=False),
-        sa.Column("expires_at", database.types.UTCDateTime(), nullable=True),
+        sa.Column("expires_at", st.database.types.UTCDateTime(), nullable=True),
         sa.PrimaryKeyConstraint("link"),
     )
     op.create_table(
@@ -88,7 +82,7 @@ def upgrade() -> None:
             ),
             nullable=False,
         ),
-        sa.Column("date_released", database.types.UTCDateTime(), nullable=False),
+        sa.Column("date_released", st.database.types.UTCDateTime(), nullable=False),
         sa.Column("disc", sa.Integer(), nullable=True),
         sa.Column("custom_artwork", sa.String(), nullable=True),
         sa.Column("is_copyrighted", sa.Boolean(), nullable=False),
@@ -106,8 +100,8 @@ def upgrade() -> None:
             nullable=False,
         ),
         sa.Column("id", sa.Uuid(), nullable=False),
-        sa.Column("date_created", database.types.UTCDateTime(), nullable=False),
-        sa.Column("deleted_at", database.types.UTCDateTime(), nullable=True),
+        sa.Column("date_created", st.database.types.UTCDateTime(), nullable=False),
+        sa.Column("deleted_at", st.database.types.UTCDateTime(), nullable=True),
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_index(op.f("ix_songs_type"), "songs", ["type"], unique=False)
@@ -121,8 +115,8 @@ def upgrade() -> None:
             nullable=False,
         ),
         sa.Column("id", sa.Uuid(), nullable=False),
-        sa.Column("date_created", database.types.UTCDateTime(), nullable=False),
-        sa.Column("deleted_at", database.types.UTCDateTime(), nullable=True),
+        sa.Column("date_created", st.database.types.UTCDateTime(), nullable=False),
+        sa.Column("deleted_at", st.database.types.UTCDateTime(), nullable=True),
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("email"),
     )
@@ -146,8 +140,8 @@ def upgrade() -> None:
         ),
         sa.Column("provider_id", sa.String(), nullable=False),
         sa.Column("id", sa.Uuid(), nullable=False),
-        sa.Column("date_created", database.types.UTCDateTime(), nullable=False),
-        sa.Column("deleted_at", database.types.UTCDateTime(), nullable=True),
+        sa.Column("date_created", st.database.types.UTCDateTime(), nullable=False),
+        sa.Column("deleted_at", st.database.types.UTCDateTime(), nullable=True),
         sa.ForeignKeyConstraint(["user_id"], ["users.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint(
@@ -165,8 +159,8 @@ def upgrade() -> None:
         ),
         sa.Column("user_id", sa.Uuid(), nullable=True),
         sa.Column("id", sa.Uuid(), nullable=False),
-        sa.Column("date_created", database.types.UTCDateTime(), nullable=False),
-        sa.Column("deleted_at", database.types.UTCDateTime(), nullable=True),
+        sa.Column("date_created", st.database.types.UTCDateTime(), nullable=False),
+        sa.Column("deleted_at", st.database.types.UTCDateTime(), nullable=True),
         sa.ForeignKeyConstraint(["user_id"], ["users.id"], ondelete="SET NULL"),
         sa.PrimaryKeyConstraint("id"),
     )
@@ -184,7 +178,7 @@ def upgrade() -> None:
     op.create_table(
         "song_audio_references",
         sa.Column("id", sa.Integer(), nullable=False),
-        sa.Column("date_created", database.types.UTCDateTime(), nullable=False),
+        sa.Column("date_created", st.database.types.UTCDateTime(), nullable=False),
         sa.Column("song_id", sa.Uuid(), nullable=False),
         sa.Column(
             "type",
@@ -240,7 +234,7 @@ def upgrade() -> None:
         "playlist_songs",
         sa.Column("playlist_id", sa.Uuid(), nullable=False),
         sa.Column("song_id", sa.Uuid(), nullable=False),
-        sa.Column("date_added", database.types.UTCDateTime(), nullable=False),
+        sa.Column("date_added", st.database.types.UTCDateTime(), nullable=False),
         sa.ForeignKeyConstraint(["playlist_id"], ["playlists.id"], ondelete="CASCADE"),
         sa.ForeignKeyConstraint(["song_id"], ["songs.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("playlist_id", "song_id"),
@@ -249,11 +243,11 @@ def upgrade() -> None:
         "tokens",
         sa.Column("user_id", sa.Uuid(), nullable=True),
         sa.Column("identity_id", sa.Uuid(), nullable=True),
-        sa.Column("expires_at", database.types.UTCDateTime(), nullable=False),
+        sa.Column("expires_at", st.database.types.UTCDateTime(), nullable=False),
         sa.Column("secret_hash", sa.String(), nullable=False),
         sa.Column("id", sa.Uuid(), nullable=False),
-        sa.Column("date_created", database.types.UTCDateTime(), nullable=False),
-        sa.Column("deleted_at", database.types.UTCDateTime(), nullable=True),
+        sa.Column("date_created", st.database.types.UTCDateTime(), nullable=False),
+        sa.Column("deleted_at", st.database.types.UTCDateTime(), nullable=True),
         sa.ForeignKeyConstraint(["identity_id"], ["identities.id"], ondelete="CASCADE"),
         sa.ForeignKeyConstraint(["user_id"], ["users.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),

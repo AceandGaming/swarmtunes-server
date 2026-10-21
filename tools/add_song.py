@@ -1,6 +1,5 @@
 """Tool to add songs from YT"""
 
-import sys
 from dataclasses import asdict
 from datetime import datetime
 from pathlib import Path
@@ -8,14 +7,11 @@ from urllib.parse import parse_qs, urlsplit
 
 import questionary
 
-project_dir = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(project_dir / "app"))
-
-from database.database import create as create_db  # noqa: E402
-from database.dependencies import db_session  # noqa: E402
-from external.youtube import create_metadata, get_duration, get_video  # noqa: E402
-from features.metadata import MetaArtist, Metadata, MetadataSource  # noqa: E402
-from features.song import (  # noqa: E402
+from st.database.database import create as create_db  # noqa: E402
+from st.database.dependencies import db_session  # noqa: E402
+from st.external.youtube import create_metadata, get_duration, get_video  # noqa: E402
+from st.features.metadata import MetaArtist, Metadata, MetadataSource  # noqa: E402
+from st.features.song import (  # noqa: E402
     AudioReferenceType,
     SongAudioReference,
     create_song_service,
