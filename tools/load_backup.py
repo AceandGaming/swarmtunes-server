@@ -1,16 +1,12 @@
 import shutil
-import sys
 import tarfile
 from dataclasses import asdict
 from pathlib import Path
 
 import questionary
 
-project_dir = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(project_dir / "app"))
-
-import core.paths as paths  # noqa: E402
-from core.backup import (  # noqa: E402
+import st.core.paths as paths
+from st.core.backup import (
     BackupMetadata,
     create_backup,
     get_backups,
@@ -51,7 +47,10 @@ print("Running integrity checks...")
 if metadata.completed_at is None or metadata.completed_at < metadata.created_at:
     print("Backup incomplete!")
     exit(0)
-if get_hash(path) != metadata.post_hash or metadata.sqlite_integrity_check != "ok":
+if (
+    get_hash(path) != metadata.post_hash
+    or metadata.sqlite_integrity_check != "ok"
+):
     print("Backup corrupted!")
     exit(0)
 

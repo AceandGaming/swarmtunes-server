@@ -1,15 +1,9 @@
-import sys
-from pathlib import Path
-
 import questionary
 
-project_dir = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(project_dir / "app"))
-
-from automated.albums import update_albums  # noqa: E402
-from database.database import create as create_db  # noqa: E402
-from database.dependencies import db_session  # noqa: E402
-from features.album.album import Album  # noqa: E402
+from st.automated.albums import update_albums
+from st.database.database import create as create_db
+from st.database.dependencies import db_session
+from st.features.album.album import Album
 
 create_db()
 

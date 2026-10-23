@@ -1,19 +1,12 @@
-import sys
-from dataclasses import asdict
 from datetime import datetime
-from pathlib import Path
-from urllib.parse import parse_qs, urlsplit
 from uuid import UUID
 
 import questionary
 
-project_dir = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(project_dir / "app"))
-
-from database.database import create as create_db  # noqa: E402
-from database.dependencies import db_session  # noqa: E402
-from features.artist import create_or_get  # noqa: E402
-from features.song import (  # noqa: E402
+from st.database.database import create as create_db  # noqa: E402
+from st.database.dependencies import db_session  # noqa: E402
+from st.features.artist import create_or_get  # noqa: E402
+from st.features.song import (  # noqa: E402
     create_song_service,
 )
 
@@ -33,7 +26,9 @@ with db_session() as db:
 
     song.title = questionary.text("Title (English):", default=song.title).ask()
     song.title_original = (
-        questionary.text("Original title:", default=song.title_original or "").ask()
+        questionary.text(
+            "Original title:", default=song.title_original or ""
+        ).ask()
         or None
     )
     song.date_released = datetime.fromisoformat(
@@ -66,7 +61,9 @@ with db_session() as db:
         i += 1
 
         if i >= len(song.artists):
-            if not questionary.confirm("Add another artist?", default=False).ask():
+            if not questionary.confirm(
+                "Add another artist?", default=False
+            ).ask():
                 break
 
     new_singers = []
@@ -92,7 +89,9 @@ with db_session() as db:
         i += 1
 
         if i >= len(song.singers):
-            if not questionary.confirm("Add another singer?", default=False).ask():
+            if not questionary.confirm(
+                "Add another singer?", default=False
+            ).ask():
                 break
 
     song.artists = new_artists

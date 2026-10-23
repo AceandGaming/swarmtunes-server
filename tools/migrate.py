@@ -2,7 +2,6 @@
 
 import json
 import re
-import sys
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
@@ -11,17 +10,13 @@ from typing import Optional, TypedDict
 
 import questionary
 
-project_dir = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(project_dir / "app"))
-
-
-from database.database import create as create_db  # noqa: E402
-from database.dependencies import db_session  # noqa: E402
-from database.relationships import PlaylistSong  # noqa: E402
-from features.identity import AuthProvider, Identity, LegacyCredentials  # noqa: E402
-from features.playlist import Playlist  # noqa: E402
-from features.song import Song  # noqa: E402
-from features.user import User, UserRoles  # noqa: E402
+from st.database.database import create as create_db
+from st.database.dependencies import db_session
+from st.database.relationships import PlaylistSong
+from st.features.identity import AuthProvider, Identity, LegacyCredentials
+from st.features.playlist import Playlist
+from st.features.song import Song
+from st.features.user import User, UserRoles
 
 
 class UserData(TypedDict):
@@ -71,7 +66,9 @@ def load_user(path: Path):
     data = json.loads(path.read_text())
 
     if "date" in data:
-        data["date"] = datetime.fromisoformat(data["date"]).replace(tzinfo=timezone.utc)
+        data["date"] = datetime.fromisoformat(data["date"]).replace(
+            tzinfo=timezone.utc
+        )
     else:
         data["date"] = datetime.now()
     if "userData" in data:
@@ -83,14 +80,18 @@ def load_user(path: Path):
 def load_playlist(path: Path):
     data = json.loads(path.read_text())
 
-    data["date"] = datetime.fromisoformat(data["date"]).replace(tzinfo=timezone.utc)
+    data["date"] = datetime.fromisoformat(data["date"]).replace(
+        tzinfo=timezone.utc
+    )
     return OldPlaylist(**data)
 
 
 def load_song(path: Path):
     data = json.loads(path.read_text())
 
-    data["date"] = datetime.fromisoformat(data["date"]).replace(tzinfo=timezone.utc)
+    data["date"] = datetime.fromisoformat(data["date"]).replace(
+        tzinfo=timezone.utc
+    )
 
     if "storage" in data:
         data["storage"] = SongExternalStorage(**data["storage"])
@@ -152,7 +153,9 @@ def create_song_lookup(
 ) -> dict[OldSong, Song]:
 
     lookup: dict[OldSong, Song] = load_lookup(new_songs, old_songs)
-    potental_matches: dict[OldSong, list[tuple[Song, float]]] = defaultdict(list)
+    potental_matches: dict[OldSong, list[tuple[Song, float]]] = defaultdict(
+        list
+    )
 
     if len(lookup) >= len(old_songs):
         return lookup
@@ -225,7 +228,9 @@ def create_song_lookup(
 
 def main():
     while True:
-        data_path = Path(input("Please enter the path to the old data: ")).resolve()
+        data_path = Path(
+            input("Please enter the path to the old data: ")
+        ).resolve()
         if data_path.is_dir():
             break
         print("Invalid path. Please try again.")
@@ -274,7 +279,10 @@ def main():
                         f"Warning: Playlist '{playlist.name}' missing {len(playlist.songIds) - len(new_songs)} songs."
                     )
                     print(
-                        {lookup[song_lookup[song_id]] for song_id in playlist.songIds}
+                        {
+                            lookup[song_lookup[song_id]]
+                            for song_id in playlist.songIds
+                        }
                         - set(new_songs)
                     )
 

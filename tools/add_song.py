@@ -2,16 +2,15 @@
 
 from dataclasses import asdict
 from datetime import datetime
-from pathlib import Path
 from urllib.parse import parse_qs, urlsplit
 
 import questionary
 
-from st.database.database import create as create_db  # noqa: E402
-from st.database.dependencies import db_session  # noqa: E402
-from st.external.youtube import create_metadata, get_duration, get_video  # noqa: E402
-from st.features.metadata import MetaArtist, Metadata, MetadataSource  # noqa: E402
-from st.features.song import (  # noqa: E402
+from st.database.database import create as create_db
+from st.database.dependencies import db_session
+from st.external.youtube import create_metadata, get_duration, get_video
+from st.features.metadata import MetaArtist
+from st.features.song import (
     AudioReferenceType,
     SongAudioReference,
     create_song_service,
@@ -50,12 +49,18 @@ print("Metadata:")
 for key, value in asdict(metadata).items():
     print(f"  {key}: {value}")
 
-if questionary.confirm("Would you like to edit the above data?", default=True).ask():
-    metadata.title = questionary.text("Title (English):", default=metadata.title).ask()
+if questionary.confirm(
+    "Would you like to edit the above data?", default=True
+).ask():
+    metadata.title = questionary.text(
+        "Title (English):", default=metadata.title
+    ).ask()
     if metadata.title is None:
         exit(0)
     metadata.title_og = (
-        questionary.text("Original title:", default=metadata.title_og or "").ask()
+        questionary.text(
+            "Original title:", default=metadata.title_og or ""
+        ).ask()
         or None
     )
     metadata.date = datetime.fromisoformat(
@@ -88,7 +93,9 @@ if questionary.confirm("Would you like to edit the above data?", default=True).a
         i += 1
 
         if i >= len(metadata.artists):
-            if not questionary.confirm("Add another artist?", default=False).ask():
+            if not questionary.confirm(
+                "Add another artist?", default=False
+            ).ask():
                 break
 
     new_singers = []
@@ -114,7 +121,9 @@ if questionary.confirm("Would you like to edit the above data?", default=True).a
         i += 1
 
         if i >= len(metadata.singers):
-            if not questionary.confirm("Add another singer?", default=False).ask():
+            if not questionary.confirm(
+                "Add another singer?", default=False
+            ).ask():
                 break
 
     metadata.artists = new_artists

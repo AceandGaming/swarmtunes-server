@@ -1,21 +1,16 @@
 import logging
-import sys
-from pathlib import Path
 
 from sqlalchemy.orm import Session
 
-project_dir = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(project_dir / "app"))
-
-from automated.cleanup import sync_cleanup  # noqa: E402
-from automated.sync import correct_many  # noqa: E402
-from core.backup import create_backup  # noqa: E402
-from core.log import setup_logging  # noqa: E402
-from core.paths import AUDIO, CORRECT, DOWNLOADS  # noqa: E402
-from database.database import create as create_db  # noqa: E402
-from database.dependencies import db_session  # noqa: E402
-from external.rclone_api import DriveFile, download_files, get_all_files  # noqa: E402
-from features.song import AudioReferenceType, SongAudioReference  # noqa: E402
+from st.automated.cleanup import sync_cleanup
+from st.automated.sync import correct_many
+from st.core.backup import create_backup
+from st.core.log import setup_logging
+from st.core.paths import AUDIO, CORRECT, DOWNLOADS
+from st.database.database import create as create_db
+from st.database.dependencies import db_session
+from st.external.rclone_api import DriveFile, download_files, get_all_files
+from st.features.song import AudioReferenceType, SongAudioReference
 
 log = logging.getLogger(__name__)
 
@@ -31,7 +26,9 @@ def download(db: Session):
 
     to_download: list[tuple[SongAudioReference, DriveFile]] = []
     for ref in refs:
-        drive_file = next((f for f in drive_files if f.id == ref.external_id), None)
+        drive_file = next(
+            (f for f in drive_files if f.id == ref.external_id), None
+        )
         if not drive_file:
             print(f"File {ref.external_id} not found on Drive, skipping")
             continue
