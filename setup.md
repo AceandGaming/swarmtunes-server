@@ -114,7 +114,7 @@ Clone the repository you want to work with:
 
 ```bash
 git clone https://github.com/AceandGaming/swarmtunes.git
-cd swarmtunes-server/server
+cd swarmtunes-server
 ```
 
 If you are working from a fork, replace the URL with your fork's URL.
@@ -129,7 +129,7 @@ uv sync
 
 This creates or synchronizes the project's virtual environment and installs its dependencies.
 
-#### Step 3: Configure secrets and settings
+#### Step 3: Configure secrets and settings (If using Google API)
 
 1. Place `credentials.json` and any required SSL certificates and keys in the secrets directory expected by the server.
 2. Copy the example configuration files and rename them as needed. For example:
