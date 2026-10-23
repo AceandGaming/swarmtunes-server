@@ -103,6 +103,12 @@ async def validation_error_handler(
 app.include_router(v1_router, prefix="/v1")
 app.include_router(v2_router, prefix="/v2")
 
+for route in app.routes:
+    print(
+        getattr(route, "methods", None),
+        getattr(route, "path", None),
+        type(route).__name__,
+    )
 
 @app.get("/")
 async def root():

@@ -1,7 +1,7 @@
 from datetime import timedelta
 from typing import Literal
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, UploadFile
 from fastapi.responses import FileResponse
 
 import st.core.paths as paths
@@ -13,7 +13,7 @@ from st.features.song import (
 from st.general.export import export_artwork
 from st.general.search import search_songs
 
-from .shared import APIException
+from .shared import APIException, admin_required
 
 misc_router = APIRouter()
 
@@ -59,3 +59,27 @@ async def get_cover(
             "Cache-Control": f"public, max-age={timedelta(days=7).total_seconds()}, immutable"
         },
     )
+
+@misc_router.post("/covers/{name:path}")
+async def add_cover(name: str, file: UploadFile, token=Depends(admin_required)):
+    if (file.content_type != "image/png"):
+        raise APIException("INVALID_COVER", "Cover must be a PNG", status_code=400)
+    if "." in name or ".." in name:
+        raise APIException("INVALID_COVER", "Cover name must not contain dots", status_code=400)
+
+    path = paths.ARTWORK / f"{name}.png"
+
+    if path.exists():
+        raise APIException("COVER_EXISTS", "Cover already exists", status_code=400)
+
+    data = await file.read()
+
+    if not data.startswith(b"\x89PNG\r\n\x1a\n"):
+        raise APIException(
+            "INVALID_COVER",
+            "Invalid PNG file",
+            status_code=400,
+        )
+
+    path.write_bytes(data)
+

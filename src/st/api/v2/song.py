@@ -107,8 +107,6 @@ class UpdateSongRequest(BaseModel):
 
 @song_router.put("/{id}")
 def update_song(id: UUID, req: UpdateSongRequest, db=Depends(get_db), token=Depends(admin_required)):
-    raise NotImplementedError()
-
     service = create_song_service(db)
     song = service.get(id)
     if song is None:
@@ -125,17 +123,19 @@ def update_song(id: UUID, req: UpdateSongRequest, db=Depends(get_db), token=Depe
 
 
     song.title = req.title
-    song.title_original = req.titleOriginal
+    song.title_original = req.titleOriginal or None
 
-    song.artists = [create_or_get(db, a.name, a.originalName) for a in req.artists]
-    song.singers = [create_or_get(db, s.name, s.originalName) for s in req.singers]
+    song.artists = [create_or_get(db, a.name, a.originalName or None) for a in req.artists]
+    song.singers = [create_or_get(db, s.name, s.originalName or None) for s in req.singers]
 
     song.type = type
 
     song.date_released = date
-    song.seconds = req.seconds
+    #song.seconds = req.seconds
 
     song.custom_artwork = req.customArtwork
+
+    db.flush()
 
 
 @song_router.get("/{id}/audio")

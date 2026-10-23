@@ -26,7 +26,8 @@ dependencies = [
     "argon2-cffi==25.1.0",
     "argon2-cffi-bindings==25.1.0",
     "alembic==1.18.5",
-    "case-converter==1.2.0"
+    "case-converter==1.2.0",
+    "python-multipart>=0.0.32",
 ]
 
 [build-system]
