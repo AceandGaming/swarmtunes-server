@@ -1,7 +1,7 @@
 from enum import StrEnum
 from typing import TYPE_CHECKING, Optional
 
-from sqlalchemy import ForeignKey
+from sqlalchemy import JSON, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from st.abstract.id_object import IDObject
@@ -35,6 +35,12 @@ class Playlist(IDObject):
     )
     type: Mapped[PlaylistType] = mapped_column(
         StringValueEnum(PlaylistType), default=PlaylistType.USER
+    )
+
+    seconds: Mapped[float] = mapped_column(default=0)
+    artworks: Mapped[dict[str, str]] = mapped_column(
+        JSON,
+        default=dict
     )
 
     user_id = mapped_column(

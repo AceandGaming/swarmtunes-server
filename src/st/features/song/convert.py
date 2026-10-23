@@ -44,9 +44,7 @@ def to_network_v2(song: Song) -> NetworkSongV2:
         "type": song.type.value,
         "dateReleased": song.date_released.isoformat(),
         "seconds": int(song.duration),
-        "artworks": {
-            artwork.type: artwork.name for artwork in get_song_artwork(song)
-        },
+        "artworks": song.artworks,
         "playable": song.playable,
         "audioType": audio.type.value,
         "audioId": audio.external_id,

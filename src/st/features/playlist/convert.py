@@ -30,18 +30,11 @@ def to_network_v1(
 
 
 def to_network_v2(playlist: Playlist) -> NetworkPlaylistV2:
-    seconds = 0
-    for song in playlist.songs:
-        seconds += song.song.seconds
-
     return NetworkPlaylistV2(
         id=str(playlist.id),
         title=playlist.title,
-        seconds=int(seconds),
-        artworks={
-            artwork.type: artwork.name
-            for artwork in get_playlist_artwork(playlist)
-        },
+        seconds=int(playlist.seconds),
+        artworks=playlist.artworks,
         type=camelcase(playlist.type.value),  # pyright: ignore[reportArgumentType]
         songCount=len(playlist.songs),
         dateCreated=playlist.date_created.isoformat(),

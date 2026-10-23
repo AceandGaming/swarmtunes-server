@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 from enum import StrEnum
 from typing import TYPE_CHECKING, Optional
 
-from sqlalchemy import CheckConstraint, Index
+from sqlalchemy import JSON, CheckConstraint, Index
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from st.abstract.id_object import IDObject
@@ -30,6 +30,12 @@ class Album(IDObject):
     type: Mapped[AlbumType] = mapped_column(StringValueEnum(AlbumType))
     date: Mapped[Optional[datetime]] = mapped_column(UTCDateTime())
     disc: Mapped[Optional[int]]
+
+    seconds: Mapped[float] = mapped_column(default=0)
+    artworks: Mapped[dict[str, str]] = mapped_column(
+        JSON,
+        default=dict
+    )
 
     songs: Mapped[list["Song"]] = relationship(
         "Song", secondary=album_songs, back_populates="albums"

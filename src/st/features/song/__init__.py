@@ -4,6 +4,7 @@ from .audio_refrence import AudioReferenceType, SongAudioReference
 from .convert import to_network_v1, to_network_v2
 from .service import SongService
 from .song import Song, SongCopyrightStatus, SongType
+from . import events # IMPORTANT
 
 
 def create_song_service(db: Session):

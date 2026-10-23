@@ -1,11 +1,9 @@
-import sys
 from logging.config import fileConfig
-from pathlib import Path
 
 from sqlalchemy import engine_from_config, pool
 
 from alembic import context
-import st.database.models
+import st.database.models # DO NOT REMOVE
 from st.database.database import DATABASE_URL, Base
 
 # this is the Alembic Config object, which provides

@@ -2,6 +2,7 @@ from .album import Album, AlbumType
 from .convert import to_network_v1, to_network_v2
 from st.core.service import Service
 from sqlalchemy.orm import Session
+from . import events # IMPORTANT
 
 def create_album_service(db: Session):
     return Service(db, Album)

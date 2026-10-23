@@ -22,18 +22,12 @@ def to_network_v1(album: Album) -> NetworkAlbumV1:
 
 
 def to_network_v2(album: Album) -> NetworkAlbumV2:
-    seconds = 0
-    for song in album.songs:
-        seconds += song.seconds
-
     return NetworkAlbumV2(
         id=str(album.id),
         title=album.title,
-        artworks={
-            artwork.type: artwork.name for artwork in get_album_artwork(album)
-        },
+        artworks=album.artworks,
         date=album.date and album.date.isoformat() or None,
         disc=album.disc,
         songCount=len(album.songs),
-        seconds=int(seconds),
+        seconds=int(album.seconds),
     )

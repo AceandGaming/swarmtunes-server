@@ -7,6 +7,7 @@ from st.core.service import Service
 
 from .convert import to_network_v1, to_network_v2
 from .playlist import Playlist, PlaylistType
+from . import events # IMPORTANT
 
 if TYPE_CHECKING:
     from st.features.user.user import User

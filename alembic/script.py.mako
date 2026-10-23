@@ -9,8 +9,6 @@ from typing import Sequence, Union
 
 from alembic import op
 import sqlalchemy as sa
-import sys
-from pathlib import Path
 
 ${imports if imports else ""}
 

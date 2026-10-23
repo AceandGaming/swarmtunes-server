@@ -2,6 +2,7 @@ from datetime import datetime
 from enum import StrEnum
 from typing import TYPE_CHECKING, Optional
 
+from sqlalchemy import JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from st.abstract.id_object import IDObject
@@ -85,6 +86,10 @@ class Song(IDObject):
     date_released: Mapped[datetime] = mapped_column(UTCDateTime())
     disc: Mapped[Optional[int]]
     custom_artwork: Mapped[Optional[str]]
+    artworks: Mapped[dict[str, str]] = mapped_column(
+        JSON,
+        default=dict
+    )
 
     is_copyrighted: Mapped[bool]
     copyright_status: Mapped[SongCopyrightStatus] = mapped_column(
