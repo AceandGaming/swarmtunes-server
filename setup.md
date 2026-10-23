@@ -2,7 +2,7 @@
 
 This guide explains how to configure and run the Swarmtunes server using Docker or a local development environment.
 
-## Requirements
+## Optional Requirements
 
 ### 1. Google API Credentials
 
@@ -56,7 +56,9 @@ You may need to download artwork for songs separately. Artwork is available from
 
 ## Installation
 
-**Docker is recommended for most users** because it provides a consistent runtime environment. Running from source is also supported, particularly for development.
+For self hosting, **Docker is recommended for most users**. 
+
+For development, **running from source is recommended**.
 
 ### Option 1: Docker
 
