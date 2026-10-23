@@ -129,16 +129,16 @@ uv sync
 
 This creates or synchronizes the project's virtual environment and installs its dependencies.
 
-#### Step 3: Configure secrets and settings (If using Google API)
+#### Step 3: Configure secrets and settings
 
-1. Place `credentials.json` and any required SSL certificates and keys in the secrets directory expected by the server.
-2. Copy the example configuration files and rename them as needed. For example:
+1. (If using Google API) Place `credentials.json` and any required SSL certificates and keys in the secrets directory expected by the server.
+2. Copy the example configuration files and rename them. For example:
 
    ```bash
    cp config/.env.example config/.env
    ```
 
-3. Edit the configuration files to match your environment.
+3. Edit the configuration files to match your needs.
 
 #### Step 4: Start the server
 
@@ -161,8 +161,6 @@ The HTTPS option requires the certificates and keys to be configured in `/secret
 ## Configuration
 
 The server supports several configuration options. The primary settings are defined through its `.env` configuration file; consult the example configuration for available options and their descriptions.
-
-Depending on the deployment, you may also need to configure Google credentials, SSL certificates, database settings, and logging.
 
 ### Docker runtime parameters
 
