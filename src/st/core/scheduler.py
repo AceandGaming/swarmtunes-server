@@ -75,6 +75,7 @@ def add_backup_tasks(scheduler: AsyncIOScheduler):
             "interval",
             days=config.trim_frequency_days,
             id="trim_backups",
+            next_run_time=datetime.now(tz=timezone.utc),
         )
 
 

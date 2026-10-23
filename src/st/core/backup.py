@@ -153,10 +153,13 @@ def get_size_of_backups():
 def trim_backups():
     log.info("Trimming backups...")
     config = get_config().backups
-
     backups = get_backups()
+    max_size_bytes = config.max_backup_size_gb * 1024**3
 
-    while get_size_of_backups() > config.max_backup_size_gb * 1024 * 1024:
+    while get_size_of_backups() > max_size_bytes and backups:
         oldest = min(backups, key=lambda x: x[1].created_at)
-        log.debug(f"Deleting backup {oldest}")
+        log.info("Deleting backup %s", oldest[0])
+
         shutil.rmtree(oldest[0])
+        backups.remove(oldest)
+
