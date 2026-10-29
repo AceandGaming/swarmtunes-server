@@ -6,8 +6,8 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Query
 from fastapi.responses import FileResponse, RedirectResponse
 from pydantic import BaseModel
-
 from sqlalchemy.orm import Session
+
 from st.core import paths
 from st.database.dependencies import get_db
 from st.database.relationships import PlaylistSong
@@ -23,9 +23,13 @@ from st.features.song import (
 )
 from st.features.song.api import NetworkSongV2
 from st.features.song.audio_refrence import AudioReferenceType
-from pydantic import BaseModel
 
-from .shared import APIException, CachedJSONResponse, admin_required, auth_required
+from .shared import (
+    APIException,
+    CachedJSONResponse,
+    admin_required,
+    auth_required,
+)
 
 log = logging.getLogger()
 
@@ -87,13 +91,15 @@ def get_song(id: UUID, db=Depends(get_db)):
 
     return CachedJSONResponse(to_network_v2(song), cache_for=timedelta(hours=1))
 
+
 class UpdateSongRequestArtist(BaseModel):
     name: str
-    originalName: str | None
+    originalName: str | None = None
+
 
 class UpdateSongRequest(BaseModel):
     title: str
-    titleOriginal: str | None
+    titleOriginal: str | None = None
 
     artists: list[UpdateSongRequestArtist]
     singers: list[UpdateSongRequestArtist]
@@ -102,11 +108,16 @@ class UpdateSongRequest(BaseModel):
     dateReleased: str
     seconds: float
 
-    customArtwork: str | None
+    customArtwork: str | None = None
 
 
 @song_router.put("/{id}")
-def update_song(id: UUID, req: UpdateSongRequest, db=Depends(get_db), token=Depends(admin_required)):
+def update_song(
+    id: UUID,
+    req: UpdateSongRequest,
+    db=Depends(get_db),
+    token=Depends(admin_required),
+):
     service = create_song_service(db)
     song = service.get(id)
     if song is None:
@@ -119,21 +130,26 @@ def update_song(id: UUID, req: UpdateSongRequest, db=Depends(get_db), token=Depe
     try:
         type = SongType(req.type)
     except ValueError:
-        raise APIException("INVALID_AUDIO_TYPE", "Invalid audio type", status_code=400)
-
+        raise APIException(
+            "INVALID_AUDIO_TYPE", "Invalid audio type", status_code=400
+        )
 
     song.title = req.title
     song.title_original = req.titleOriginal or None
 
-    song.artists = [create_or_get(db, a.name, a.originalName or None) for a in req.artists]
-    song.singers = [create_or_get(db, s.name, s.originalName or None) for s in req.singers]
+    song.artists = [
+        create_or_get(db, a.name, a.originalName or None) for a in req.artists
+    ]
+    song.singers = [
+        create_or_get(db, s.name, s.originalName or None) for s in req.singers
+    ]
 
     song.type = type
 
     song.date_released = date
-    #song.seconds = req.seconds
+    # song.seconds = req.seconds
 
-    song.custom_artwork = req.customArtwork
+    song.custom_artwork = req.customArtwork or None
 
     db.flush()
 
@@ -200,7 +216,11 @@ def get_song_gdrive(id: UUID, db=Depends(get_db)):
 
 
 @song_router.get("/{id}/playlists")
-def get_playlists_with_song(id: UUID, token: Token = Depends(auth_required), db: Session = Depends(get_db)):
+def get_playlists_with_song(
+    id: UUID,
+    token: Token = Depends(auth_required),
+    db: Session = Depends(get_db),
+):
     return [
         playlist_id
         for (playlist_id,) in (
