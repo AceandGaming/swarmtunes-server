@@ -1,6 +1,6 @@
 import logging
 
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from st.core.service import Service
 from st.features.artist import create_or_get
@@ -16,6 +16,10 @@ log = logging.getLogger()
 class SongService(Service[Song]):
     def __init__(self, db: Session):
         super().__init__(db, Song)
+
+    def query(self, include_disabled=False):
+        query = super().query(include_disabled)
+        return query.options(selectinload(Song.artists))
 
     def create_from_metadata(
         self,

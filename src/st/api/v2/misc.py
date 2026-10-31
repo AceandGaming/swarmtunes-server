@@ -1,6 +1,9 @@
 from datetime import timedelta
+from threading import RLock
+from time import perf_counter
 from typing import Literal
 
+from cachetools import TTLCache
 from fastapi import APIRouter, Depends, Query, UploadFile
 from fastapi.responses import FileResponse
 
@@ -11,24 +14,44 @@ from st.features.song import (
     to_network_v2,
 )
 from st.general.export import export_artwork
-from st.general.search import search_songs
+from st.general.search import SearchObject, song_search_objects
+from st.general.search import search as search_objects
 
 from .shared import APIException, admin_required
 
 misc_router = APIRouter()
 
+search_cache = TTLCache(maxsize=100, ttl=timedelta(minutes=15).total_seconds())
+search_cache_lock = RLock()
+
+
+def get_search_objects(service) -> list[SearchObject]:
+    with search_cache_lock:
+        try:
+            return search_cache["songs"]  # pyright: ignore[reportReturnType]
+        except KeyError:
+            songs = service.get_all()
+            objects = song_search_objects(songs)
+
+            search_cache["songs"] = objects
+            return objects
+
 
 @misc_router.get("/search")
 async def search(
-    q: str | None = Query(None), limit: int = Query(10), db=Depends(get_db)
+    q: str | None = Query(None, max_length=30),
+    limit: int = Query(10),
+    db=Depends(get_db),
 ):
     if not q:
         return []
 
     service = create_song_service(db)
-    songs = service.get_all()
 
-    return [to_network_v2(song) for song in search_songs(songs, q)[:limit]]
+    search_results = search_objects(get_search_objects(service), q)[:limit]
+
+    song_results = service.get_many([r.id for r in search_results])
+    return [to_network_v2(song) for song in song_results]
 
 
 @misc_router.get("/covers/{name:path}")
@@ -60,17 +83,24 @@ async def get_cover(
         },
     )
 
+
 @misc_router.post("/covers/{name:path}")
 async def add_cover(name: str, file: UploadFile, token=Depends(admin_required)):
-    if (file.content_type != "image/png"):
-        raise APIException("INVALID_COVER", "Cover must be a PNG", status_code=400)
+    if file.content_type != "image/png":
+        raise APIException(
+            "INVALID_COVER", "Cover must be a PNG", status_code=400
+        )
     if "." in name or ".." in name:
-        raise APIException("INVALID_COVER", "Cover name must not contain dots", status_code=400)
+        raise APIException(
+            "INVALID_COVER", "Cover name must not contain dots", status_code=400
+        )
 
     path = paths.ARTWORK / f"{name}.png"
 
     if path.exists():
-        raise APIException("COVER_EXISTS", "Cover already exists", status_code=400)
+        raise APIException(
+            "COVER_EXISTS", "Cover already exists", status_code=400
+        )
 
     data = await file.read()
 
@@ -82,4 +112,3 @@ async def add_cover(name: str, file: UploadFile, token=Depends(admin_required)):
         )
 
     path.write_bytes(data)
-

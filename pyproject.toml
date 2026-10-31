@@ -28,6 +28,7 @@ dependencies = [
     "alembic==1.18.5",
     "case-converter==1.2.0",
     "python-multipart>=0.0.32",
+    "cachetools>=7.2.7",
 ]
 
 [build-system]

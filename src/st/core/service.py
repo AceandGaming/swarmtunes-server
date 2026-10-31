@@ -16,12 +16,12 @@ class Service(Generic[T]):
         self._model = model
 
     def query(self, include_disabled=False):
-        if include_disabled:
-            return self._db.query(self._model)
+        query = self._db.query(self._model)
 
-        return self._db.query(self._model).filter(
-            self._model.deleted_at.is_(None)
-        )
+        if include_disabled:
+            return query
+
+        return query.filter(self._model.deleted_at.is_(None))
 
     def get_all(self) -> list[T]:
         return self.query().all()

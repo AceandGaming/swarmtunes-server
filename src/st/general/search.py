@@ -67,9 +67,10 @@ def search(objects: list[SearchObject], query: str) -> list[SearchObject]:
     return output
 
 
-def search_songs(songs: list[Song], query: str) -> list[Song]:
+def song_search_objects(
+    songs: list[Song],
+) -> list[SearchObject]:
     objects = []
-    lookup = {}
     for song in songs:
         objects.append(SearchObject(song.id, normalise(song.title)))
         for artist in song.artists:
@@ -77,7 +78,4 @@ def search_songs(songs: list[Song], query: str) -> list[Song]:
                 SearchObject(song.id, normalise(artist.name), bias=-0.5)
             )
 
-        lookup[song.id] = song
-
-    matches = search(objects, query)
-    return [lookup[m.id] for m in matches]
+    return objects

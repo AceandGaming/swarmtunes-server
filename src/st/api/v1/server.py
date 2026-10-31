@@ -11,7 +11,8 @@ from st.features.song import SongCopyrightStatus, create_song_service
 from st.features.song import to_network_v1 as song_to_network
 from st.general.embed import create_song_embed
 from st.general.export import export_artwork
-from st.general.search import search_songs
+from st.general.search import search as search_objects
+from st.general.search import song_search_objects
 
 from .album import album_router
 from .auth import auth_router
@@ -81,10 +82,13 @@ async def search(
     query=Query(""), maxResults: int = Query(10), db=Depends(get_db)
 ):
     service = create_song_service(db)
-    songs = service.get_all()
+    objects = song_search_objects(service.get_all())
+
+    ids = [s.id for s in search_objects(objects, query)[:maxResults]]
+
     return [
         song_to_network(song)
-        for song in search_songs(songs, query)[:maxResults]
+        for song in service.get_many(ids)
         if song.copyright_status == SongCopyrightStatus.ACTIVE
     ]
 
