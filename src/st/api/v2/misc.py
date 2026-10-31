@@ -50,7 +50,7 @@ async def search(
 
     search_results = search_objects(get_search_objects(service), q)[:limit]
 
-    song_results = service.get_many([r.id for r in search_results])
+    song_results = service.get_many([r.id for r in search_results], True)
     return [to_network_v2(song) for song in song_results]
 
 

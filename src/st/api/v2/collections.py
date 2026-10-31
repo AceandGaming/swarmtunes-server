@@ -5,7 +5,15 @@ from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel
 
 from st.database.dependencies import get_db
-from st.features.album import Album, AlbumType, create_album_service, to_network_v2
+from st.features.album import (
+    Album,
+    AlbumType,
+    create_album_service,
+    to_network_v2,
+)
+from st.features.song import create_song_service
+from st.general.search import search as search_objects
+from st.general.search import song_search_objects
 
 from .shared import APIException, CachedJSONResponse
 
@@ -84,3 +92,22 @@ def get_songs(id: UUID, db=Depends(get_db)):
         [str(song.id) for song in album.songs],
         cache_for=timedelta(days=1),
     )
+
+
+@collections_router.get("/{id}/search")
+def search_songs(id: UUID, q: str = Query(max_length=30), db=Depends(get_db)):
+    service = create_album_service(db)
+    song_service = create_song_service(db)
+
+    album = service.get(id)
+    if not album:
+        raise APIException(
+            "ALBUM_NOT_FOUND", "Album not found", status_code=404
+        )
+
+    objects = song_search_objects(album.songs)
+    results = search_objects(objects, q)
+
+    songs = song_service.get_many([r.id for r in results], True)
+
+    return [str(song.id) for song in songs]

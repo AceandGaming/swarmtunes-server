@@ -7,10 +7,15 @@ from pydantic import BaseModel
 
 from st.core.config import get_config
 from st.database.dependencies import get_db
-from st.features.playlist import Playlist, create_playlist_service, to_network_v2
+from st.features.playlist import (
+    Playlist,
+    create_playlist_service,
+    to_network_v2,
+)
 from st.features.session import Token
 from st.features.song import create_song_service
-from st.features.song import to_network_v2 as to_network_v2_song
+from st.general.search import search as search_objects
+from st.general.search import song_search_objects
 
 from .shared import APIException, auth_required
 
@@ -133,6 +138,36 @@ def get_songs(
             "dateAdded": str(item.date_added),
         }
         for item in playlist.songs
+    ]
+
+
+@playlist_router.get("/{id}/search")
+def search_songs(
+    id: UUID,
+    q: str,
+    token: Token = Depends(auth_required),
+    db=Depends(get_db),
+):
+    service = create_playlist_service(db)
+
+    playlist = service.get_in_user(token.user, id)
+    if not playlist:
+        raise APIException(
+            "PLAYLIST_NOT_FOUND", "Playlist not found", status_code=404
+        )
+
+    objects = song_search_objects([i.song for i in playlist.songs])
+    results = search_objects(objects, q)
+
+    playlist_songs = {item.song.id: item for item in playlist.songs}
+
+    return [
+        {
+            "songId": str(result.id),
+            "dateAdded": str(playlist_songs[result.id].date_added),
+        }
+        for result in results
+        if result.id in playlist_songs
     ]
 
 

@@ -88,7 +88,7 @@ async def search(
 
     return [
         song_to_network(song)
-        for song in service.get_many(ids)
+        for song in service.get_many(ids, True)
         if song.copyright_status == SongCopyrightStatus.ACTIVE
     ]
 
