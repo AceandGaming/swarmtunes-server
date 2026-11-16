@@ -32,6 +32,7 @@ COPY alembic.ini .
 COPY dockerentry.sh ./dockerentry.sh
 RUN chmod +x ./dockerentry.sh
 
+COPY tools ./tools
 
 # Install Python dependencies
 RUN uv sync --locked
