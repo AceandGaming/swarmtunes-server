@@ -20,12 +20,21 @@ def create_setlist_title(date: datetime, songs: list[Song]) -> str:
             singer_count[singers] = 1
 
     singers = max(singer_count, key=lambda singers: singer_count[singers])
-    if len(singers) == 1:
-        return list(singers)[0]
-    elif {"Neuro-sama", "Evil Neuro"} == singers:
-        return "Neuro and Evil"
 
-    return f"{date.strftime('%-d %B %Y')} Setlist"
+    name = ""
+    if len(singers) == 1:
+        name = list(singers)[0]
+    elif {"Neuro-sama", "Evil Neuro"} == singers:
+        name = "Neuro and Evil"
+    else:
+        name = f"{date.strftime('%-d %B %Y')} Setlist"
+
+    if (date.month, date.day) == (12, 25):
+        name = name.strip() + " Christmas"
+    elif (date.month, date.day) == (10, 31):
+        name = name.strip() + " Halloween"
+
+    return name
 
 
 def create_collection_title(disc: int) -> str:

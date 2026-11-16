@@ -9,7 +9,7 @@ from st.features.album import to_network_v2 as to_network_v2_album
 from st.features.song import Song, SongType, create_song_service
 from st.features.song import to_network_v2 as to_network_v2_song
 
-from .shared import APIException, CachedJSONResponse
+from .shared import CachedJSONResponse
 
 page_router = APIRouter()
 
