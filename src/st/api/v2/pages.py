@@ -1,4 +1,5 @@
 from datetime import timedelta
+from typing import Literal
 from uuid import UUID
 
 from fastapi import APIRouter, Depends
@@ -97,7 +98,9 @@ async def discover_ids(db=Depends(get_db)):
 
 
 @page_router.get("/home")
-async def home(db=Depends(get_db)):
+async def home(
+    originalType: Literal["song", "collection"] = "song", db=Depends(get_db)
+):
     album_service = create_album_service(db)
     song_service = create_song_service(db)
 
@@ -111,6 +114,7 @@ async def home(db=Depends(get_db)):
             .limit(10)
         )
     ]
+
     discs: list[UUID] = [
         album_id
         for (album_id,) in (
@@ -121,16 +125,31 @@ async def home(db=Depends(get_db)):
             .all()
         )
     ]
-    originals: list[UUID] = [
-        song_id
-        for (song_id,) in (
-            song_service.query()
-            .filter(Song.type == SongType.ORIGINAL)
-            .order_by(Song.date_released.desc())
-            .with_entities(Song.id)
-            .all()
-        )
-    ]
+
+    originals: list[UUID]
+    if originalType == "song":
+        originals = [
+            song_id
+            for (song_id,) in (
+                song_service.query()
+                .filter(Song.type == SongType.ORIGINAL)
+                .order_by(Song.date_released.desc())
+                .with_entities(Song.id)
+                .all()
+            )
+        ]
+    else:
+        originals = [
+            album_id
+            for (album_id,) in (
+                album_service.query()
+                .filter(Album.type == AlbumType.EP)
+                .order_by(Album.date.desc())
+                .with_entities(Album.id)
+                .all()
+            )
+        ]
+
     mashups: list[UUID] = [
         song_id
         for (song_id,) in (
