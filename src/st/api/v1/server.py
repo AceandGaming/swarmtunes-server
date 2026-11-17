@@ -71,7 +71,7 @@ async def root(
         raise HTTPException(500, detail="Unsupported link type")
 
     return {
-        "message": "Welcome to the SwarmTunes API!",
+        "message": "Welcome to the Swarmtunes API!",
         "status": "ok",
         "current-path": "SQLite :)",
     }

@@ -9,6 +9,12 @@ from .song import song_router
 
 v2_router = APIRouter()
 
+
+@v2_router.get("/")
+def root():
+    return {"status": "ok (probably)", "version": "v2"}
+
+
 v2_router.include_router(song_router, prefix="/songs")
 v2_router.include_router(collections_router, prefix="/collections")
 v2_router.include_router(playlist_router, prefix="/playlists")

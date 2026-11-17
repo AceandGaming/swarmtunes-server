@@ -103,6 +103,7 @@ async def validation_error_handler(
 app.include_router(v1_router, prefix="/v1")
 app.include_router(v2_router, prefix="/v2")
 
+
 @app.get("/")
 async def root():
-    return RedirectResponse(url="/v1")
+    return RedirectResponse(url="/v2")
