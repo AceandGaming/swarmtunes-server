@@ -33,7 +33,7 @@ def create_setlist_title(date: datetime, songs: list[Song]) -> str:
 
     if (date.month, date.day) == (12, 25):
         name = name.strip() + " Christmas"
-    elif (date.month, date.day) == (10, 31):
+    elif (date.month, date.day) == (10, 29):
         name = name.strip() + " Halloween"
 
     return name
