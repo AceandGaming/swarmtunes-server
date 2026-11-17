@@ -14,8 +14,9 @@ if TYPE_CHECKING:
 
 
 class AlbumType(StrEnum):
-    DATE_SETLIST = "setlist"
-    DISC_COLLECTION = "collection"
+    SETLIST = "setlist"
+    DISC = "collection"
+    EP = "ep"
 
 
 class Album(IDObject):
@@ -32,10 +33,7 @@ class Album(IDObject):
     disc: Mapped[Optional[int]]
 
     seconds: Mapped[float] = mapped_column(default=0)
-    artworks: Mapped[dict[str, str]] = mapped_column(
-        JSON,
-        default=dict
-    )
+    artworks: Mapped[dict[str, str]] = mapped_column(JSON, default=dict)
 
     songs: Mapped[list["Song"]] = relationship(
         "Song", secondary=album_songs, back_populates="albums"
@@ -45,7 +43,8 @@ class Album(IDObject):
         CheckConstraint(
             """
                 (type = 'collection' AND disc IS NOT NULL) OR
-                (type = 'setlist' AND date IS NOT NULL)
+                (type = 'setlist' AND date IS NOT NULL) OR
+                (type = 'ep' AND date IS NOT NULL)
             """,
             name="ck_albums_vaild_type_data",
         ),

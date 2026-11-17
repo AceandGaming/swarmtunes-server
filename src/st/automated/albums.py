@@ -1,4 +1,5 @@
 import logging
+from collections import defaultdict
 from datetime import datetime, timezone
 
 from sqlalchemy.orm import Session
@@ -6,6 +7,7 @@ from sqlalchemy.orm import Session
 from st.core.config import get_config
 from st.features.album import Album, AlbumType, create_album_service
 from st.features.song import Song, create_song_service
+from st.features.song.song import SongType
 
 log = logging.getLogger("automated")
 
@@ -49,18 +51,18 @@ def update_albums(db: Session):
 
     songs = song_service.get_all()
 
-    by_disc: dict[int, list[Song]] = {}
-    by_date: dict[datetime, list[Song]] = {}
+    by_disc: dict[int, list[Song]] = defaultdict(list)
+    by_date: dict[datetime, list[Song]] = defaultdict(list)
+    by_date_ep: dict[datetime, list[Song]] = defaultdict(list)
 
     for song in songs:
         if song.disc:
-            if song.disc not in by_disc:
-                by_disc[song.disc] = []
             by_disc[song.disc].append(song)
 
-        if song.date_released not in by_date:
-            by_date[song.date_released] = []
-        by_date[song.date_released].append(song)
+        if song.type == SongType.ORIGINAL:
+            by_date_ep[song.date_released].append(song)
+        else:
+            by_date[song.date_released].append(song)
 
     for date in list(by_date.keys()):
         if len(by_date[date]) < config.automated.album_min_songs:
@@ -75,7 +77,7 @@ def update_albums(db: Session):
     for date, songs in by_date.items():
         album = (
             album_service.query()
-            .filter(Album.type == AlbumType.DATE_SETLIST, Album.date == date)
+            .filter(Album.type == AlbumType.SETLIST, Album.date == date)
             .first()
         )
 
@@ -90,8 +92,40 @@ def update_albums(db: Session):
             )
         else:
             album = Album(
-                type=AlbumType.DATE_SETLIST,
+                type=AlbumType.SETLIST,
                 title=create_setlist_title(date, songs),
+                date=date,
+                songs=songs,
+            )
+            db.add(album)
+            log.debug(
+                f"Creating album {album.title} with {len(album.songs)} songs."
+            )
+
+        album.last_updated = datetime.now(timezone.utc)
+
+    for date, songs in by_date_ep.items():
+        album = (
+            album_service.query()
+            .filter(Album.type == AlbumType.EP, Album.date == date)
+            .first()
+        )
+
+        title = songs[0].title if len(songs) == 1 else "EP"
+
+        if album:
+            if {song.id for song in album.songs} == {song.id for song in songs}:
+                continue
+
+            album.title = title
+            album.songs = songs
+            log.debug(
+                f"Updating album {album.title} with {len(album.songs)} songs."
+            )
+        else:
+            album = Album(
+                type=AlbumType.EP,
+                title=title,
                 date=date,
                 songs=songs,
             )
@@ -105,7 +139,7 @@ def update_albums(db: Session):
     for disc, songs in by_disc.items():
         album = (
             album_service.query()
-            .filter(Album.type == AlbumType.DISC_COLLECTION, Album.disc == disc)
+            .filter(Album.type == AlbumType.DISC, Album.disc == disc)
             .first()
         )
 
@@ -120,7 +154,7 @@ def update_albums(db: Session):
             )
         else:
             album = Album(
-                type=AlbumType.DISC_COLLECTION,
+                type=AlbumType.DISC,
                 title=create_collection_title(disc),
                 disc=disc,
                 songs=songs,

@@ -4,7 +4,12 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import JSONResponse
 
 from st.database.dependencies import get_db
-from st.features.album import Album, AlbumType, create_album_service, to_network_v1
+from st.features.album import (
+    Album,
+    AlbumType,
+    create_album_service,
+    to_network_v1,
+)
 
 album_router = APIRouter()
 
@@ -18,9 +23,7 @@ def get_albums(ids: list[UUID] = Query(None), db=Depends(get_db)):
         if len(albums) != len(ids):
             raise HTTPException(404, detail="Album not found")
     else:
-        albums = (
-            service.query().filter(Album.type == AlbumType.DATE_SETLIST).all()
-        )
+        albums = service.query().filter(Album.type == AlbumType.SETLIST).all()
 
     return JSONResponse(
         [to_network_v1(album) for album in albums],

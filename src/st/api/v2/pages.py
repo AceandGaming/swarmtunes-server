@@ -20,13 +20,9 @@ async def discover(db=Depends(get_db)):
     song_service = create_song_service(db)
 
     setlists = (
-        album_service.query().filter(Album.type == AlbumType.DATE_SETLIST).all()
+        album_service.query().filter(Album.type == AlbumType.SETLIST).all()
     )
-    discs = (
-        album_service.query()
-        .filter(Album.type == AlbumType.DISC_COLLECTION)
-        .all()
-    )
+    discs = album_service.query().filter(Album.type == AlbumType.DISC).all()
     originals = (
         song_service.query().filter(Song.type == SongType.ORIGINAL).all()
     )
@@ -52,7 +48,7 @@ async def discover_ids(db=Depends(get_db)):
         album_id
         for (album_id,) in (
             album_service.query()
-            .filter(Album.type == AlbumType.DATE_SETLIST)
+            .filter(Album.type == AlbumType.SETLIST)
             .order_by(Album.date.desc())
             .with_entities(Album.id)
             .all()
@@ -62,7 +58,7 @@ async def discover_ids(db=Depends(get_db)):
         album_id
         for (album_id,) in (
             album_service.query()
-            .filter(Album.type == AlbumType.DISC_COLLECTION)
+            .filter(Album.type == AlbumType.DISC)
             .order_by(Album.disc.desc())
             .with_entities(Album.id)
             .all()
@@ -109,7 +105,7 @@ async def home(db=Depends(get_db)):
         album_id
         for (album_id,) in (
             album_service.query()
-            .filter(Album.type == AlbumType.DATE_SETLIST)
+            .filter(Album.type == AlbumType.SETLIST)
             .order_by(Album.date.desc())
             .with_entities(Album.id)
             .limit(10)
@@ -119,7 +115,7 @@ async def home(db=Depends(get_db)):
         album_id
         for (album_id,) in (
             album_service.query()
-            .filter(Album.type == AlbumType.DISC_COLLECTION)
+            .filter(Album.type == AlbumType.DISC)
             .order_by(Album.disc.desc())
             .with_entities(Album.id)
             .all()
