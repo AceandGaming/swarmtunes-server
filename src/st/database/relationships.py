@@ -59,6 +59,7 @@ class PlaylistSong(Base):
     date_added = Column(
         UTCDateTime, nullable=False, default=lambda: datetime.now(timezone.utc)
     )
+    user_order = Column(Integer, nullable=False, default=0)
 
     song = relationship("Song", back_populates="playlists")
     playlist = relationship("Playlist", back_populates="songs")
@@ -80,3 +81,25 @@ album_songs = Table(
         primary_key=True,
     ),
 )
+
+
+class UserPlaylist(Base):
+    __tablename__ = "user_playlists"
+
+    playlist_id = Column(
+        SqlAlchemyUuid,
+        ForeignKey("playlists.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    user_id = Column(
+        SqlAlchemyUuid,
+        ForeignKey("users.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    date_added = Column(
+        UTCDateTime, nullable=False, default=lambda: datetime.now(timezone.utc)
+    )
+    user_order = Column(Integer, nullable=False, default=0)
+
+    user = relationship("User", back_populates="playlists")
+    playlist = relationship("Playlist", back_populates="users")

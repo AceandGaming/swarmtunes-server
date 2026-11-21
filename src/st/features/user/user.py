@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, Optional
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from st.abstract.id_object import IDObject
+from st.database.relationships import UserPlaylist
 from st.database.types import StringValueEnum
 
 if TYPE_CHECKING:
@@ -29,7 +30,7 @@ class User(IDObject):
     )
 
     playlists: Mapped[list["Playlist"]] = relationship(
-        "Playlist", back_populates="user"
+        UserPlaylist, back_populates="user"
     )
     tokens: Mapped[list["Token"]] = relationship(
         "Token", back_populates="user", cascade="all, delete-orphan"

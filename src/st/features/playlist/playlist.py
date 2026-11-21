@@ -1,11 +1,12 @@
 from enum import StrEnum
 from typing import TYPE_CHECKING, Optional
+from uuid import UUID
 
 from sqlalchemy import JSON, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from st.abstract.id_object import IDObject
-from st.database.relationships import PlaylistSong
+from st.database.relationships import PlaylistSong, UserPlaylist
 from st.database.types import StringValueEnum
 
 if TYPE_CHECKING:
@@ -30,7 +31,10 @@ class Playlist(IDObject):
 
     songs: Mapped[list[PlaylistSong]] = relationship(
         "PlaylistSong",
-        order_by=PlaylistSong.date_added,
+        order_by=lambda: (
+            PlaylistSong.user_order.desc(),
+            PlaylistSong.date_added.asc(),
+        ),
         cascade="all, delete-orphan",
     )
     type: Mapped[PlaylistType] = mapped_column(
@@ -38,16 +42,13 @@ class Playlist(IDObject):
     )
 
     seconds: Mapped[float] = mapped_column(default=0)
-    artworks: Mapped[dict[str, str]] = mapped_column(
-        JSON,
-        default=dict
-    )
+    artworks: Mapped[dict[str, str]] = mapped_column(JSON, default=dict)
 
-    user_id = mapped_column(
+    owner_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("users.id", ondelete="SET NULL"), index=True
     )
-    user: Mapped[Optional["User"]] = relationship(
-        "User", back_populates="playlists"
+    users: Mapped[list["User"]] = relationship(
+        UserPlaylist, back_populates="playlist"
     )
 
     def add_song(self, song: "Song"):
