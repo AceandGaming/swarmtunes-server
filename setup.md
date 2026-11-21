@@ -49,7 +49,7 @@ These certificates are suitable for development and testing. Production deployme
 
 You may need to download artwork for songs separately. Artwork is available from the following sources:
 
-- [Neuro and Evil covers](https://images.swarmtunes.com)
+- [Plush images](https://www.makeship.com/shop/creator/vedal)
 - [Disc covers](https://drive.google.com/drive/folders/1Pr53j8IHp_hJTLafCellHFz4kUiTzuUy)
 
 **Copyright notice:** These links and assets are not managed by Swarmtunes. Artwork remains the property of its respective copyright holders and is subject to their rights.
