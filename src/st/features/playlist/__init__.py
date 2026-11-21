@@ -4,10 +4,11 @@ from uuid import UUID
 from sqlalchemy.orm import Session
 
 from st.core.service import Service
+from st.database.relationships import UserPlaylist
 
+from . import events  # IMPORTANT
 from .convert import to_network_v1, to_network_v2
 from .playlist import Playlist, PlaylistType
-from . import events # IMPORTANT
 
 if TYPE_CHECKING:
     from st.features.user.user import User
@@ -17,20 +18,34 @@ class PlaylistService(Service[Playlist]):
     def __init__(self, db: Session):
         super().__init__(db, Playlist)
 
-    def get_of_user(self, user: "User"):
-        return self.query().filter(self._model.user_id == user.id).all()
-
-    def get_in_user(self, user: "User", id: UUID) -> Playlist | None:
+    def get_of_user(self, user: "User") -> list[UserPlaylist]:
         return (
             self.query()
-            .filter(self._model.user_id == user.id, self._model.id == id)
+            .join(Playlist.users)
+            .with_entities(UserPlaylist)
+            .filter(UserPlaylist.user_id == user.id)
+            .all()
+        )
+
+    def get_in_user(self, user: "User", id: UUID) -> UserPlaylist | None:
+        return (
+            self.query()
+            .join(Playlist.users)
+            .with_entities(UserPlaylist)
+            .filter(UserPlaylist.user_id == user.id)
+            .filter(Playlist.id == id)
             .first()
         )
 
-    def get_many_in_user(self, user: "User", ids: list[UUID]) -> list[Playlist]:
+    def get_many_in_user(
+        self, user: "User", ids: list[UUID]
+    ) -> list[UserPlaylist]:
         return (
             self.query()
-            .filter(self._model.user_id == user.id, self._model.id.in_(ids))
+            .join(Playlist.users)
+            .with_entities(UserPlaylist)
+            .filter(UserPlaylist.user_id == user.id)
+            .filter(Playlist.id.in_(ids))
             .all()
         )
 
@@ -38,7 +53,7 @@ class PlaylistService(Service[Playlist]):
         playlist = (
             self.query()
             .filter(
-                self._model.user_id == user.id,
+                self._model.owner_id == user.id,
                 self._model.type == PlaylistType.LIKED_SONGS,
             )
             .first()

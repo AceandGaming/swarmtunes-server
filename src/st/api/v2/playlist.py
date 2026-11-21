@@ -105,11 +105,12 @@ def delete_playlist(
     id: UUID, token: Token = Depends(auth_required), db=Depends(get_db)
 ):
     service = create_playlist_service(db)
-    playlist = service.get_in_user(token.user, id)
-    if not playlist:
+    item = service.get_in_user(token.user, id)
+    if not item:
         raise APIException(
             "PLAYLIST_NOT_FOUND", "Playlist not found", status_code=404
         )
+    playlist = item.playlist
     if playlist.protected:
         raise APIException(
             "PLAYLIST_IS_PROTECTED", "Playlist is protected", status_code=403
