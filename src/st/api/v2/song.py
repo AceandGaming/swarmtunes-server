@@ -195,7 +195,11 @@ def get_song_audio(id: UUID, db=Depends(get_db)):
 
 
 @song_router.get("/{id}/gdrive")
-def get_song_gdrive(id: UUID, db=Depends(get_db)):
+def get_song_gdrive(
+    id: UUID,
+    returnType: Literal["redirect", "json"] = "redirect",
+    db=Depends(get_db),
+):
     service = create_song_service(db)
 
     song = service.get(id)
@@ -208,11 +212,24 @@ def get_song_gdrive(id: UUID, db=Depends(get_db)):
         if ref.type == AudioReferenceType.GOOGLE_DRIVE
     ]
 
+    if len(audios) == 0:
+        raise APIException(
+            "SONG_NOT_EXPORTABLE",
+            "Song is not on Google Drive and cannot be exported",
+            status_code=404,
+        )
+
     audio = audios[0]
 
-    return RedirectResponse(
-        "https://drive.google.com/uc?export=download&id=" + audio.external_id
-    )
+    url = "https://drive.google.com/uc?export=download&id=" + audio.external_id
+
+    match returnType:
+        case "json":
+            return {
+                "url": url,
+            }
+        case "redirect":
+            return RedirectResponse(url)
 
 
 @song_router.get("/{id}/playlists")
